@@ -3672,7 +3672,8 @@ button p {
   border-radius: 4px;
 }
 .vertical-milestone-marker {
-  left: 27%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   color: var(--teal);
 }
 .vertical-milestone-marker span {
