@@ -33,6 +33,7 @@ type Page =
 export default function App() {
   const [page, setPage] = useState<Page>("home");
   const [practiceEntry, setPracticeEntry] = useState<PracticeEntry>();
+  const [eventId, setEventId] = useState<string>();
   const [ready, setReady] = useState(false);
   const [error, setError] = useState("");
   const [today, setToday] = useState(localDate());
@@ -47,6 +48,7 @@ export default function App() {
     if (ready) return registerTrainingTools();
   }, [ready]);
   const navigate = (value: Page) => {
+    setEventId(undefined);
     setPracticeEntry(undefined);
     setPage(value);
     window.scrollTo({ top: 0 });
@@ -54,6 +56,11 @@ export default function App() {
   const openPractice = (entry: PracticeEntry) => {
     setPracticeEntry(entry);
     setPage("practice");
+    window.scrollTo({ top: 0 });
+  };
+  const openEvent = (id?: string) => {
+    setEventId(id);
+    setPage("events");
     window.scrollTo({ top: 0 });
   };
   return (
@@ -129,7 +136,7 @@ export default function App() {
               today={today}
               mode={page === "home" ? "themes" : "notes"}
               onSchedule={() => navigate("practice")}
-              onEvents={() => navigate("events")}
+              onEvents={openEvent}
               onLegacy={(item, sectionId) =>
                 openPractice(openAgendaItem(item, today, sectionId))
               }
@@ -141,7 +148,7 @@ export default function App() {
           ) : page === "series" ? (
             <RecurringLessons today={today} onBack={() => navigate("tools")} />
           ) : page === "events" ? (
-            <Events />
+            <Events key={eventId ?? "list"} initialEventId={eventId} />
           ) : page === "plans" ? (
             <>
               <button
@@ -216,6 +223,7 @@ export default function App() {
               }
               today={today}
               entry={practiceEntry}
+              onEvent={openEvent}
             />
           )}
         </main>

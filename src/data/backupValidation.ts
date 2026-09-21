@@ -1,4 +1,5 @@
 import { goalCategories } from "../lib/goalCategories";
+import { validateMilestones } from "../lib/milestones";
 
 export const backupTables = [
   "events",
@@ -80,6 +81,14 @@ const checks: Record<BackupTable, Check> = {
     description: optional(text),
     status: oneOf("planned", "active", "completed", "cancelled"),
     goalIds: ids,
+    milestones: optional((value) => {
+      try {
+        validateMilestones(value);
+        return true;
+      } catch {
+        return false;
+      }
+    }),
   }),
   goals: shape({
     ...base,

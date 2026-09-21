@@ -1,4 +1,5 @@
 import { liveQuery } from "dexie";
+import { validateMilestones } from "../lib/milestones";
 import { db } from "./db";
 import { removeUnusedDefaultGoals } from "./migrations";
 import { retireTechnicalGoals } from "./retireGoals";
@@ -234,6 +235,8 @@ export async function home(today: string) {
   };
 }
 function validate<K extends Kind>(kind: K, record: Records[K]) {
+  if (kind === "events" && (record as DanceEvent).milestones !== undefined)
+    validateMilestones((record as DanceEvent).milestones);
   if (kind === "learningNotes") {
     const note = record as LearningNote;
     if (!["lesson", "practice", "reflection"].includes(note.kind))

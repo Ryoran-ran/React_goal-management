@@ -19,6 +19,7 @@ import {
 } from "../lib/practiceNavigation";
 import { agendaStatus, practiceAgenda } from "../data/practiceAgenda";
 import { ensureLessonSchedules } from "../data/lessonSchedule";
+import { milestoneDeadlines } from "../data/eventMilestones";
 import { useQuery } from "../lib/hooks";
 import { addDays, dateLabel, monthRange } from "../lib/dates";
 import { shiftCalendarMonth } from "../lib/calendar";
@@ -38,9 +39,11 @@ const statuses = { planned: "予定", recorded: "記録済み", cancelled: "中�
 export function Practice({
   today,
   entry,
+  onEvent,
 }: {
   today: string;
   entry?: PracticeEntry;
+  onEvent: (id: string) => void;
 }) {
   const [selectedDate, setSelectedDate] = useState(
     entry?.type === "edit" ? entry.item.record.date : today,
@@ -76,6 +79,16 @@ export function Practice({
   const items = result.data?.filter(
     (item) => filter === "all" || agendaStatus(item) === filter,
   );
+  const deadlines = useQuery(
+    () =>
+      milestoneDeadlines(
+        view === "day" ? selectedDate : monthRange(month).start,
+        view === "day" ? selectedDate : monthRange(month).end,
+      ),
+    [period],
+  );
+  const shownDeadlines =
+    filter === "all" || filter === "planned" ? (deadlines.data ?? []) : [];
   const close = () => setEditing(undefined);
   const afterSave = (date: string) => {
     setSelectedDate(date);
@@ -267,6 +280,26 @@ export function Practice({
             </div>
           )}
           <div className="card-list with-floating-add">
+            {deadlines.error && (
+              <p className="error" role="alert">
+                準備の期限を読み込めませんでした：{deadlines.error}
+              </p>
+            )}
+            {shownDeadlines.map(({ eventId, eventTitle, milestone }) => (
+              <button
+                key={`${eventId}-${milestone.id}`}
+                type="button"
+                className="card agenda-milestone"
+                onClick={() => onEvent(eventId)}
+              >
+                <span className="tag">準備の期限</span>
+                <strong>{milestone.title}</strong>
+                <span>
+                  {dateLabel(milestone.dueDate!)} · {eventTitle}
+                </span>
+                <ArrowUpRight size={16} />
+              </button>
+            ))}
             {result.error && (
               <p className="error" role="alert">
                 {result.error}
@@ -349,15 +382,18 @@ export function Practice({
                 </div>
               );
             })}
-            {items?.length === 0 && (
-              <section className="card">
-                <Empty>
-                  {filter === "all"
-                    ? `この${view === "day" ? "日" : "月"}の予定はまだありません。左下の「追加」から登録できます。`
-                    : "この条件に当てはまる予定・記録はありません。"}
-                </Empty>
-              </section>
-            )}
+            {items?.length === 0 &&
+              !shownDeadlines.length &&
+              !deadlines.error &&
+              deadlines.data && (
+                <section className="card">
+                  <Empty>
+                    {filter === "all"
+                      ? `この${view === "day" ? "日" : "月"}の予定はまだありません。左下の「追加」から登録できます。`
+                      : "この条件に当てはまる予定・記録はありません。"}
+                  </Empty>
+                </section>
+              )}
           </div>
           <FloatingAddButton
             actions={[

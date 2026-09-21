@@ -13,6 +13,25 @@ export interface DanceEvent extends Base {
   description?: string;
   status: "planned" | "active" | "completed" | "cancelled";
   goalIds: string[];
+  milestones?: EventMilestone[];
+}
+export interface MilestonePlan {
+  startDate?: string;
+  dueDate?: string;
+}
+export interface EventMilestone extends Base, MilestonePlan {
+  title: string;
+  successCriteria: string;
+  status: "not_started" | "in_progress" | "achieved" | "skipped";
+  actualStartDate?: string;
+  completedDate?: string;
+  baseline?: MilestonePlan;
+  changes: {
+    changedAt: string;
+    from: MilestonePlan;
+    to: MilestonePlan;
+    reason: string;
+  }[];
 }
 export type GoalStatus = "not_started" | "in_progress" | "achieved" | "paused";
 export type GoalCategory =

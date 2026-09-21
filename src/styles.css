@@ -2452,3 +2452,378 @@ button p {
     gap: 2px;
   }
 }
+.event-preparation,
+.milestone-editor-page {
+  min-width: 0;
+}
+.event-preparation-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.event-preparation-heading h1 {
+  font-size: 1.7rem;
+  overflow-wrap: anywhere;
+}
+.event-preparation-heading p,
+.milestone-event-label {
+  color: var(--muted);
+  margin: 8px 0 20px;
+}
+.event-preparation-heading > div {
+  min-width: 0;
+}
+.preparation-card {
+  min-width: 0;
+}
+.preparation-card > .section-heading {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.milestone-summary {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.milestone-summary label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.milestone-list {
+  display: grid;
+  gap: 12px;
+}
+.milestone-list-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: left;
+}
+.milestone-list-row > div {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.milestone-list-row p {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 5px 0;
+}
+.milestone-list-row > .tag {
+  flex-shrink: 0;
+}
+.milestone-dot {
+  color: var(--teal);
+}
+.milestone-add {
+  margin-top: 24px;
+}
+.overdue {
+  color: #a73541;
+}
+.milestone-history {
+  margin: 20px 0;
+  overflow-wrap: anywhere;
+}
+.milestone-history summary {
+  cursor: pointer;
+  color: var(--teal);
+  padding: 12px 0;
+}
+.milestone-history > div {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.85rem;
+}
+.event-date-shift {
+  margin-bottom: 20px;
+}
+.event-date-shift p {
+  font-size: 0.85rem;
+  margin-top: 8px;
+}
+.next-milestone-link {
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.next-milestone-link small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.agenda-milestone {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  text-align: left;
+}
+.agenda-milestone strong {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.agenda-milestone > span:not(.tag) {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.event-next-milestone {
+  color: var(--teal);
+}
+.gantt-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+}
+.gantt-controls label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+}
+.gantt-controls select {
+  width: auto;
+}
+.gantt-navigation {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.gantt-navigation button {
+  min-width: 44px;
+  min-height: 44px;
+}
+.gantt-range {
+  margin: 8px 0;
+  font-size: 0.85rem;
+}
+.gantt-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 12px 0;
+  font-size: 0.75rem;
+}
+.gantt-legend .baseline {
+  color: #64748b;
+}
+.gantt-legend .planned {
+  color: var(--teal);
+}
+.gantt-legend .actual {
+  color: #245eab;
+}
+.gantt-legend .today {
+  color: #b33144;
+}
+.gantt-legend .event {
+  color: #7850a5;
+}
+.gantt-hint {
+  font-size: 0.78rem;
+  margin-bottom: 12px;
+}
+.gantt-scroll {
+  max-width: 100%;
+  max-height: 65dvh;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overscroll-behavior-x: contain;
+}
+.gantt-scroll:focus-visible {
+  outline: 3px solid #b18b34;
+  outline-offset: 3px;
+}
+.gantt-grid {
+  --label-width: 180px;
+  width: calc(var(--label-width) + var(--timeline-width));
+}
+.gantt-grid-header,
+.gantt-grid-row {
+  display: grid;
+  grid-template-columns: var(--label-width) var(--timeline-width);
+}
+.gantt-grid-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  height: 44px;
+  background: #f0f5f3;
+  border-bottom: 1px solid var(--line);
+}
+.gantt-label {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background: white;
+  border-right: 1px solid var(--line);
+  padding: 12px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  width: 100%;
+}
+.gantt-label strong {
+  font-size: 0.85rem;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.gantt-label small {
+  font-size: 0.72rem;
+}
+.gantt-grid-header .gantt-label {
+  background: #f0f5f3;
+  justify-content: center;
+  font-size: 0.8rem;
+  z-index: 6;
+}
+.gantt-grid-row {
+  min-height: 116px;
+  border-bottom: 1px solid var(--line);
+}
+.gantt-grid-row.is-skipped .gantt-track {
+  opacity: 0.5;
+}
+.gantt-track {
+  position: relative;
+  min-height: 100%;
+  overflow: hidden;
+}
+.gantt-tick {
+  position: absolute;
+  top: 12px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 0.72rem;
+}
+.gantt-grid-line,
+.gantt-marker-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #e9efec;
+  pointer-events: none;
+}
+.gantt-marker-line {
+  z-index: 2;
+  border-left: 2px dashed;
+  background: transparent;
+}
+.gantt-marker-line.today {
+  border-color: #c44151;
+}
+.gantt-marker-line.event {
+  border-color: #8760b0;
+}
+.gantt-bar {
+  position: absolute;
+  height: 22px;
+  border-radius: 4px;
+  padding: 0 4px;
+  color: white;
+  font-size: 0.65rem;
+  line-height: 22px;
+  overflow: hidden;
+  white-space: nowrap;
+  min-width: 3px;
+}
+.gantt-bar.baseline {
+  top: 14px;
+  background: #cbd5de;
+  color: #394959;
+  border: 1px dashed #7d8b98;
+}
+.gantt-bar.planned {
+  top: 46px;
+  background: #27786c;
+}
+.gantt-bar.actual {
+  top: 78px;
+  background: #3169b1;
+}
+.gantt-bar.is-point {
+  min-width: 20px;
+  background: transparent;
+  padding: 0;
+  font-size: 18px;
+}
+.gantt-bar.baseline.is-point {
+  color: #8493a1;
+  border: 0;
+}
+.gantt-bar.planned.is-point {
+  color: #27786c;
+}
+.gantt-bar.actual.is-point {
+  color: #3169b1;
+}
+.gantt-diamond {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 17px;
+  line-height: 22px;
+  pointer-events: none;
+  text-shadow: 0 0 3px white;
+}
+.gantt-diamond.planned {
+  top: 46px;
+  color: #183d3d;
+}
+.gantt-diamond.actual {
+  top: 78px;
+  color: #193f70;
+}
+.gantt-unscheduled {
+  position: absolute;
+  left: 12px;
+  top: 46px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+@media (max-width: 760px) {
+  .preparation-card {
+    padding: 16px;
+  }
+  .gantt-grid {
+    --label-width: 112px;
+  }
+  .gantt-label {
+    padding: 10px 8px;
+  }
+  .milestone-list-row {
+    flex-wrap: wrap;
+    padding: 12px;
+  }
+  .milestone-list-row > .tag {
+    margin-left: 26px;
+  }
+  .preparation-card .section-heading h2 {
+    font-size: 1rem;
+  }
+  .preparation-card .segmented button {
+    padding: 8px 12px;
+  }
+}
