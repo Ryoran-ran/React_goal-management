@@ -17,6 +17,8 @@ export const sortedMilestones = (items: EventMilestone[]) =>
   [...items].sort(
     (a, b) =>
       (a.dueDate ?? "9999-12-31").localeCompare(b.dueDate ?? "9999-12-31") ||
+      (a.sortOrder ?? Number.MAX_SAFE_INTEGER) -
+        (b.sortOrder ?? Number.MAX_SAFE_INTEGER) ||
       a.createdAt.localeCompare(b.createdAt) ||
       a.id.localeCompare(b.id),
   );
@@ -131,6 +133,9 @@ export function validateMilestones(
       !Object.hasOwn(milestoneStatuses, String(item.status)) ||
       !timestamp(item.createdAt) ||
       !timestamp(item.updatedAt) ||
+      (item.sortOrder !== undefined &&
+        (!Number.isSafeInteger(item.sortOrder) ||
+          Number(item.sortOrder) < 0)) ||
       !validPlan(item) ||
       (item.baseline !== undefined && !validPlan(item.baseline)) ||
       (item.actualStartDate !== undefined &&

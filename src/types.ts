@@ -26,6 +26,7 @@ export interface MilestoneTask {
   completed: boolean;
 }
 export interface EventWorkItem extends Base, MilestonePlan {
+  sortOrder?: number;
   milestoneId?: string;
   title: string;
   description: string;
@@ -37,6 +38,7 @@ export interface EventWorkItem extends Base, MilestonePlan {
   changes: EventMilestone["changes"];
 }
 export interface EventMilestone extends Base, MilestonePlan {
+  sortOrder?: number;
   title: string;
   successCriteria: string;
   status: "not_started" | "in_progress" | "achieved" | "skipped";

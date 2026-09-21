@@ -15,6 +15,8 @@ export const sortedEventWork = (items: EventWorkItem[]) =>
       (a.startDate ?? "9999-12-31").localeCompare(
         b.startDate ?? "9999-12-31",
       ) ||
+      (a.sortOrder ?? Number.MAX_SAFE_INTEGER) -
+        (b.sortOrder ?? Number.MAX_SAFE_INTEGER) ||
       a.createdAt.localeCompare(b.createdAt) ||
       a.id.localeCompare(b.id),
   );

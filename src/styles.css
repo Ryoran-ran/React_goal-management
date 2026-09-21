@@ -2586,9 +2586,21 @@ button p {
   text-align: left;
 }
 .milestone-work-group {
-  border: 1px solid #cbdcd5;
-  border-radius: 10px;
+  border-bottom: 1px solid #cbdcd5;
   background: white;
+}
+.milestone-tree-heading {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  align-items: start;
+}
+.milestone-expand {
+  width: 32px;
+  min-height: 44px;
+  padding: 0;
+}
+.milestone-expand .is-open {
+  transform: rotate(90deg);
 }
 .milestone-role-label {
   display: block;
@@ -2621,16 +2633,41 @@ button p {
 }
 .milestone-task-list {
   list-style: none;
-  padding: 0;
+  padding: 0 0 0 16px;
   margin: 0;
 }
 .milestone-task-children {
-  margin: 0;
-  padding: 12px 16px 16px;
-  border-top: 1px solid var(--line);
-  border-radius: 0 0 10px 10px;
-  background: #f6f9f7;
+  margin: 0 0 0 32px;
+  padding: 0 0 12px;
   min-width: 0;
+}
+.work-tree-caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  padding: 4px 0 8px;
+}
+.work-list-entry::before {
+  content: "";
+  position: absolute;
+  left: -16px;
+  top: -9px;
+  bottom: -1px;
+  border-left: 1px solid #b9ccc5;
+}
+.work-list-entry:last-child::before {
+  bottom: auto;
+  height: 31px;
+}
+.work-list-entry::after {
+  content: "";
+  position: absolute;
+  left: -16px;
+  top: 22px;
+  width: 16px;
+  border-top: 1px solid #b9ccc5;
 }
 .milestone-task-disclosure > summary {
   display: grid;
@@ -2704,6 +2741,7 @@ button p {
   background: #f4f8f6;
 }
 .work-list-entry {
+  position: relative;
   min-width: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -2715,8 +2753,30 @@ button p {
   border: 0;
   margin-bottom: 0;
 }
-.work-list-entry > .schedule-status {
-  margin: 0 12px;
+.work-tree-actions {
+  padding: 0 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: start;
+  justify-content: space-between;
+}
+.schedule-order {
+  min-width: 0;
+}
+.schedule-order > div {
+  display: flex;
+  gap: 2px;
+}
+.schedule-order button {
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.schedule-order .error {
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
 }
 .schedule-status {
   min-width: 0;
@@ -2734,7 +2794,12 @@ button p {
   overflow-wrap: anywhere;
 }
 .milestone-status-row {
-  padding: 0 12px 12px 36px;
+  padding: 0 12px 12px 68px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: start;
+  gap: 8px;
 }
 .gantt-item-edit {
   display: grid;
@@ -3332,7 +3397,7 @@ button p {
     width: 14px;
   }
   .milestone-task-children {
-    padding: 10px 10px 12px;
+    padding: 0 0 12px;
   }
   .milestone-list-row > .tag {
     margin-left: 26px;

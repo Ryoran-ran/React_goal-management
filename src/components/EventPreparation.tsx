@@ -16,6 +16,7 @@ import { EventWorkList } from "./EventWorkList";
 import { EventWorkEditor } from "./EventWorkEditor";
 import { ScheduleStatus } from "./ScheduleStatus";
 import { sortedEventWork } from "../lib/eventWork";
+import { ScheduleOrder } from "./ScheduleOrder";
 
 export function EventPreparation({
   event,
@@ -30,6 +31,7 @@ export function EventPreparation({
   const [scale, setScale] = useState<GanttScale>("event");
   const [anchor, setAnchor] = useState(localDate);
   const [showFinished, setShowFinished] = useState(false);
+  const [collapsed, setCollapsed] = useState<string[]>([]);
   const [editing, setEditing] = useState<EventMilestone>();
   const [editingWork, setEditingWork] = useState<EventWorkItem>();
   const all = sortedMilestones(event.milestones ?? []);
@@ -193,70 +195,110 @@ export function EventPreparation({
                   role="list"
                   aria-label={`${event.title}のマイルストーン`}
                 >
-                  {items.map((item) => (
+                  {items.map((item, index) => (
                     <li className="milestone-branch" key={item.id}>
                       <article
                         className="milestone-work-group"
                         aria-label={`マイルストーン「${item.title}」とその作業`}
                       >
-                        <button
-                          type="button"
-                          className="milestone-list-row"
-                          onClick={() => open(item)}
-                          aria-label={`マイルストーン「${item.title}」を編集`}
-                        >
-                          <span className="milestone-dot" aria-hidden="true">
-                            {item.status === "achieved" ? "✓" : "◆"}
-                          </span>
-                          <div>
-                            <span className="milestone-role-label">
-                              マイルストーン · 到達点
-                            </span>
-                            <strong>{item.title}</strong>
-                            <p>
-                              期限：
-                              {item.dueDate?.replaceAll("-", "/") ?? "未設定"}
-                            </p>
-                            {item.successCriteria && (
-                              <p className="clamp">{item.successCriteria}</p>
-                            )}
-                            <small
+                        <div className="milestone-tree-heading">
+                          <button
+                            type="button"
+                            className="icon-button milestone-expand"
+                            aria-label={`${item.title}の作業を${collapsed.includes(item.id) ? "展開" : "折りたたむ"}`}
+                            aria-expanded={!collapsed.includes(item.id)}
+                            onClick={() =>
+                              setCollapsed((current) =>
+                                current.includes(item.id)
+                                  ? current.filter((id) => id !== item.id)
+                                  : [...current, item.id],
+                              )
+                            }
+                          >
+                            <ChevronRight
+                              size={18}
                               className={
-                                unfinished(item) &&
-                                item.dueDate &&
-                                item.dueDate < localDate()
-                                  ? "overdue"
-                                  : ""
+                                collapsed.includes(item.id) ? "" : "is-open"
                               }
-                            >
-                              {milestoneTiming(item)}
-                            </small>
-                            {milestonePlanDelay(item) > 0 && (
-                              <small className="overdue">
-                                {" "}
-                                · 当初より{milestonePlanDelay(item)}日後ろ
+                            />
+                          </button>
+                          <button
+                            type="button"
+                            className="milestone-list-row"
+                            onClick={() => open(item)}
+                            aria-label={`マイルストーン「${item.title}」を編集`}
+                          >
+                            <span className="milestone-dot" aria-hidden="true">
+                              {item.status === "achieved" ? "✓" : "◆"}
+                            </span>
+                            <div>
+                              <span className="milestone-role-label">
+                                マイルストーン · 到達点
+                              </span>
+                              <strong>{item.title}</strong>
+                              <p>
+                                期限：
+                                {item.dueDate?.replaceAll("-", "/") ?? "未設定"}
+                              </p>
+                              {item.successCriteria && (
+                                <p className="clamp">{item.successCriteria}</p>
+                              )}
+                              <small
+                                className={
+                                  unfinished(item) &&
+                                  item.dueDate &&
+                                  item.dueDate < localDate()
+                                    ? "overdue"
+                                    : ""
+                                }
+                              >
+                                {milestoneTiming(item)}
                               </small>
-                            )}
-                          </div>
-                        </button>
+                              {milestonePlanDelay(item) > 0 && (
+                                <small className="overdue">
+                                  {" "}
+                                  · 当初より{milestonePlanDelay(item)}日後ろ
+                                </small>
+                              )}
+                            </div>
+                          </button>
+                        </div>
                         <div className="milestone-status-row">
                           <ScheduleStatus
                             eventId={event.id}
                             target={{ kind: "milestone", item }}
                           />
+                          <ScheduleOrder
+                            eventId={event.id}
+                            kind="milestone"
+                            item={item}
+                            previous={
+                              index > 0 &&
+                              items[index - 1].dueDate === item.dueDate
+                                ? items[index - 1]
+                                : undefined
+                            }
+                            next={
+                              items[index + 1]?.dueDate === item.dueDate
+                                ? items[index + 1]
+                                : undefined
+                            }
+                          />
                         </div>
-                        <EventWorkList
-                          eventId={event.id}
-                          milestoneTitle={item.title}
-                          items={visibleWork.filter(
-                            (work) => work.milestoneId === item.id,
-                          )}
-                          totalItems={allWork.filter(
-                            (work) => work.milestoneId === item.id,
-                          )}
-                          onEdit={openWork}
-                          onAdd={() => addWork(item.id)}
-                        />
+                        {!collapsed.includes(item.id) && (
+                          <EventWorkList
+                            eventId={event.id}
+                            milestoneTitle={item.title}
+                            items={visibleWork.filter(
+                              (work) => work.milestoneId === item.id,
+                            )}
+                            totalItems={allWork.filter(
+                              (work) => work.milestoneId === item.id,
+                            )}
+                            onEdit={openWork}
+                            onAdd={() => addWork(item.id)}
+                          />
+                        )}
                       </article>
                     </li>
                   ))}

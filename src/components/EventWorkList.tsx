@@ -2,6 +2,7 @@ import { Plus } from "lucide-react";
 import type { EventWorkItem } from "../types";
 import { workProgress, workSchedule } from "../lib/eventWork";
 import { ScheduleStatus } from "./ScheduleStatus";
+import { ScheduleOrder } from "./ScheduleOrder";
 import { milestoneTiming } from "../lib/milestones";
 
 export function EventWorkList({
@@ -22,15 +23,13 @@ export function EventWorkList({
   const progress = workProgress(totalItems);
   return (
     <div className="milestone-task-children">
-      <details className="milestone-task-disclosure" open>
-        <summary>
-          <span>
-            {milestoneTitle ? "この到達点に向けた作業" : "到達点が未設定の作業"}
-          </span>
+      <div className="milestone-task-disclosure">
+        <div className="work-tree-caption">
+          <span>{milestoneTitle ? "作業" : "到達点が未設定の作業"}</span>
           <span className="work-completion-count">
             {progress.completed} / {progress.total} 件完了
           </span>
-        </summary>
+        </div>
         {items.length > 0 ? (
           <ul
             className="milestone-task-list"
@@ -41,7 +40,7 @@ export function EventWorkList({
                 : "未分類の作業"
             }
           >
-            {items.map((item) => (
+            {items.map((item, index) => (
               <li key={item.id} className="work-list-entry">
                 <button
                   type="button"
@@ -61,10 +60,27 @@ export function EventWorkList({
                   )}
                   <small>{milestoneTiming(workSchedule(item))}</small>
                 </button>
-                <ScheduleStatus
-                  eventId={eventId}
-                  target={{ kind: "work", item }}
-                />
+                <div className="work-tree-actions">
+                  <ScheduleStatus
+                    eventId={eventId}
+                    target={{ kind: "work", item }}
+                  />
+                  <ScheduleOrder
+                    eventId={eventId}
+                    kind="work"
+                    item={item}
+                    previous={
+                      index > 0 && items[index - 1].startDate === item.startDate
+                        ? items[index - 1]
+                        : undefined
+                    }
+                    next={
+                      items[index + 1]?.startDate === item.startDate
+                        ? items[index + 1]
+                        : undefined
+                    }
+                  />
+                </div>
               </li>
             ))}
           </ul>
@@ -88,7 +104,7 @@ export function EventWorkList({
             <span>このマイルストーンに作業を追加</span>
           </button>
         )}
-      </details>
+      </div>
     </div>
   );
 }
