@@ -5,6 +5,7 @@ import { dateLabel, localDate } from "../lib/dates";
 import {
   milestoneTiming,
   milestonePlanDelay,
+  sortedMilestones,
   unfinished,
 } from "../lib/milestones";
 import { workProgress } from "../lib/eventWork";
@@ -31,7 +32,8 @@ export function EventMilestoneTimeline({
 }) {
   const [collapsed, setCollapsed] = useState<string[]>([]);
   const unassigned = workItems.filter((work) => !work.milestoneId);
-  const all = event.milestones ?? [];
+  const all = sortedMilestones(event.milestones ?? []);
+  const numbers = new Map(all.map((item, index) => [item.id, index + 1]));
   const total = all.filter((item) => item.status !== "skipped").length;
   const achieved = all.filter((item) => item.status === "achieved").length;
   return (
@@ -40,6 +42,7 @@ export function EventMilestoneTimeline({
       aria-label={`${event.title}に向けたマイルストーン`}
     >
       {items.map((item, index) => {
+        const number = numbers.get(item.id)!;
         const children = workItems.filter(
           (work) => work.milestoneId === item.id,
         );
@@ -52,10 +55,11 @@ export function EventMilestoneTimeline({
         return (
           <li
             key={item.id}
+            value={number}
             className={`preparation-timeline-step is-${item.status}`}
           >
             <span className="preparation-step-number" aria-hidden="true">
-              {index + 1}
+              {number}
             </span>
             <article
               className="preparation-step-card"
@@ -69,7 +73,7 @@ export function EventMilestoneTimeline({
                   aria-label={`${item.title}を編集`}
                 >
                   <span className="preparation-step-label">
-                    マイルストーン {index + 1}
+                    マイルストーン {number}
                   </span>
                   <h3>{item.title}</h3>
                   <span className="preparation-step-date">
