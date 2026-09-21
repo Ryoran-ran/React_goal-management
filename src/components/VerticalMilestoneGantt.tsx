@@ -127,20 +127,17 @@ export function VerticalMilestoneGantt({
   };
   return (
     <div className="vertical-gantt">
-      <div className="vertical-gantt-actions">
-        <span>縦：日付 ／ 横：マイルストーン</span>
-        <button
-          type="button"
-          className="text-button"
-          onClick={() => setExpanded([])}
-          disabled={!expanded.length}
-        >
-          作業を閉じる
-        </button>
-      </div>
-      <p className="muted vertical-gantt-note">
-        見出しをタップすると作業を展開できます。薄い帯は、完了分も含めた関連作業の全体範囲です。
-      </p>
+      {expanded.length > 0 && (
+        <div className="vertical-gantt-actions">
+          <button
+            type="button"
+            className="text-button"
+            onClick={() => setExpanded([])}
+          >
+            作業を閉じる
+          </button>
+        </div>
+      )}
       <div
         className="vertical-gantt-scroll"
         role="region"

@@ -107,7 +107,13 @@ export function EventPreparation({
       </div>
       <section className="card preparation-card">
         <div className="section-heading">
-          <h2>準備スケジュール</h2>
+          <div>
+            <h2>準備スケジュール</h2>
+            <p className="preparation-progress">
+              {all.filter((item) => item.status === "achieved").length} /{" "}
+              {all.filter((item) => item.status !== "skipped").length} 件達成
+            </p>
+          </div>
           <div
             className="segmented"
             role="group"
@@ -131,20 +137,18 @@ export function EventPreparation({
             </button>
           </div>
         </div>
-        <div className="milestone-summary">
-          <span>
-            {all.filter((item) => item.status === "achieved").length} /{" "}
-            {all.filter((item) => item.status !== "skipped").length} 件達成
-          </span>
-          <label>
-            <input
-              type="checkbox"
-              checked={showFinished}
-              onChange={(e) => setShowFinished(e.target.checked)}
-            />
-            達成・完了・見送りも表示
-          </label>
-        </div>
+        {(view !== "gantt" || (!items.length && !unassigned.length)) && (
+          <div className="milestone-summary">
+            <label>
+              <input
+                type="checkbox"
+                checked={showFinished}
+                onChange={(e) => setShowFinished(e.target.checked)}
+              />
+              達成・完了・見送りも表示
+            </label>
+          </div>
+        )}
         {!all.length && !allWork.length ? (
           <p className="empty">大会までに準備したい到達点を追加しましょう。</p>
         ) : !items.length && !unassigned.length ? (
@@ -162,6 +166,8 @@ export function EventPreparation({
             onScale={setScale}
             anchor={anchor}
             onAnchor={setAnchor}
+            showFinished={showFinished}
+            onShowFinished={setShowFinished}
           />
         ) : (
           <ul className="milestone-tree" role="list">

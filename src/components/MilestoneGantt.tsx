@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { VerticalMilestoneGantt } from "./VerticalMilestoneGantt";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { DanceEvent, EventMilestone, EventWorkItem } from "../types";
@@ -26,6 +26,8 @@ export function MilestoneGantt({
   onScale,
   anchor,
   onAnchor,
+  showFinished,
+  onShowFinished,
 }: {
   event: DanceEvent;
   items: EventMilestone[];
@@ -36,7 +38,11 @@ export function MilestoneGantt({
   onScale: (scale: GanttScale) => void;
   anchor: string;
   onAnchor: (date: string) => void;
+  showFinished: boolean;
+  onShowFinished: (value: boolean) => void;
 }) {
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const optionsId = useId();
   const [mobile, setMobile] = useState(
     () => window.matchMedia("(max-width: 760px)").matches,
   );
@@ -143,29 +149,25 @@ export function MilestoneGantt({
   return (
     <div className="milestone-gantt">
       <div className="gantt-controls">
-        <label>
-          表示方向
-          <select
-            value={vertical ? "vertical" : "horizontal"}
-            onChange={(e) =>
-              setDirection(e.target.value as "vertical" | "horizontal")
-            }
-          >
-            <option value="vertical">縦</option>
-            <option value="horizontal">横</option>
-          </select>
-        </label>
-        <label>
-          表示期間
-          <select
-            value={scale}
-            onChange={(e) => onScale(e.target.value as GanttScale)}
-          >
-            <option value="week">週</option>
-            <option value="month">月</option>
-            <option value="event">全期間</option>
-          </select>
-        </label>
+        <div className="segmented" role="group" aria-label="ガントの表示期間">
+          {(
+            [
+              ["event", "全期間"],
+              ["month", "月"],
+              ["week", "週"],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              type="button"
+              key={value}
+              className={scale === value ? "active" : ""}
+              aria-pressed={scale === value}
+              onClick={() => onScale(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         {scale !== "event" && (
           <div className="gantt-navigation">
             <button
@@ -194,24 +196,74 @@ export function MilestoneGantt({
           </div>
         )}
       </div>
-      <p className="gantt-range" aria-live="polite">
-        {range.start.replaceAll("-", "/")}〜{range.end.replaceAll("-", "/")}
-      </p>
-      <div className="gantt-legend">
-        <span className="baseline">当初計画</span>
-        <span className="planned">現在の計画</span>
-        <span className="actual">実績（開始〜達成）</span>
-        <span>◆ 到達点・期限　━ 作業期間</span>
-        <span className="today">赤線：今日の{vertical ? "中央" : "左端"}</span>
-        <span className="event">
-          紫線：開催日の{vertical ? "上端" : "左端"}
-        </span>
+      <div className="gantt-options-row">
+        <p className="gantt-range" aria-live="polite">
+          {scale === "month"
+            ? `${range.start.slice(0, 4)}年${Number(range.start.slice(5, 7))}月`
+            : `${range.start.replaceAll("-", "/")}〜${range.end.replaceAll("-", "/")}`}
+        </p>
+        <button
+          type="button"
+          className="text-button gantt-options-toggle"
+          aria-expanded={optionsOpen}
+          aria-controls={optionsId}
+          onClick={() => setOptionsOpen(!optionsOpen)}
+        >
+          表示設定{showFinished ? "・完了を含む" : ""}
+          {optionsOpen ? " ▴" : " ▾"}
+        </button>
+        <div
+          id={optionsId}
+          className="gantt-options-panel"
+          hidden={!optionsOpen}
+        >
+          <div className="gantt-controls">
+            <label>
+              表示方向
+              <select
+                value={vertical ? "vertical" : "horizontal"}
+                onChange={(e) =>
+                  setDirection(e.target.value as "vertical" | "horizontal")
+                }
+              >
+                <option value="vertical">縦</option>
+                <option value="horizontal">横</option>
+              </select>
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={showFinished}
+                onChange={(e) => onShowFinished(e.target.checked)}
+              />
+              達成・完了・見送りも表示
+            </label>
+          </div>
+          <h3>グラフの見方</h3>
+          <div className="gantt-legend">
+            <span className="baseline">当初計画</span>
+            <span className="planned">現在の計画</span>
+            <span className="actual">実績（開始〜達成）</span>
+            <span>◆ 到達点・期限　━ 作業期間</span>
+            <span className="today">
+              赤線：今日の{vertical ? "中央" : "左端"}
+            </span>
+            <span className="event">
+              紫線：開催日の{vertical ? "上端" : "左端"}
+            </span>
+          </div>
+          <p className="muted gantt-hint">
+            {vertical
+              ? "日付は縦、マイルストーンは横に並びます。見出しをタップすると関連作業を展開できます。上下・左右にスクロールできます。"
+              : "日付部分は横にスクロールできます。項目名から編集できます。"}
+          </p>
+          {vertical && (
+            <p className="muted gantt-hint">
+              薄い帯は、完了分も含めた関連作業の全体範囲です。途中の空白期間も含みます。
+            </p>
+          )}
+        </div>
       </div>
-      <p className="muted gantt-hint">
-        {vertical
-          ? "上下に日付、左右に項目をスクロールできます。"
-          : "日付部分は横にスクロールできます。項目名から編集できます。"}
-      </p>
       {vertical ? (
         <VerticalMilestoneGantt
           event={event}
