@@ -2087,16 +2087,24 @@ button p {
     margin-left: 0;
   }
   .topbar {
-    height: 54px;
-    padding: 0 20px;
+    /* Keep header text below the iPhone status area with an opaque surface. */
+    height: auto;
+    min-height: calc(54px + env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-right: max(20px, env(safe-area-inset-right, 0px));
+    padding-bottom: 0;
+    padding-left: max(20px, env(safe-area-inset-left, 0px));
+    background: #fff;
+    color: var(--ink);
+    font-family:
+      -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN",
+      "Yu Gothic", sans-serif;
+    font-weight: 500;
+    line-height: 1.5;
   }
   .topbar > span:first-child {
-    font:
-      600 0.9rem Georgia,
-      serif;
+    font-weight: 600;
     letter-spacing: 0.03em;
-  }
-  .topbar > span:first-child {
     font-size: 0.75rem;
   }
   .local-badge {
