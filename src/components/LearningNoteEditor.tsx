@@ -1,3 +1,4 @@
+import { DatePicker } from "./DatePicker";
 import { useState } from "react";
 import { ArrowLeft, ExternalLink, Plus } from "lucide-react";
 import type { LearningNote, LearningTheme } from "../types";
@@ -62,11 +63,11 @@ export function LearningNoteEditor({
       >
         <div className="form-grid">
           <Field label="レッスン・練習をした日">
-            <input
+            <DatePicker
               type="date"
               required
               value={note.date}
-              onChange={(e) => patch({ date: e.target.value })}
+              onChange={(nextDateValue) => patch({ date: nextDateValue })}
             />
           </Field>
           <Field label="記録すること">

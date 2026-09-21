@@ -1,9 +1,14 @@
+import { DatePicker } from "../components/DatePicker";
 import { useState } from "react";
 import { CalendarDays, ArrowUpRight } from "lucide-react";
 import type { DanceEvent } from "../types";
 import { allEvents, base, remove, save } from "../data/repository";
 import { useQuery } from "../lib/hooks";
 import { dateLabel, daysUntil, localDate } from "../lib/dates";
+import {
+  readShowFinishedEvents,
+  saveShowFinishedEvents,
+} from "../lib/eventView";
 import { Editor, Empty, Field, PageHeading, SaveForm } from "../components/ui";
 import { Attachments, type ImageDraft } from "../components/Attachments";
 export const eventTypes = {
@@ -22,6 +27,11 @@ const statuses = {
 export function Events() {
   const { data: events, error } = useQuery(allEvents);
   const [editing, setEditing] = useState<DanceEvent>();
+  const [showFinished, setShowFinished] = useState(readShowFinishedEvents);
+  const visibleEvents = events?.filter(
+    (event) =>
+      showFinished || !["completed", "cancelled"].includes(event.status),
+  );
   const create = () =>
     setEditing({
       ...base(),
@@ -49,12 +59,25 @@ export function Events() {
         />
       ) : (
         <div className="card-list with-floating-add">
+          <div className="toolbar">
+            <label className="choice">
+              <input
+                type="checkbox"
+                checked={showFinished}
+                onChange={(event) => {
+                  setShowFinished(event.target.checked);
+                  saveShowFinishedEvents(event.target.checked);
+                }}
+              />
+              完了・中止も表示
+            </label>
+          </div>
           {error && (
             <p role="alert" className="error">
               {error}
             </p>
           )}
-          {events?.map((event) => (
+          {visibleEvents?.map((event) => (
             <button
               className="event-row card"
               key={event.id}
@@ -91,11 +114,19 @@ export function Events() {
               <ArrowUpRight size={18} />
             </button>
           ))}
-          {events?.length === 0 && (
+          {visibleEvents?.length === 0 && (
             <div className="card">
               <CalendarDays className="empty-icon" />
               <Empty>
-                左下の「追加」から、次の競技会やメダルテストを登録しましょう。
+                {events?.length ? (
+                  <>
+                    表示中のイベントはありません。「完了・中止も表示」をオンにすると、完了・中止したイベントを確認できます。
+                  </>
+                ) : (
+                  <>
+                    左下の「追加」から、次の競技会やメダルテストを登録しましょう。
+                  </>
+                )}
               </Empty>
             </div>
           )}
@@ -163,11 +194,11 @@ function EventEditor({
               </select>
             </Field>
             <Field label="開催日">
-              <input
+              <DatePicker
                 required
                 type="date"
                 value={event.date}
-                onChange={(e) => patch({ date: e.target.value })}
+                onChange={(nextDateValue) => patch({ date: nextDateValue })}
               />
             </Field>
           </div>

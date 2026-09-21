@@ -1,5 +1,5 @@
 export function localDate(date = new Date()): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  return `${String(date.getFullYear()).padStart(4, "0")}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 export function addDays(value: string, amount: number): string {
   const date = new Date(`${value}T12:00:00`);
@@ -25,6 +25,7 @@ export function dateLabel(value: string) {
   });
 }
 export function monthRange(month: string) {
-  const [year, m] = month.split("-").map(Number);
-  return { start: `${month}-01`, end: localDate(new Date(year, m, 0)) };
+  const last = new Date(`${month}-01T12:00:00`);
+  last.setMonth(last.getMonth() + 1, 0);
+  return { start: `${month}-01`, end: localDate(last) };
 }

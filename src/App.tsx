@@ -6,8 +6,10 @@ import {
   CheckCircle2,
   DatabaseBackup,
   MessageSquare,
+  Repeat2,
 } from "lucide-react";
 import { initialize } from "./data/repository";
+import { CalendarSettings } from "./components/CalendarSettings";
 import { localDate } from "./lib/dates";
 import { Learning } from "./pages/Learning";
 import { Events } from "./pages/Events";
@@ -15,6 +17,7 @@ import { Backup } from "./pages/Backup";
 import { LessonAdvice } from "./pages/LessonAdvice";
 import { Plans } from "./pages/Plans";
 import { Practice } from "./pages/PracticeAgenda";
+import { RecurringLessons } from "./pages/RecurringLessons";
 import { openAgendaItem, type PracticeEntry } from "./lib/practiceNavigation";
 import { errorText } from "./lib/hooks";
 import { registerTrainingTools } from "./lib/webmcp";
@@ -25,7 +28,8 @@ const navigation = [
   { id: "events", label: "大会など", icon: CalendarDays },
   { id: "tools", label: "整理", icon: Settings2 },
 ] as const;
-type Page = (typeof navigation)[number]["id"] | "plans" | "backup" | "advice";
+type Page =
+  (typeof navigation)[number]["id"] | "plans" | "backup" | "advice" | "series";
 export default function App() {
   const [page, setPage] = useState<Page>("home");
   const [practiceEntry, setPracticeEntry] = useState<PracticeEntry>();
@@ -74,8 +78,14 @@ export default function App() {
           {navigation.map((item) => (
             <button
               key={item.id}
-              className={`${page === item.id || (item.id === "tools" && (page === "plans" || page === "backup" || page === "advice")) ? "active" : ""}`}
-              aria-current={page === item.id ? "page" : undefined}
+              className={`${page === item.id || (item.id === "tools" && ["plans", "backup", "advice", "series"].includes(page)) ? "active" : ""}`}
+              aria-current={
+                page === item.id ||
+                (item.id === "tools" &&
+                  ["plans", "backup", "advice", "series"].includes(page))
+                  ? "page"
+                  : undefined
+              }
               onClick={() => navigate(item.id)}
             >
               <item.icon size={20} />
@@ -128,6 +138,8 @@ export default function App() {
             <LessonAdvice today={today} onBack={() => navigate("tools")} />
           ) : page === "backup" ? (
             <Backup onBack={() => navigate("tools")} />
+          ) : page === "series" ? (
+            <RecurringLessons today={today} onBack={() => navigate("tools")} />
           ) : page === "events" ? (
             <Events />
           ) : page === "plans" ? (
@@ -182,8 +194,17 @@ export default function App() {
                 >
                   <NotebookPen size={24} />
                   <h2>以前のレッスン・練習記録</h2>
-                  <p>これまでの記録・添付資料・繰り返し予定を開く。</p>
+                  <p>これまでの記録・添付資料を開く。</p>
                 </button>
+                <button
+                  className="card learning-note-card"
+                  onClick={() => navigate("series")}
+                >
+                  <Repeat2 size={24} />
+                  <h2>繰り返しレッスン</h2>
+                  <p>毎週の曜日・時間・終了日を管理します。</p>
+                </button>
+                <CalendarSettings />
               </div>
             </section>
           ) : (

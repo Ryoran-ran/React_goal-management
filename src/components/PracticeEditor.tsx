@@ -1,3 +1,4 @@
+import { DatePicker } from "./DatePicker";
 import { useState } from "react";
 import type { PracticeLog } from "../types";
 import { Editor, Field, SaveForm } from "./ui";
@@ -65,11 +66,11 @@ export function PracticeEditor({
         </Field>
         <div className="form-grid">
           <Field label="日付">
-            <input
+            <DatePicker
               required
               type="date"
               value={log.date}
-              onChange={(e) => patch({ date: e.target.value })}
+              onChange={(nextDateValue) => patch({ date: nextDateValue })}
             />
           </Field>
           <Field label="状態">

@@ -1,3 +1,4 @@
+import { DatePicker } from "../components/DatePicker";
 import { useState } from "react";
 import { ArrowLeft, Copy } from "lucide-react";
 import { learningJournal } from "../data/learningJournal";
@@ -63,11 +64,11 @@ export function LessonAdvice({
         <div className="form-grid">
           <label className="field">
             <span>開始日</span>
-            <input
+            <DatePicker
               type="date"
               value={start}
-              onChange={(e) => {
-                setStart(e.target.value);
+              onChange={(nextDateValue) => {
+                setStart(nextDateValue);
                 setExcluded(new Set());
                 setNotice("");
               }}
@@ -75,11 +76,11 @@ export function LessonAdvice({
           </label>
           <label className="field">
             <span>終了日</span>
-            <input
+            <DatePicker
               type="date"
               value={end}
-              onChange={(e) => {
-                setEnd(e.target.value);
+              onChange={(nextDateValue) => {
+                setEnd(nextDateValue);
                 setExcluded(new Set());
                 setNotice("");
               }}

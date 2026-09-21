@@ -1,3 +1,4 @@
+import { DatePicker } from "../components/DatePicker";
 import { useRef, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import type { Lesson, LessonTopic } from "../types";
@@ -93,11 +94,13 @@ export function Lessons() {
       ) : (
         <>
           <div className="toolbar">
-            <input
+            <DatePicker
               aria-label="レッスンの表示月"
               type="month"
               value={month}
-              onChange={(e) => e.target.value && setMonth(e.target.value)}
+              onChange={(nextDateValue) =>
+                nextDateValue && setMonth(nextDateValue)
+              }
             />
             <span className="muted">
               予定{" "}
@@ -310,11 +313,11 @@ export function LessonEditor({
               </Field>
               <div className="form-grid">
                 <Field label="日付">
-                  <input
+                  <DatePicker
                     required
                     type="date"
                     value={lesson.date}
-                    onChange={(e) => patch({ date: e.target.value })}
+                    onChange={(nextDateValue) => patch({ date: nextDateValue })}
                   />
                 </Field>
                 <Field label="時間（分）">

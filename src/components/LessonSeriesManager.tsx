@@ -1,3 +1,4 @@
+import { DatePicker } from "./DatePicker";
 import { useState } from "react";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import {
@@ -57,7 +58,6 @@ export function LessonSeriesManager({
   return (
     <div className="card-list with-floating-add">
       <div>
-        <h2>繰り返しレッスンの管理</h2>
         <p className="muted">
           毎週の曜日・時間・終了日を設定します。1回だけの変更は予定一覧から行えます。
         </p>
@@ -247,12 +247,12 @@ function SeriesEditor({
         </Field>
         <div className="form-grid">
           <Field label="変更を反映する日">
-            <input
+            <DatePicker
               required
               type="date"
               min={today}
               value={change.from}
-              onChange={(e) => patch({ from: e.target.value })}
+              onChange={(nextDateValue) => patch({ from: nextDateValue })}
             />
           </Field>
           <Field label="繰り返し">
@@ -309,11 +309,14 @@ function SeriesEditor({
                 />
               </Field>
               <Field label="終了日（任意・空欄なら終了日なし）">
-                <input
+                <DatePicker
+                  allowClear
                   type="date"
                   min={change.from}
                   value={change.endDate ?? ""}
-                  onChange={(e) => patch({ endDate: e.target.value })}
+                  onChange={(nextDateValue) =>
+                    patch({ endDate: nextDateValue })
+                  }
                 />
               </Field>
             </div>
