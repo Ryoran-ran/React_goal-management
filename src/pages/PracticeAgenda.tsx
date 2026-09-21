@@ -8,6 +8,7 @@ import {
   CalendarDays,
   NotebookPen,
   UsersRound,
+  SlidersHorizontal,
 } from "lucide-react";
 import { remove, save } from "../data/repository";
 import {
@@ -20,18 +21,18 @@ import { agendaStatus, practiceAgenda } from "../data/practiceAgenda";
 import { ensureLessonSchedules } from "../data/lessonSchedule";
 import { useQuery } from "../lib/hooks";
 import { addDays, dateLabel, monthRange } from "../lib/dates";
+import { shiftCalendarMonth } from "../lib/calendar";
 import {
   readAgendaView,
   saveAgendaView,
   type AgendaView,
 } from "../lib/agendaView";
 import { lessonCategoryLabel } from "../lib/lessonCategories";
-import { PageHeading, Empty } from "../components/ui";
+import { Empty } from "../components/ui";
 import { FloatingAddButton } from "../components/FloatingAddButton";
 import { LessonScheduleEditor } from "../components/LessonScheduleEditor";
 import { LessonEditor } from "./Lessons";
 import { PracticeEditor } from "../components/PracticeEditor";
-import { LessonSeriesManager } from "../components/LessonSeriesManager";
 
 const statuses = { planned: "予定", recorded: "記録済み", cancelled: "中止" };
 export function Practice({
@@ -59,14 +60,14 @@ export function Practice({
     Extract<PracticeEntry, { type: "edit" }> | undefined
   >(entry?.type === "edit" ? entry : undefined);
   const [scheduling, setScheduling] = useState(entry?.type === "schedule");
-  const [managingSeries, setManagingSeries] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const [notice, setNotice] = useState("");
   useEffect(() => {
     window.scrollTo({ top: 0 });
-  }, [editing?.item.record.id, scheduling, managingSeries]);
+  }, [editing?.item.record.id, scheduling]);
   const result = useQuery(
     () => practiceAgenda(period),
-    [period, !!editing, scheduling, managingSeries],
+    [period, !!editing, scheduling],
     () =>
       ensureLessonSchedules(
         view === "day" ? selectedDate : monthRange(month).end,
@@ -95,55 +96,58 @@ export function Practice({
   const createLesson = () => create("lesson");
   return (
     <>
-      <PageHeading
-        eyebrow="PRACTICE & LESSONS"
-        title="練習とレッスンの予定"
-        description="予定を確認して、当日は学びを記録。繰り返し予定や日付の変更もここから。"
-      />
-      {!editing && !scheduling && (
-        <div className="agenda-navigation">
-          <div
-            className="segmented"
-            role="group"
-            aria-label="予定と繰り返し設定の切替"
-          >
+      <header className="agenda-heading">
+        <h1>予定</h1>
+        {!editing && !scheduling && (
+          <div className="agenda-heading-actions">
+            <div
+              className="segmented"
+              role="group"
+              aria-label="予定一覧の表示単位"
+            >
+              <button
+                type="button"
+                className={view === "month" ? "active" : ""}
+                aria-pressed={view === "month"}
+                aria-label="月ごとに表示"
+                onClick={() => changeView("month")}
+              >
+                月
+              </button>
+              <button
+                type="button"
+                className={view === "day" ? "active" : ""}
+                aria-pressed={view === "day"}
+                aria-label="日ごとに表示"
+                onClick={() => changeView("day")}
+              >
+                日
+              </button>
+            </div>
             <button
               type="button"
-              className={!managingSeries ? "active" : ""}
-              aria-pressed={!managingSeries}
-              onClick={() => {
-                setManagingSeries(false);
-                setNotice("");
-              }}
+              className={`agenda-filter-toggle ${filter !== "all" ? "is-active" : ""}`}
+              aria-expanded={showFilters}
+              aria-label={
+                filter === "all"
+                  ? "予定を絞り込む"
+                  : `絞り込み：${statuses[filter]}`
+              }
+              aria-controls="agenda-filters"
+              onClick={() => setShowFilters((show) => !show)}
             >
-              予定・記録一覧
-            </button>
-            <button
-              type="button"
-              className={managingSeries ? "active" : ""}
-              aria-pressed={managingSeries}
-              onClick={() => {
-                setManagingSeries(true);
-                setNotice("");
-              }}
-            >
-              繰り返しレッスン
+              <SlidersHorizontal size={18} aria-hidden="true" />
+              <span>{filter === "all" ? "絞り込み" : statuses[filter]}</span>
             </button>
           </div>
-          <p className="muted">
-            {managingSeries
-              ? "毎週のレッスンを選ぶと、曜日・時間・終了日などの基本設定を変更できます。"
-              : "各回の記録はこちら。毎週の基本設定は「繰り返しレッスン」から変更できます。"}
-          </p>
-        </div>
-      )}
+        )}
+      </header>
       {(editing || scheduling) && (
         <button
           className="text-button agenda-back"
           onClick={() => {
             close();
             setScheduling(false);
-            setManagingSeries(false);
           }}
         >
           <ArrowLeft size={18} />
@@ -155,15 +159,7 @@ export function Practice({
           {notice}
         </p>
       )}
-      {managingSeries ? (
-        <LessonSeriesManager
-          today={today}
-          onAdd={() => {
-            setManagingSeries(false);
-            setScheduling(true);
-          }}
-        />
-      ) : scheduling ? (
+      {scheduling ? (
         <LessonScheduleEditor
           onClose={() => setScheduling(false)}
           onCreated={(count, date) => {
@@ -202,118 +198,74 @@ export function Practice({
         />
       ) : (
         <>
-          <div className="toolbar agenda-toolbar">
-            <div className="agenda-period-tools">
-              <div
-                className="segmented"
-                role="group"
-                aria-label="予定一覧の表示単位"
-              >
-                <button
-                  type="button"
-                  className={view === "month" ? "active" : ""}
-                  aria-pressed={view === "month"}
-                  onClick={() => {
-                    changeView("month");
-                  }}
-                >
-                  月ごと
-                </button>
-                <button
-                  type="button"
-                  className={view === "day" ? "active" : ""}
-                  aria-pressed={view === "day"}
-                  onClick={() => {
-                    changeView("day");
-                  }}
-                >
-                  日ごと
-                </button>
-              </div>
-              {view === "month" ? (
-                <label className="agenda-month">
-                  表示する月
-                  <DatePicker
-                    type="month"
-                    value={month}
-                    onChange={(nextDateValue) => {
-                      const value = nextDateValue;
-                      if (value && value !== month) {
-                        setSelectedDate(
-                          value === today.slice(0, 7) ? today : `${value}-01`,
-                        );
-                        setNotice("");
-                      }
-                    }}
-                  />
-                </label>
-              ) : (
-                <div className="agenda-day-control">
-                  <label htmlFor="agenda-day">表示する日</label>
-                  <div className="agenda-day-navigation">
-                    <button
-                      type="button"
-                      className="icon-button"
-                      aria-label="前日の予定"
-                      onClick={() => {
-                        setSelectedDate(addDays(selectedDate, -1));
-                        setNotice("");
-                      }}
-                    >
-                      <ChevronLeft size={20} />
-                    </button>
-                    <DatePicker
-                      id="agenda-day"
-                      type="date"
-                      value={selectedDate}
-                      onChange={(nextDateValue) => {
-                        if (nextDateValue) {
-                          setSelectedDate(nextDateValue);
-                          setNotice("");
-                        }
-                      }}
-                    />
-                    <button
-                      type="button"
-                      className="icon-button"
-                      aria-label="翌日の予定"
-                      onClick={() => {
-                        setSelectedDate(addDays(selectedDate, 1));
-                        setNotice("");
-                      }}
-                    >
-                      <ChevronRight size={20} />
-                    </button>
-                    <button
-                      type="button"
-                      className="secondary"
-                      disabled={selectedDate === today}
-                      onClick={() => {
-                        setSelectedDate(today);
-                        setNotice("");
-                      }}
-                    >
-                      今日
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-            <label className="agenda-filter">
-              表示する予定
-              <select
-                value={filter}
-                onChange={(e) => setFilter(e.target.value as typeof filter)}
-              >
-                <option value="all">すべて</option>
-                {Object.entries(statuses).map(([key, label]) => (
-                  <option key={key} value={key}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
+          <div className="agenda-period-navigation">
+            <button
+              type="button"
+              className="icon-button"
+              aria-label={view === "day" ? "前日の予定" : "前月の予定"}
+              onClick={() => {
+                setSelectedDate(
+                  view === "day"
+                    ? addDays(selectedDate, -1)
+                    : `${shiftCalendarMonth(month, -1)}-01`,
+                );
+                setNotice("");
+              }}
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <DatePicker
+              aria-label={view === "day" ? "表示する日" : "表示する月"}
+              type={view === "day" ? "date" : "month"}
+              value={period}
+              onChange={(value) => {
+                if (!value) return;
+                setSelectedDate(
+                  view === "day"
+                    ? value
+                    : value === today.slice(0, 7)
+                      ? today
+                      : `${value}-01`,
+                );
+                setNotice("");
+              }}
+            />
+            <button
+              type="button"
+              className="icon-button"
+              aria-label={view === "day" ? "翌日の予定" : "翌月の予定"}
+              onClick={() => {
+                setSelectedDate(
+                  view === "day"
+                    ? addDays(selectedDate, 1)
+                    : `${shiftCalendarMonth(month, 1)}-01`,
+                );
+                setNotice("");
+              }}
+            >
+              <ChevronRight size={20} />
+            </button>
           </div>
+          {showFilters && (
+            <div id="agenda-filters" className="agenda-filter-panel">
+              <label className="agenda-filter">
+                表示する予定
+                <select
+                  value={filter}
+                  onChange={(event) =>
+                    setFilter(event.target.value as typeof filter)
+                  }
+                >
+                  <option value="all">すべて</option>
+                  {Object.entries(statuses).map(([key, label]) => (
+                    <option key={key} value={key}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          )}
           <div className="card-list with-floating-add">
             {result.error && (
               <p className="error" role="alert">

@@ -58,7 +58,6 @@ export function LessonSeriesManager({
   return (
     <div className="card-list with-floating-add">
       <div>
-        <h2>繰り返しレッスンの管理</h2>
         <p className="muted">
           毎週の曜日・時間・終了日を設定します。1回だけの変更は予定一覧から行えます。
         </p>
