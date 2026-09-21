@@ -3037,6 +3037,216 @@ button p {
   font-size: 0.8rem;
   color: var(--muted);
 }
+.vertical-gantt-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+.vertical-gantt-note {
+  font-size: 0.78rem;
+  margin: 8px 0 12px;
+}
+.vertical-gantt-scroll {
+  overflow: auto;
+  max-height: 70dvh;
+  max-width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overscroll-behavior-x: contain;
+}
+.vertical-gantt-scroll:focus-visible {
+  outline: 3px solid #b18b34;
+  outline-offset: 3px;
+}
+.vertical-gantt-grid {
+  --date-width: 48px;
+  min-width: calc(var(--date-width) + var(--column-count) * 112px);
+  width: 100%;
+}
+.vertical-gantt-header,
+.vertical-gantt-body {
+  display: grid;
+  grid-template-columns: var(--date-width) repeat(
+      var(--column-count),
+      minmax(112px, 1fr)
+    );
+}
+.vertical-gantt-header {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  background: #edf4f1;
+  border-bottom: 1px solid #cbdcd5;
+}
+.vertical-gantt-corner,
+.vertical-date-axis {
+  position: sticky;
+  left: 0;
+  background-color: #f5f8f7;
+  border-right: 1px solid #cbdcd5;
+  z-index: 4;
+}
+.vertical-gantt-corner {
+  padding: 12px 4px;
+  text-align: center;
+  font-size: 0.75rem;
+}
+.vertical-column-heading {
+  min-width: 0;
+  padding: 8px;
+  border-right: 1px solid #cbdcd5;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+.vertical-column-heading.is-work {
+  background: #fff;
+}
+.vertical-heading-main {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  text-align: left;
+  gap: 5px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+}
+.vertical-heading-main strong {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font-size: 0.85rem;
+}
+.vertical-heading-main small,
+.vertical-heading-main span,
+.vertical-timing {
+  font-size: 0.72rem;
+}
+.vertical-heading-main span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.vertical-heading-main svg {
+  flex-shrink: 0;
+}
+.vertical-heading-main svg.is-open {
+  transform: rotate(180deg);
+}
+.vertical-edit {
+  font-size: 0.7rem;
+  min-height: 44px;
+  margin-top: auto;
+}
+.vertical-gantt-body {
+  height: var(--vertical-height);
+}
+.vertical-date-axis,
+.vertical-gantt-column {
+  min-width: 0;
+  background-image: linear-gradient(to bottom, #dce6e2 1px, transparent 1px);
+  background-size: 100% var(--vertical-day-height);
+  background-repeat: repeat-y;
+  box-shadow: inset 0 -1px #dce6e2;
+}
+.vertical-gantt-column {
+  position: relative;
+  border-right: 1px solid #dce6e2;
+  overflow: hidden;
+}
+.vertical-date-label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  padding-top: 3px;
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+.vertical-date-label.is-today {
+  color: #b33144;
+  font-weight: 700;
+}
+.vertical-date-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 2px dashed;
+  z-index: 3;
+  pointer-events: none;
+}
+.vertical-date-line.today {
+  border-color: #c44151;
+}
+.vertical-date-line.event {
+  border-color: #8760b0;
+}
+.vertical-period {
+  position: absolute;
+  width: 18%;
+  min-height: 2px;
+  border-radius: 4px;
+  padding: 0;
+}
+.vertical-period.baseline {
+  left: 12%;
+  background: #cbd5de;
+  border: 1px dashed #7d8b98;
+}
+.vertical-period.planned {
+  left: 41%;
+  background: #27786c;
+}
+.vertical-period.actual {
+  left: 70%;
+  background: #3169b1;
+}
+.vertical-period.is-overview {
+  opacity: 0.4;
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 4px,
+    #fff9 4px 6px
+  );
+}
+.vertical-milestone-marker,
+.vertical-completed-marker {
+  position: absolute;
+  z-index: 2;
+  transform: translateY(-50%);
+  min-height: 26px;
+  padding: 2px 3px;
+  font-size: 0.85rem;
+  background: #ffffffeb;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+.vertical-milestone-marker {
+  left: 27%;
+  color: var(--teal);
+}
+.vertical-milestone-marker span {
+  font-size: 0.65rem;
+  padding-left: 3px;
+}
+.vertical-completed-marker {
+  right: 8%;
+  color: #245eab;
+}
+.vertical-unscheduled {
+  display: block;
+  margin-top: 12px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
 @media (max-width: 760px) {
   .preparation-card {
     padding: 16px;

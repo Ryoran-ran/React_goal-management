@@ -1,0 +1,330 @@
+import { useState, type CSSProperties } from "react";
+import { ChevronDown } from "lucide-react";
+import type {
+  DanceEvent,
+  EventMilestone,
+  EventWorkItem,
+  MilestonePlan,
+} from "../types";
+import { addDays, daysUntil, localDate } from "../lib/dates";
+import {
+  ganttDayStart,
+  ganttPosition,
+  ganttSegment,
+  milestoneTiming,
+  type GanttScale,
+} from "../lib/milestones";
+import { workOverview } from "../lib/verticalGantt";
+import { workStatuses } from "../lib/eventWork";
+
+export function VerticalMilestoneGantt({
+  event,
+  items,
+  workItems,
+  range,
+  scale,
+  onEdit,
+  onEditWork,
+}: {
+  event: DanceEvent;
+  items: EventMilestone[];
+  workItems: EventWorkItem[];
+  range: { start: string; end: string };
+  scale: GanttScale;
+  onEdit: (item: EventMilestone) => void;
+  onEditWork: (item: EventWorkItem) => void;
+}) {
+  const [expanded, setExpanded] = useState<string[]>([]);
+  const today = localDate();
+  const count = daysUntil(range.end, range.start) + 1;
+  const height = Math.max(
+    320,
+    Math.min(
+      2400,
+      count * (scale === "week" ? 48 : scale === "month" ? 28 : 24),
+    ),
+  );
+  const stride = Math.max(1, Math.ceil(count / Math.floor(height / 24)));
+  const dates = Array.from({ length: Math.ceil(count / stride) }, (_, index) =>
+    addDays(range.start, index * stride),
+  );
+  const allWork = event.workItems ?? [];
+  type Column = {
+    key: string;
+    title: string;
+    milestone?: EventMilestone;
+    work?: EventWorkItem;
+    children: EventWorkItem[];
+    allChildren: EventWorkItem[];
+  };
+  const groups: Column[] = items.map((item) => ({
+    key: `milestone:${item.id}`,
+    title: item.title,
+    milestone: item,
+    children: workItems.filter((work) => work.milestoneId === item.id),
+    allChildren: allWork.filter((work) => work.milestoneId === item.id),
+  }));
+  const unassigned = workItems.filter((work) => !work.milestoneId);
+  if (unassigned.length)
+    groups.push({
+      key: "unassigned",
+      title: "未分類の作業",
+      children: unassigned,
+      allChildren: allWork.filter((work) => !work.milestoneId),
+    });
+  const columns = groups.flatMap((group) => [
+    group,
+    ...(expanded.includes(group.key)
+      ? group.children.map((work): Column => ({
+          key: `work:${work.id}`,
+          title: work.title,
+          work,
+          children: [],
+          allChildren: [],
+        }))
+      : []),
+  ]);
+  const inRange = (date?: string) =>
+    !!date && date >= range.start && date <= range.end;
+  const line = (date: string, kind: string) =>
+    inRange(date) ? (
+      <span
+        className={`vertical-date-line ${kind}`}
+        style={{ top: `${ganttDayStart(date, range)}%` }}
+        aria-hidden="true"
+      />
+    ) : null;
+  const toggle = (key: string) =>
+    setExpanded((previous) =>
+      previous.includes(key)
+        ? previous.filter((value) => value !== key)
+        : [...previous, key],
+    );
+  const period = (
+    plan: MilestonePlan,
+    kind: string,
+    label: string,
+    summary: boolean,
+    open: () => void,
+  ) => {
+    if (!plan.startDate && !plan.dueDate) return null;
+    const first = plan.startDate ?? plan.dueDate!,
+      last = plan.dueDate ?? plan.startDate!;
+    const segment = ganttSegment(first, last, range);
+    if (!segment) return null;
+    return (
+      <button
+        type="button"
+        className={`vertical-period ${kind} ${summary ? "is-overview" : ""}`}
+        style={{ top: segment.left, height: segment.width }}
+        onClick={open}
+        title={`${label}：${first}〜${last}`}
+        aria-label={`${label}：${first}〜${last}`}
+      />
+    );
+  };
+  return (
+    <div className="vertical-gantt">
+      <div className="vertical-gantt-actions">
+        <span>縦：日付 ／ 横：マイルストーン</span>
+        <button
+          type="button"
+          className="text-button"
+          onClick={() => setExpanded([])}
+          disabled={!expanded.length}
+        >
+          作業を閉じる
+        </button>
+      </div>
+      <p className="muted vertical-gantt-note">
+        見出しをタップすると作業を展開できます。薄い帯は、完了分も含めた関連作業の全体範囲です。
+      </p>
+      <div
+        className="vertical-gantt-scroll"
+        role="region"
+        aria-label="日付を縦に並べた準備スケジュール"
+        tabIndex={0}
+      >
+        <div
+          className="vertical-gantt-grid"
+          style={
+            {
+              "--column-count": columns.length,
+              "--vertical-height": `${height}px`,
+              "--vertical-day-height": `${100 / count}%`,
+            } as CSSProperties
+          }
+        >
+          <div className="vertical-gantt-header">
+            <div className="vertical-gantt-corner">日付</div>
+            {columns.map((column) => (
+              <div
+                key={column.key}
+                className={`vertical-column-heading ${column.work ? "is-work" : ""}`}
+              >
+                {column.work ? (
+                  <button
+                    type="button"
+                    onClick={() => onEditWork(column.work!)}
+                    className="vertical-heading-main"
+                  >
+                    <small>作業</small>
+                    <strong>{column.title}</strong>
+                    <small>{workStatuses[column.work.status]}</small>
+                    <small>編集する</small>
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      className="vertical-heading-main"
+                      aria-expanded={expanded.includes(column.key)}
+                      onClick={() => toggle(column.key)}
+                    >
+                      <small>{column.milestone ? "◆ 到達点" : "未分類"}</small>
+                      <strong>{column.title}</strong>
+                      <span>
+                        <ChevronDown
+                          size={14}
+                          className={
+                            expanded.includes(column.key) ? "is-open" : ""
+                          }
+                        />
+                        作業 {column.children.length}件
+                      </span>
+                    </button>
+                    {column.milestone && (
+                      <>
+                        <small className="vertical-timing">
+                          {milestoneTiming(column.milestone, today)}
+                        </small>
+                        <button
+                          type="button"
+                          className="text-button vertical-edit"
+                          onClick={() => onEdit(column.milestone!)}
+                          aria-label={`マイルストーン「${column.title}」を編集`}
+                        >
+                          到達点を編集
+                        </button>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="vertical-gantt-body">
+            <div className="vertical-date-axis">
+              {dates.map((date) => (
+                <span
+                  key={date}
+                  className={`vertical-date-label ${date === today ? "is-today" : ""}`}
+                  style={{
+                    top: `${ganttDayStart(date, range)}%`,
+                    height: `${100 / count}%`,
+                  }}
+                  title={date}
+                >
+                  {Number(date.slice(5, 7))}/{Number(date.slice(8))}
+                </span>
+              ))}
+              {line(event.date, "event")}
+              {line(today, "today")}
+            </div>
+            {columns.map((column) => {
+              const work = column.work;
+              const overview = workOverview(column.allChildren, today);
+              const planned = work ?? overview.planned;
+              const baseline =
+                work?.baseline ?? (work ? {} : overview.baseline);
+              const actual = work
+                ? {
+                    startDate: work.actualStartDate,
+                    dueDate:
+                      work.completedDate ??
+                      (work.status === "in_progress" && work.actualStartDate
+                        ? today
+                        : undefined),
+                  }
+                : overview.actual;
+              const open = () => (work ? onEditWork(work) : toggle(column.key));
+              const due = work?.dueDate ?? column.milestone?.dueDate;
+              const completed =
+                work?.completedDate ?? column.milestone?.completedDate;
+              const hasDates =
+                planned.startDate ||
+                planned.dueDate ||
+                baseline.startDate ||
+                baseline.dueDate ||
+                actual.startDate ||
+                actual.dueDate ||
+                due ||
+                completed;
+              return (
+                <div
+                  key={column.key}
+                  className={`vertical-gantt-column ${work ? "is-work" : ""}`}
+                >
+                  {period(
+                    baseline,
+                    "baseline",
+                    `${column.title}・当初計画`,
+                    !work,
+                    open,
+                  )}
+                  {period(
+                    planned,
+                    "planned",
+                    `${column.title}・${work ? "作業期間" : "作業全体の範囲"}`,
+                    !work,
+                    open,
+                  )}
+                  {period(
+                    actual,
+                    "actual",
+                    `${column.title}・実績`,
+                    !work,
+                    open,
+                  )}
+                  {inRange(due) && (
+                    <button
+                      type="button"
+                      className="vertical-milestone-marker"
+                      style={{ top: `${ganttPosition(due!, range)}%` }}
+                      onClick={() =>
+                        work ? onEditWork(work) : onEdit(column.milestone!)
+                      }
+                      aria-label={`${column.title}・期限 ${due}・編集`}
+                      title={`期限：${due}`}
+                    >
+                      ◆<span>{work ? "期限" : "到達点"}</span>
+                    </button>
+                  )}
+                  {inRange(completed) && (
+                    <button
+                      type="button"
+                      className="vertical-completed-marker"
+                      style={{ top: `${ganttPosition(completed!, range)}%` }}
+                      onClick={() =>
+                        work ? onEditWork(work) : onEdit(column.milestone!)
+                      }
+                      aria-label={`${column.title}・完了 ${completed}・編集`}
+                      title={`完了：${completed}`}
+                    >
+                      ✓
+                    </button>
+                  )}
+                  {!hasDates && (
+                    <span className="vertical-unscheduled">日付未設定</span>
+                  )}
+                  {line(event.date, "event")}
+                  {line(today, "today")}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

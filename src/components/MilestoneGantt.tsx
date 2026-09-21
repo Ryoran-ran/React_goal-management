@@ -1,4 +1,5 @@
-import { useEffect, useRef, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { VerticalMilestoneGantt } from "./VerticalMilestoneGantt";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { DanceEvent, EventMilestone, EventWorkItem } from "../types";
 import { workProgress, workSchedule } from "../lib/eventWork";
@@ -36,6 +37,18 @@ export function MilestoneGantt({
   anchor: string;
   onAnchor: (date: string) => void;
 }) {
+  const [mobile, setMobile] = useState(
+    () => window.matchMedia("(max-width: 760px)").matches,
+  );
+  const [direction, setDirection] = useState<"vertical" | "horizontal">();
+  const vertical =
+    (direction ?? (mobile ? "vertical" : "horizontal")) === "vertical";
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 760px)");
+    const update = () => setMobile(media.matches);
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
   const today = localDate();
   const workRow = (work: EventWorkItem) => ({
     item: workSchedule(work),
@@ -73,7 +86,7 @@ export function MilestoneGantt({
         ? (ganttPosition(today, range) / 100) * width
         : 0;
     scroller.current.scrollLeft = Math.max(0, offset - 70);
-  }, [range.start, range.end, width, today]);
+  }, [range.start, range.end, width, today, vertical]);
   const ticks = Array.from({ length: Math.ceil(count / stride) }, (_, i) =>
     addDays(range.start, i * stride),
   );
@@ -131,6 +144,18 @@ export function MilestoneGantt({
     <div className="milestone-gantt">
       <div className="gantt-controls">
         <label>
+          表示方向
+          <select
+            value={vertical ? "vertical" : "horizontal"}
+            onChange={(e) =>
+              setDirection(e.target.value as "vertical" | "horizontal")
+            }
+          >
+            <option value="vertical">縦</option>
+            <option value="horizontal">横</option>
+          </select>
+        </label>
+        <label>
           表示期間
           <select
             value={scale}
@@ -177,180 +202,198 @@ export function MilestoneGantt({
         <span className="planned">現在の計画</span>
         <span className="actual">実績（開始〜達成）</span>
         <span>◆ 到達点・期限　━ 作業期間</span>
-        <span className="today">赤線：今日の左端</span>
-        <span className="event">紫線：開催日の左端</span>
+        <span className="today">赤線：今日の{vertical ? "上端" : "左端"}</span>
+        <span className="event">
+          紫線：開催日の{vertical ? "上端" : "左端"}
+        </span>
       </div>
       <p className="muted gantt-hint">
-        日付部分は横にスクロールできます。項目名から編集できます。
+        {vertical
+          ? "上下に日付、左右に項目をスクロールできます。"
+          : "日付部分は横にスクロールできます。項目名から編集できます。"}
       </p>
-      <div
-        className="gantt-scroll"
-        ref={scroller}
-        role="region"
-        aria-label="準備スケジュールのガントチャート"
-        tabIndex={0}
-      >
+      {vertical ? (
+        <VerticalMilestoneGantt
+          event={event}
+          items={items}
+          workItems={workItems}
+          range={range}
+          scale={scale}
+          onEdit={onEdit}
+          onEditWork={onEditWork}
+        />
+      ) : (
         <div
-          className="gantt-grid"
-          style={
-            {
-              "--timeline-width": `${width}px`,
-              "--day-width": `${100 / count}%`,
-            } as CSSProperties
-          }
+          className="gantt-scroll"
+          ref={scroller}
+          role="region"
+          aria-label="準備スケジュールのガントチャート"
+          tabIndex={0}
         >
-          <div className="gantt-grid-header">
-            <div className="gantt-label">到達点</div>
-            <div className="gantt-track">
-              {ticks.map((date) => (
-                <span
-                  key={date}
-                  className="gantt-tick"
-                  style={{
-                    left: `${ganttDayStart(date, range)}%`,
-                    width: `${100 / count}%`,
-                  }}
-                  title={date}
-                >
-                  {scale === "week" ||
-                  date === range.start ||
-                  date.endsWith("-01")
-                    ? `${Number(date.slice(5, 7))}/`
-                    : ""}
-                  {Number(date.slice(8))}
-                </span>
-              ))}
-              {line(event.date, "event")}
-              {line(today, "today")}
-            </div>
-          </div>
-          {rows.map(({ item, key, isWork, open }) => (
-            <div
-              className={`gantt-grid-row ${isWork ? "gantt-work-row" : "gantt-milestone-row"} ${item.status === "skipped" ? "is-skipped" : ""}`}
-              key={key}
-            >
-              <button
-                type="button"
-                className="gantt-label"
-                onClick={open}
-                title={item.title}
-              >
-                <strong>
-                  {isWork ? "作業：" : "◆ "}
-                  {item.title}
-                </strong>
-                <small>{milestoneStatuses[item.status]}</small>
-                {!isWork &&
-                  workProgress(
-                    (event.workItems ?? []).filter(
-                      (work) => work.milestoneId === item.id,
-                    ),
-                  ).total > 0 && (
-                    <small>
-                      作業{" "}
-                      {
-                        workProgress(
-                          (event.workItems ?? []).filter(
-                            (work) => work.milestoneId === item.id,
-                          ),
-                        ).completed
-                      }{" "}
-                      /{" "}
-                      {
-                        workProgress(
-                          (event.workItems ?? []).filter(
-                            (work) => work.milestoneId === item.id,
-                          ),
-                        ).total
-                      }{" "}
-                      完了
-                    </small>
-                  )}
-                {milestonePlanDelay(item) > 0 && (
-                  <small className="overdue">
-                    当初より{milestonePlanDelay(item)}日後ろ
-                  </small>
-                )}
-                <small
-                  className={
-                    item.dueDate &&
-                    item.dueDate < today &&
-                    item.status !== "achieved" &&
-                    item.status !== "skipped"
-                      ? "overdue"
-                      : ""
-                  }
-                >
-                  {milestoneTiming(item, today)}
-                </small>
-              </button>
+          <div
+            className="gantt-grid"
+            style={
+              {
+                "--timeline-width": `${width}px`,
+                "--day-width": `${100 / count}%`,
+              } as CSSProperties
+            }
+          >
+            <div className="gantt-grid-header">
+              <div className="gantt-label">到達点</div>
               <div className="gantt-track">
+                {ticks.map((date) => (
+                  <span
+                    key={date}
+                    className="gantt-tick"
+                    style={{
+                      left: `${ganttDayStart(date, range)}%`,
+                      width: `${100 / count}%`,
+                    }}
+                    title={date}
+                  >
+                    {scale === "week" ||
+                    date === range.start ||
+                    date.endsWith("-01")
+                      ? `${Number(date.slice(5, 7))}/`
+                      : ""}
+                    {Number(date.slice(8))}
+                  </span>
+                ))}
                 {line(event.date, "event")}
                 {line(today, "today")}
-                {bar(
-                  item,
-                  isWork ? item.baseline?.startDate : undefined,
-                  item.baseline?.dueDate,
-                  "baseline",
-                  "当初",
-                  open,
-                )}
-                {bar(
-                  item,
-                  isWork ? item.startDate : undefined,
-                  item.dueDate,
-                  "planned",
-                  "計画",
-                  open,
-                )}
-                {bar(
-                  item,
-                  isWork ? item.actualStartDate : undefined,
-                  item.completedDate ??
-                    (isWork &&
-                    item.status === "in_progress" &&
-                    item.actualStartDate
-                      ? today
-                      : undefined),
-                  "actual",
-                  item.completedDate
-                    ? "達成"
-                    : item.status === "in_progress"
-                      ? "実施中"
-                      : "開始",
-                  open,
-                )}
-                {inRange(item.dueDate) && (
-                  <span
-                    className="gantt-diamond planned"
-                    style={{ left: `${ganttPosition(item.dueDate!, range)}%` }}
-                    aria-hidden="true"
-                  >
-                    ◆
-                  </span>
-                )}
-                {inRange(item.completedDate) && (
-                  <span
-                    className="gantt-diamond actual"
-                    style={{
-                      left: `${ganttPosition(item.completedDate!, range)}%`,
-                    }}
-                    aria-hidden="true"
-                  >
-                    ◆
-                  </span>
-                )}
-                {(!isWork || !item.startDate) &&
-                  !item.dueDate &&
-                  (!isWork || !item.actualStartDate) &&
-                  !item.completedDate && (
-                    <span className="gantt-unscheduled">日付未設定</span>
-                  )}
               </div>
             </div>
-          ))}
+            {rows.map(({ item, key, isWork, open }) => (
+              <div
+                className={`gantt-grid-row ${isWork ? "gantt-work-row" : "gantt-milestone-row"} ${item.status === "skipped" ? "is-skipped" : ""}`}
+                key={key}
+              >
+                <button
+                  type="button"
+                  className="gantt-label"
+                  onClick={open}
+                  title={item.title}
+                >
+                  <strong>
+                    {isWork ? "作業：" : "◆ "}
+                    {item.title}
+                  </strong>
+                  <small>{milestoneStatuses[item.status]}</small>
+                  {!isWork &&
+                    workProgress(
+                      (event.workItems ?? []).filter(
+                        (work) => work.milestoneId === item.id,
+                      ),
+                    ).total > 0 && (
+                      <small>
+                        作業{" "}
+                        {
+                          workProgress(
+                            (event.workItems ?? []).filter(
+                              (work) => work.milestoneId === item.id,
+                            ),
+                          ).completed
+                        }{" "}
+                        /{" "}
+                        {
+                          workProgress(
+                            (event.workItems ?? []).filter(
+                              (work) => work.milestoneId === item.id,
+                            ),
+                          ).total
+                        }{" "}
+                        完了
+                      </small>
+                    )}
+                  {milestonePlanDelay(item) > 0 && (
+                    <small className="overdue">
+                      当初より{milestonePlanDelay(item)}日後ろ
+                    </small>
+                  )}
+                  <small
+                    className={
+                      item.dueDate &&
+                      item.dueDate < today &&
+                      item.status !== "achieved" &&
+                      item.status !== "skipped"
+                        ? "overdue"
+                        : ""
+                    }
+                  >
+                    {milestoneTiming(item, today)}
+                  </small>
+                </button>
+                <div className="gantt-track">
+                  {line(event.date, "event")}
+                  {line(today, "today")}
+                  {bar(
+                    item,
+                    isWork ? item.baseline?.startDate : undefined,
+                    item.baseline?.dueDate,
+                    "baseline",
+                    "当初",
+                    open,
+                  )}
+                  {bar(
+                    item,
+                    isWork ? item.startDate : undefined,
+                    item.dueDate,
+                    "planned",
+                    "計画",
+                    open,
+                  )}
+                  {bar(
+                    item,
+                    isWork ? item.actualStartDate : undefined,
+                    item.completedDate ??
+                      (isWork &&
+                      item.status === "in_progress" &&
+                      item.actualStartDate
+                        ? today
+                        : undefined),
+                    "actual",
+                    item.completedDate
+                      ? "達成"
+                      : item.status === "in_progress"
+                        ? "実施中"
+                        : "開始",
+                    open,
+                  )}
+                  {inRange(item.dueDate) && (
+                    <span
+                      className="gantt-diamond planned"
+                      style={{
+                        left: `${ganttPosition(item.dueDate!, range)}%`,
+                      }}
+                      aria-hidden="true"
+                    >
+                      ◆
+                    </span>
+                  )}
+                  {inRange(item.completedDate) && (
+                    <span
+                      className="gantt-diamond actual"
+                      style={{
+                        left: `${ganttPosition(item.completedDate!, range)}%`,
+                      }}
+                      aria-hidden="true"
+                    >
+                      ◆
+                    </span>
+                  )}
+                  {(!isWork || !item.startDate) &&
+                    !item.dueDate &&
+                    (!isWork || !item.actualStartDate) &&
+                    !item.completedDate && (
+                      <span className="gantt-unscheduled">日付未設定</span>
+                    )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
