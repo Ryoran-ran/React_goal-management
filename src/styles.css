@@ -2418,6 +2418,15 @@ button p {
 .calendar-week-start select {
   width: auto;
 }
+.app-update-settings > p {
+  margin-bottom: 18px;
+  color: var(--muted);
+}
+.app-update-settings > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
 .calendar-month-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

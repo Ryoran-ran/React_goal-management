@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { initialize } from "./data/repository";
 import { CalendarSettings } from "./components/CalendarSettings";
+import { AppUpdateSettings } from "./components/AppUpdateSettings";
 import { localDate } from "./lib/dates";
 import { Learning } from "./pages/Learning";
 import { Events } from "./pages/Events";
@@ -212,6 +213,7 @@ export default function App() {
                   <p>毎週の曜日・時間・終了日を管理します。</p>
                 </button>
                 <CalendarSettings />
+                <AppUpdateSettings />
               </div>
             </section>
           ) : (
