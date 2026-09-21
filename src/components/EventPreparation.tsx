@@ -47,7 +47,7 @@ export function EventPreparation({
     setEditingWork(item);
     window.scrollTo({ top: 0 });
   };
-  const addWork = (milestoneId?: string) =>
+  const addWork = (milestoneId: string) =>
     openWork({
       ...base(),
       milestoneId,
@@ -270,7 +270,6 @@ export function EventPreparation({
                             (work) => !work.milestoneId,
                           )}
                           onEdit={openWork}
-                          onAdd={() => addWork()}
                         />
                       </article>
                     </li>
@@ -296,14 +295,6 @@ export function EventPreparation({
           >
             <Plus size={18} />
             マイルストーンを追加
-          </button>
-          <button
-            type="button"
-            className="secondary milestone-add"
-            onClick={() => addWork()}
-          >
-            <Plus size={18} />
-            未分類の作業を追加
           </button>
         </div>
       </section>

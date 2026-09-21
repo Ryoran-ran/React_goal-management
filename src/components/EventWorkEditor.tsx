@@ -16,7 +16,7 @@ export function EventWorkEditor({
   event: DanceEvent;
   value: EventWorkItem;
   onClose: () => void;
-  onNext: (milestoneId?: string) => void;
+  onNext: (milestoneId: string) => void;
 }) {
   const [draft, setDraft] = useState(value);
   const [exists] = useState(() =>
@@ -24,6 +24,9 @@ export function EventWorkEditor({
   );
   const [reason, setReason] = useState("");
   const [addNext, setAddNext] = useState(false);
+  const milestone = event.milestones?.find(
+    (item) => item.id === value.milestoneId,
+  );
   const patch = (changes: Partial<EventWorkItem>) =>
     setDraft((current) => ({ ...current, ...changes }));
   return (
@@ -38,13 +41,16 @@ export function EventWorkEditor({
       </button>
       <div className="card editor">
         <h2>{exists ? "作業を編集" : "作業を追加"}</h2>
-        <p className="muted milestone-event-label">{event.title}</p>
+        <p className="muted milestone-event-label">
+          {event.title}
+          {milestone ? ` ／ ${milestone.title}` : ""}
+        </p>
         <SaveForm
           onCancel={onClose}
           saveLabel={addNext ? "保存して次の作業を追加" : "保存して戻る"}
           onSave={async () => {
             await saveEventWork(event.id, draft, reason, exists);
-            if (addNext) onNext(draft.milestoneId);
+            if (addNext && draft.milestoneId) onNext(draft.milestoneId);
             else onClose();
           }}
           onDelete={
@@ -65,21 +71,6 @@ export function EventWorkEditor({
               onChange={(e) => patch({ title: e.target.value })}
               placeholder="例：ルンバ前半を見本なしで踊る"
             />
-          </Field>
-          <Field label="この作業で目指すマイルストーン（到達点）">
-            <select
-              value={draft.milestoneId ?? ""}
-              onChange={(e) =>
-                patch({ milestoneId: e.target.value || undefined })
-              }
-            >
-              <option value="">未分類（後で選ぶ）</option>
-              {(event.milestones ?? []).map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.title}
-                </option>
-              ))}
-            </select>
           </Field>
           <Field label="作業内容・完了の目安（任意）">
             <textarea
@@ -216,7 +207,7 @@ export function EventWorkEditor({
               ))}
             </details>
           )}
-          {!exists && (
+          {!exists && milestone && (
             <label className="choice">
               <input
                 type="checkbox"

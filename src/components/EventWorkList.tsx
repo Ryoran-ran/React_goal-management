@@ -14,7 +14,7 @@ export function EventWorkList({
   totalItems?: EventWorkItem[];
   milestoneTitle?: string;
   onEdit: (item: EventWorkItem) => void;
-  onAdd: () => void;
+  onAdd?: () => void;
 }) {
   const progress = workProgress(totalItems);
   return (
@@ -68,26 +68,20 @@ export function EventWorkList({
               ? "登録した作業はすべて完了しています。"
               : milestoneTitle
                 ? "この到達点に向けた作業は、まだ登録されていません。"
-                : "マイルストーンは後から選べます。"}
+                : "表示する作業はありません。"}
           </p>
         )}
-        <button
-          type="button"
-          className="secondary milestone-task-edit"
-          onClick={onAdd}
-          aria-label={
-            milestoneTitle
-              ? `マイルストーン「${milestoneTitle}」に作業を追加`
-              : "未分類の作業を追加"
-          }
-        >
-          <Plus size={16} />
-          <span>
-            {milestoneTitle
-              ? "このマイルストーンに作業を追加"
-              : "未分類の作業を追加"}
-          </span>
-        </button>
+        {onAdd && milestoneTitle && (
+          <button
+            type="button"
+            className="secondary milestone-task-edit"
+            onClick={onAdd}
+            aria-label={`マイルストーン「${milestoneTitle}」に作業を追加`}
+          >
+            <Plus size={16} />
+            <span>このマイルストーンに作業を追加</span>
+          </button>
+        )}
       </details>
     </div>
   );
