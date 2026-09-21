@@ -90,7 +90,9 @@ export function VerticalMilestoneGantt({
     inRange(date) ? (
       <span
         className={`vertical-date-line ${kind}`}
-        style={{ top: `${ganttDayStart(date, range)}%` }}
+        style={{
+          top: `${kind === "today" ? ganttPosition(date, range) : ganttDayStart(date, range)}%`,
+        }}
         aria-hidden="true"
       />
     ) : null;
@@ -225,7 +227,9 @@ export function VerticalMilestoneGantt({
                   }}
                   title={date}
                 >
-                  {Number(date.slice(5, 7))}/{Number(date.slice(8))}
+                  <span>
+                    {Number(date.slice(5, 7))}/{Number(date.slice(8))}
+                  </span>
                 </span>
               ))}
               {line(event.date, "event")}

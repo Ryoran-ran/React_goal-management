@@ -3165,10 +3165,17 @@ button p {
   position: absolute;
   left: 0;
   right: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  padding-top: 3px;
   font-size: 0.7rem;
   white-space: nowrap;
+}
+.vertical-date-label > span {
+  padding: 0 3px;
+  background: #f5f8f7;
 }
 .vertical-date-label.is-today {
   color: #b33144;
@@ -3184,6 +3191,7 @@ button p {
 }
 .vertical-date-line.today {
   border-color: #c44151;
+  transform: translateY(-50%);
 }
 .vertical-date-line.event {
   border-color: #8760b0;

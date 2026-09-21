@@ -202,7 +202,7 @@ export function MilestoneGantt({
         <span className="planned">現在の計画</span>
         <span className="actual">実績（開始〜達成）</span>
         <span>◆ 到達点・期限　━ 作業期間</span>
-        <span className="today">赤線：今日の{vertical ? "上端" : "左端"}</span>
+        <span className="today">赤線：今日の{vertical ? "中央" : "左端"}</span>
         <span className="event">
           紫線：開催日の{vertical ? "上端" : "左端"}
         </span>
