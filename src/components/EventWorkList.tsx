@@ -6,23 +6,38 @@ import { milestoneTiming } from "../lib/milestones";
 export function EventWorkList({
   items,
   totalItems = items,
+  milestoneTitle,
   onEdit,
   onAdd,
 }: {
   items: EventWorkItem[];
   totalItems?: EventWorkItem[];
+  milestoneTitle?: string;
   onEdit: (item: EventWorkItem) => void;
   onAdd: () => void;
 }) {
   const progress = workProgress(totalItems);
   return (
     <div className="milestone-task-children">
-      {progress.total > 0 && (
-        <details className="milestone-task-disclosure" open>
-          <summary>
-            作業 {progress.completed} / {progress.total} 件完了
-          </summary>
-          <ul className="milestone-task-list" role="list">
+      <details className="milestone-task-disclosure" open>
+        <summary>
+          <span>
+            {milestoneTitle ? "この到達点に向けた作業" : "到達点が未設定の作業"}
+          </span>
+          <span className="work-completion-count">
+            {progress.completed} / {progress.total} 件完了
+          </span>
+        </summary>
+        {items.length > 0 ? (
+          <ul
+            className="milestone-task-list"
+            role="list"
+            aria-label={
+              milestoneTitle
+                ? `「${milestoneTitle}」に向けた作業`
+                : "未分類の作業"
+            }
+          >
             {items.map((item) => (
               <li key={item.id}>
                 <button
@@ -46,20 +61,34 @@ export function EventWorkList({
                 </button>
               </li>
             ))}
-            {!items.length && (
-              <li className="muted">表示中の作業はありません。</li>
-            )}
           </ul>
-        </details>
-      )}
-      <button
-        type="button"
-        className="text-button milestone-task-edit"
-        onClick={onAdd}
-      >
-        <Plus size={16} />
-        作業を追加
-      </button>
+        ) : (
+          <p className="work-group-empty">
+            {progress.total
+              ? "登録した作業はすべて完了しています。"
+              : milestoneTitle
+                ? "この到達点に向けた作業は、まだ登録されていません。"
+                : "マイルストーンは後から選べます。"}
+          </p>
+        )}
+        <button
+          type="button"
+          className="secondary milestone-task-edit"
+          onClick={onAdd}
+          aria-label={
+            milestoneTitle
+              ? `マイルストーン「${milestoneTitle}」に作業を追加`
+              : "未分類の作業を追加"
+          }
+        >
+          <Plus size={16} />
+          <span>
+            {milestoneTitle
+              ? "このマイルストーンに作業を追加"
+              : "未分類の作業を追加"}
+          </span>
+        </button>
+      </details>
     </div>
   );
 }

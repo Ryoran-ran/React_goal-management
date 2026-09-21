@@ -2574,10 +2574,21 @@ button p {
   gap: 12px;
   width: 100%;
   border: 0;
-  border-bottom: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 10px 10px 0 0;
   padding: 12px;
   text-align: left;
+}
+.milestone-work-group {
+  border: 1px solid #cbdcd5;
+  border-radius: 10px;
+  background: white;
+}
+.milestone-role-label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--teal);
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 .milestone-list-row:hover {
   background: #f4f8f6;
@@ -2607,15 +2618,50 @@ button p {
   margin: 0;
 }
 .milestone-task-children {
-  margin: 0 0 12px 18px;
+  margin: 0;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 10px 10px;
+  background: #f6f9f7;
   min-width: 0;
 }
 .milestone-task-disclosure > summary {
-  padding: 10px 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  padding: 4px 0 12px;
   min-height: 44px;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--teal);
+  font-weight: 600;
+  list-style: none;
+}
+.milestone-task-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+.milestone-task-disclosure > summary::before {
+  content: "›";
+  display: inline-block;
+  width: 14px;
+  text-align: center;
+  font-size: 1.1rem;
+}
+.milestone-task-disclosure[open] > summary::before {
+  transform: rotate(90deg);
+}
+.work-completion-count {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+  white-space: nowrap;
+}
+.work-group-empty {
+  margin: 4px 0 16px;
+  font-size: 0.8rem;
+  color: var(--muted);
 }
 .milestone-task-list > li {
   position: relative;
@@ -2648,6 +2694,15 @@ button p {
   min-height: 44px;
   text-align: left;
   font-size: 0.8rem;
+  max-width: 100%;
+  margin-top: 8px;
+}
+.milestone-task-edit svg {
+  flex-shrink: 0;
+}
+.milestone-task-edit span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .milestone-task-children .error {
   overflow-wrap: anywhere;
@@ -2663,6 +2718,7 @@ button p {
   border-radius: 8px;
   margin-bottom: 8px;
   overflow-wrap: anywhere;
+  background: white;
 }
 .event-work-row:hover {
   background: #f4f8f6;
@@ -2998,6 +3054,9 @@ button p {
   }
   .milestone-branch::after {
     width: 14px;
+  }
+  .milestone-task-children {
+    padding: 10px 10px 12px;
   }
   .milestone-list-row > .tag {
     margin-left: 26px;

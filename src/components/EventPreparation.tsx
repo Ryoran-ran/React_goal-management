@@ -188,66 +188,85 @@ export function EventPreparation({
                 >
                   {items.map((item) => (
                     <li className="milestone-branch" key={item.id}>
-                      <button
-                        type="button"
-                        className="milestone-list-row"
-                        onClick={() => open(item)}
+                      <article
+                        className="milestone-work-group"
+                        aria-label={`マイルストーン「${item.title}」とその作業`}
                       >
-                        <span className="milestone-dot" aria-hidden="true">
-                          {item.status === "achieved" ? "✓" : "◆"}
-                        </span>
-                        <div>
-                          <strong>{item.title}</strong>
-                          <p>
-                            期限：
-                            {item.dueDate?.replaceAll("-", "/") ?? "未設定"}
-                          </p>
-                          {item.successCriteria && (
-                            <p className="clamp">{item.successCriteria}</p>
-                          )}
-                          <small
-                            className={
-                              unfinished(item) &&
-                              item.dueDate &&
-                              item.dueDate < localDate()
-                                ? "overdue"
-                                : ""
-                            }
-                          >
-                            {milestoneTiming(item)}
-                          </small>
-                          {milestonePlanDelay(item) > 0 && (
-                            <small className="overdue">
-                              {" "}
-                              · 当初より{milestonePlanDelay(item)}日後ろ
+                        <button
+                          type="button"
+                          className="milestone-list-row"
+                          onClick={() => open(item)}
+                          aria-label={`マイルストーン「${item.title}」を編集`}
+                        >
+                          <span className="milestone-dot" aria-hidden="true">
+                            {item.status === "achieved" ? "✓" : "◆"}
+                          </span>
+                          <div>
+                            <span className="milestone-role-label">
+                              マイルストーン · 到達点
+                            </span>
+                            <strong>{item.title}</strong>
+                            <p>
+                              期限：
+                              {item.dueDate?.replaceAll("-", "/") ?? "未設定"}
+                            </p>
+                            {item.successCriteria && (
+                              <p className="clamp">{item.successCriteria}</p>
+                            )}
+                            <small
+                              className={
+                                unfinished(item) &&
+                                item.dueDate &&
+                                item.dueDate < localDate()
+                                  ? "overdue"
+                                  : ""
+                              }
+                            >
+                              {milestoneTiming(item)}
                             </small>
+                            {milestonePlanDelay(item) > 0 && (
+                              <small className="overdue">
+                                {" "}
+                                · 当初より{milestonePlanDelay(item)}日後ろ
+                              </small>
+                            )}
+                          </div>
+                          <span className="tag">
+                            {milestoneStatuses[item.status]}
+                          </span>
+                        </button>
+                        <EventWorkList
+                          milestoneTitle={item.title}
+                          items={visibleWork.filter(
+                            (work) => work.milestoneId === item.id,
                           )}
-                        </div>
-                        <span className="tag">
-                          {milestoneStatuses[item.status]}
-                        </span>
-                      </button>
-                      <EventWorkList
-                        items={visibleWork.filter(
-                          (work) => work.milestoneId === item.id,
-                        )}
-                        totalItems={allWork.filter(
-                          (work) => work.milestoneId === item.id,
-                        )}
-                        onEdit={openWork}
-                        onAdd={() => addWork(item.id)}
-                      />
+                          totalItems={allWork.filter(
+                            (work) => work.milestoneId === item.id,
+                          )}
+                          onEdit={openWork}
+                          onAdd={() => addWork(item.id)}
+                        />
+                      </article>
                     </li>
                   ))}
                   {allWork.some((work) => !work.milestoneId) && (
                     <li className="milestone-branch">
-                      <h3 className="unassigned-work-heading">未分類の作業</h3>
-                      <EventWorkList
-                        items={unassigned}
-                        totalItems={allWork.filter((work) => !work.milestoneId)}
-                        onEdit={openWork}
-                        onAdd={() => addWork()}
-                      />
+                      <article
+                        className="milestone-work-group is-unassigned"
+                        aria-label="マイルストーン未設定の作業"
+                      >
+                        <h3 className="unassigned-work-heading">
+                          未分類の作業
+                        </h3>
+                        <EventWorkList
+                          items={unassigned}
+                          totalItems={allWork.filter(
+                            (work) => !work.milestoneId,
+                          )}
+                          onEdit={openWork}
+                          onAdd={() => addWork()}
+                        />
+                      </article>
                     </li>
                   )}
                 </ul>
@@ -278,7 +297,7 @@ export function EventPreparation({
             onClick={() => addWork()}
           >
             <Plus size={18} />
-            作業を追加
+            未分類の作業を追加
           </button>
         </div>
       </section>

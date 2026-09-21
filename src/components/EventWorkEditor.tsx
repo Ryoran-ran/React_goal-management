@@ -66,7 +66,7 @@ export function EventWorkEditor({
               placeholder="例：ルンバ前半を見本なしで踊る"
             />
           </Field>
-          <Field label="関連するマイルストーン">
+          <Field label="この作業で目指すマイルストーン（到達点）">
             <select
               value={draft.milestoneId ?? ""}
               onChange={(e) =>
