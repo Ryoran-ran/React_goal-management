@@ -2575,9 +2575,10 @@ button p {
   height: 1px;
 }
 .milestone-list-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
   align-items: flex-start;
-  gap: 12px;
+  gap: 8px;
   width: 100%;
   border: 0;
   border-radius: 10px 10px 0 0;
@@ -2632,9 +2633,9 @@ button p {
   min-width: 0;
 }
 .milestone-task-disclosure > summary {
-  display: flex;
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
   align-items: center;
-  flex-wrap: wrap;
   gap: 6px 8px;
   padding: 4px 0 12px;
   min-height: 44px;
@@ -2668,33 +2669,6 @@ button p {
   margin: 4px 0 16px;
   font-size: 0.8rem;
   color: var(--muted);
-}
-.milestone-task-list > li {
-  position: relative;
-  padding-left: 16px;
-}
-.milestone-task-list > li::before,
-.milestone-task-list > li::after {
-  content: "";
-  position: absolute;
-  background: #b9ccc5;
-  pointer-events: none;
-}
-.milestone-task-list > li::before {
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-}
-.milestone-task-list > li:last-child::before {
-  bottom: auto;
-  height: 22px;
-}
-.milestone-task-list > li::after {
-  left: 0;
-  top: 22px;
-  width: 16px;
-  height: 1px;
 }
 .milestone-task-edit {
   min-height: 44px;
@@ -2730,6 +2704,7 @@ button p {
   background: #f4f8f6;
 }
 .work-list-entry {
+  min-width: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: white;
@@ -3348,9 +3323,7 @@ button p {
     padding: 10px 8px;
   }
   .milestone-list-row {
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 12px 8px;
+    padding: 12px;
   }
   .milestone-branch {
     padding-left: 14px;
