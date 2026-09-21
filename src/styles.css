@@ -3349,6 +3349,7 @@ button p {
 }
 .gantt-deadline {
   position: absolute;
+  z-index: 1;
   top: 50%;
   transform: translate(-50%, -50%);
   padding: 0;
@@ -3414,6 +3415,13 @@ button p {
   top: 50%;
   transform: translateY(-50%);
   background: #27786c;
+}
+.gantt-bar.planned.is-overview {
+  height: 12px;
+  border-radius: 1px;
+  border: 2px solid #74a699;
+  border-top-width: 3px;
+  background: #bcdacf;
 }
 .gantt-bar.actual {
   top: 78px;

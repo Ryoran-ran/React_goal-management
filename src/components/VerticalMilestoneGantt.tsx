@@ -284,7 +284,7 @@ export function VerticalMilestoneGantt({
                       aria-label={`${column.title}・期限 ${due}・編集`}
                       title={`期限：${due}`}
                     >
-                      ◆<span>期限</span>
+                      ◆
                     </button>
                   )}
                   {!hasDates && (

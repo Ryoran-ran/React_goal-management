@@ -2,7 +2,13 @@ import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { VerticalMilestoneGantt } from "./VerticalMilestoneGantt";
 import { ScheduleStatus } from "./ScheduleStatus";
 import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
-import type { DanceEvent, EventMilestone, EventWorkItem } from "../types";
+import type {
+  DanceEvent,
+  EventMilestone,
+  EventWorkItem,
+  MilestonePlan,
+} from "../types";
+import { workOverview } from "../lib/verticalGantt";
 import { workProgress, workSchedule } from "../lib/eventWork";
 import { addDays, daysUntil, localDate } from "../lib/dates";
 import { shiftCalendarMonth } from "../lib/calendar";
@@ -63,6 +69,7 @@ export function MilestoneGantt({
     groupEnd,
     parentTitle,
     childCount: 0,
+    summary: {} as MilestonePlan,
     statusTarget: { kind: "work" as const, item: work },
     open: () => onEditWork(work),
   });
@@ -78,6 +85,7 @@ export function MilestoneGantt({
           groupEnd: isCollapsed || children.length === 0,
           parentTitle: "",
           childCount: children.length,
+          summary: workOverview(children, today).planned,
           statusTarget: { kind: "milestone" as const, item },
           open: () => onEdit(item),
         },
@@ -148,22 +156,12 @@ export function MilestoneGantt({
     return (
       <button
         type="button"
-        className={`gantt-bar ${kind} ${!start || !end ? "is-point" : ""}`}
-        style={
-          !start || !end
-            ? {
-                left: `${ganttPosition(first, range)}%`,
-                width: 20,
-                transform: "translateX(-50%)",
-              }
-            : position
-        }
+        className={`gantt-bar ${kind}`}
+        style={position}
         onClick={onOpen}
         title={`${label}：${first}〜${last}`}
         aria-label={`${item.title}、${label}：${first}〜${last}、編集する`}
-      >
-        {!start || !end ? "◆" : <span>{label}</span>}
-      </button>
+      />
     );
   };
   return (
@@ -255,6 +253,7 @@ export function MilestoneGantt({
           <div className="gantt-legend">
             <span>◆ マイルストーンの期限</span>
             <span className="planned">▬ 作業の予定期間</span>
+            <span className="planned">薄いバー：配下の作業全体の期間</span>
             <span className="today">
               赤線：今日の{vertical ? "中央" : "左端"}
             </span>
@@ -267,11 +266,9 @@ export function MilestoneGantt({
               ? "日付は縦、マイルストーンは横に並びます。見出しをタップすると関連作業を展開できます。上下・左右にスクロールできます。"
               : "マイルストーンと配下の作業を枠でまとめています。矢印で作業を開閉し、項目名から編集できます。"}
           </p>
-          {vertical && (
-            <p className="muted gantt-hint">
-              薄い帯は、完了分も含めた関連作業の全体範囲です。途中の空白期間も含みます。
-            </p>
-          )}
+          <p className="muted gantt-hint">
+            薄い帯は、完了分も含めた関連作業の全体範囲です。途中の空白期間も含みます。
+          </p>
         </div>
       </div>
       {vertical ? (
@@ -336,6 +333,7 @@ export function MilestoneGantt({
                 groupEnd,
                 parentTitle,
                 childCount,
+                summary,
               }) => (
                 <div
                   className={`gantt-grid-row ${isWork ? "gantt-work-row" : "gantt-milestone-row"} ${groupEnd ? "gantt-group-end" : ""} ${item.status === "skipped" ? "is-skipped" : ""}`}
@@ -426,6 +424,15 @@ export function MilestoneGantt({
                   <div className="gantt-track">
                     {line(event.date, "event")}
                     {line(today, "today")}
+                    {!isWork &&
+                      bar(
+                        item,
+                        summary.startDate,
+                        summary.dueDate,
+                        "planned is-overview",
+                        "作業全体の予定",
+                        open,
+                      )}
                     {isWork &&
                       bar(
                         item,
@@ -449,9 +456,12 @@ export function MilestoneGantt({
                         ◆
                       </button>
                     )}
-                    {!item.dueDate && (!isWork || !item.startDate) && (
-                      <span className="gantt-unscheduled">日付未設定</span>
-                    )}
+                    {!item.dueDate &&
+                      (!isWork || !item.startDate) &&
+                      !summary.startDate &&
+                      !summary.dueDate && (
+                        <span className="gantt-unscheduled">日付未設定</span>
+                      )}
                   </div>
                 </div>
               ),
