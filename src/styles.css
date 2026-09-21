@@ -586,16 +586,23 @@
 }
 .agenda-day-navigation {
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) 36px auto;
+  grid-template-columns: 44px minmax(0, 1fr) 44px auto;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  max-width: 100%;
 }
 .agenda-day-navigation input {
   min-width: 0;
 }
+.agenda-day-navigation > .icon-button {
+  width: 44px;
+  min-width: 44px;
+  min-height: 44px;
+}
 @media (max-width: 450px) {
   .agenda-day-navigation {
-    grid-template-columns: 36px minmax(0, 1fr) 36px;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
   }
   .agenda-day-navigation > .secondary {
     grid-column: 1 / -1;
@@ -1698,10 +1705,35 @@ textarea {
   border: 1px solid #d8e2df;
   border-radius: 8px;
   min-height: 44px;
-  padding: 10px 12px;
+  padding: 10px var(--control-inline-padding, 12px);
   color: var(--ink);
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   font-size: 1rem;
+}
+input[type="date"],
+input[type="month"] {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  display: block;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  line-height: 1.5;
+}
+@supports (-webkit-touch-callout: none) {
+  /* iOS date/month inputs can add horizontal padding outside width: 100%.
+     Keep native date pickers while avoiding that extra width (WebKit 301648). */
+  input[type="date"],
+  input[type="month"] {
+    --control-inline-padding: 0px;
+  }
+  input[type="date"]::-webkit-date-and-time-value,
+  input[type="month"]::-webkit-date-and-time-value {
+    min-width: 0;
+    text-align: center;
+  }
 }
 input[type="range"] {
   accent-color: var(--teal);
