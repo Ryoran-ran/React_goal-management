@@ -10,6 +10,7 @@ import {
   milestoneStatuses,
   milestoneTiming,
   milestonePlanDelay,
+  milestoneTaskProgress,
   type GanttScale,
 } from "../lib/milestones";
 
@@ -198,6 +199,12 @@ export function MilestoneGantt({
               >
                 <strong>{item.title}</strong>
                 <small>{milestoneStatuses[item.status]}</small>
+                {milestoneTaskProgress(item).total > 0 && (
+                  <small>
+                    作業 {milestoneTaskProgress(item).completed} /{" "}
+                    {milestoneTaskProgress(item).total} 完了
+                  </small>
+                )}
                 {milestonePlanDelay(item) > 0 && (
                   <small className="overdue">
                     当初より{milestonePlanDelay(item)}日後ろ

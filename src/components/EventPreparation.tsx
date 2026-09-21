@@ -13,6 +13,7 @@ import {
 } from "../lib/milestones";
 import { MilestoneEditor } from "./MilestoneEditor";
 import { MilestoneGantt } from "./MilestoneGantt";
+import { MilestoneTasks } from "./MilestoneTasks";
 
 export function EventPreparation({
   event,
@@ -183,6 +184,11 @@ export function EventPreparation({
                           {milestoneStatuses[item.status]}
                         </span>
                       </button>
+                      <MilestoneTasks
+                        eventId={event.id}
+                        milestone={item}
+                        onEdit={() => open(item)}
+                      />
                     </li>
                   ))}
                 </ul>

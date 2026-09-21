@@ -9,6 +9,10 @@ export const milestoneStatuses = {
 };
 export const unfinished = (item: EventMilestone) =>
   item.status !== "achieved" && item.status !== "skipped";
+export const milestoneTaskProgress = (item: EventMilestone) => ({
+  completed: (item.tasks ?? []).filter((task) => task.completed).length,
+  total: (item.tasks ?? []).length,
+});
 export const sortedMilestones = (items: EventMilestone[]) =>
   [...items].sort(
     (a, b) =>
@@ -150,6 +154,27 @@ export function validateMilestones(
         "マイルストーンの名前・日付・状態を確認してください。開始日は期限・達成日以前にしてください。",
       );
     ids.add(item.id);
+    if (item.tasks !== undefined) {
+      if (!Array.isArray(item.tasks))
+        throw new Error("作業の形式が正しくありません。");
+      const taskIds = new Set<string>();
+      for (const task of item.tasks) {
+        if (
+          !object(task) ||
+          typeof task.id !== "string" ||
+          !task.id ||
+          taskIds.has(task.id) ||
+          typeof task.title !== "string" ||
+          !task.title.trim() ||
+          task.title.length > 200 ||
+          typeof task.completed !== "boolean"
+        )
+          throw new Error(
+            "作業名（200文字以内）と完了状態を確認してください。",
+          );
+        taskIds.add(task.id);
+      }
+    }
   }
 }
 

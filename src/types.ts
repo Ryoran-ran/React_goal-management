@@ -19,6 +19,11 @@ export interface MilestonePlan {
   startDate?: string;
   dueDate?: string;
 }
+export interface MilestoneTask {
+  id: string;
+  title: string;
+  completed: boolean;
+}
 export interface EventMilestone extends Base, MilestonePlan {
   title: string;
   successCriteria: string;
@@ -26,6 +31,7 @@ export interface EventMilestone extends Base, MilestonePlan {
   actualStartDate?: string;
   completedDate?: string;
   baseline?: MilestonePlan;
+  tasks?: MilestoneTask[];
   changes: {
     changedAt: string;
     from: MilestonePlan;

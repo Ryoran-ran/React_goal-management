@@ -10,6 +10,7 @@ import {
   shiftMilestones,
   updateMilestonePlan,
   validateMilestones,
+  milestoneTaskProgress,
 } from "./milestones";
 const base = {
   id: "m",
@@ -35,6 +36,34 @@ const event = (items: EventMilestone[]): DanceEvent => ({
   milestones: items,
 });
 describe("milestone planning", () => {
+  it("accepts legacy milestones and validates work items and their progress", () => {
+    expect(() => validateMilestones([milestone()])).not.toThrow();
+    expect(milestoneTaskProgress(milestone())).toEqual({
+      completed: 0,
+      total: 0,
+    });
+    const task = { id: "a", title: "前半を覚える", completed: false };
+    const withTasks = {
+      ...milestone(),
+      tasks: [task, { ...task, id: "b", completed: true }],
+    };
+    expect(() => validateMilestones([withTasks])).not.toThrow();
+    expect(milestoneTaskProgress(withTasks)).toEqual({
+      completed: 1,
+      total: 2,
+    });
+    for (const tasks of [
+      null,
+      {},
+      [task, task],
+      [{ ...task, title: " " }],
+      [{ ...task, completed: "false" }],
+      [{ ...task, title: "a".repeat(201) }],
+    ]) {
+      expect(() => validateMilestones([{ ...milestone(), tasks }])).toThrow();
+    }
+    expect(shiftMilestones([withTasks], 7)[0].tasks).toEqual(withTasks.tasks);
+  });
   it("keeps the first baseline across replanning and clearing dates", () => {
     const original = milestone();
     const changed = updateMilestonePlan(

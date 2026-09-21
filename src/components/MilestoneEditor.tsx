@@ -9,6 +9,7 @@ import {
 } from "../data/eventMilestones";
 import { DatePicker } from "./DatePicker";
 import { Field, SaveForm } from "./ui";
+import { MilestoneTasksEditor } from "./MilestoneTasks";
 
 export function MilestoneEditor({
   event,
@@ -63,7 +64,7 @@ export function MilestoneEditor({
                 }
               : undefined
           }
-          deleteConfirmation="このマイルストーンと計画変更の履歴を削除しますか？レッスンや練習記録は残ります。"
+          deleteConfirmation="このマイルストーンと配下の作業・計画変更の履歴を削除しますか？レッスンや練習記録は残ります。"
         >
           <Field label="到達点">
             <input
@@ -81,6 +82,10 @@ export function MilestoneEditor({
               placeholder="例：見本を見ず、最後まで順番を再現できる"
             />
           </Field>
+          <MilestoneTasksEditor
+            tasks={draft.tasks ?? []}
+            onChange={(tasks) => patch({ tasks })}
+          />
           <div className="form-grid">
             <Field label="開始予定日（任意）">
               <DatePicker

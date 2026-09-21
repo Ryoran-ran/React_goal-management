@@ -2601,6 +2601,123 @@ button p {
 .milestone-add {
   margin-top: 24px;
 }
+.milestone-task-editor {
+  margin: 24px 0;
+  padding: 20px 0;
+  border-block: 1px solid var(--line);
+}
+.milestone-task-editor h3 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: baseline;
+  font-size: 1rem;
+}
+.milestone-task-editor h3 small {
+  color: var(--muted);
+  font-weight: 400;
+}
+.milestone-task-editor > p {
+  font-size: 0.8rem;
+  margin: 8px 0 16px;
+}
+.milestone-task-fields,
+.milestone-task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.milestone-task-fields > li {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  gap: 4px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.milestone-task-fields .icon-button,
+.milestone-task-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+}
+.milestone-task-check {
+  cursor: pointer;
+}
+.milestone-task-fields > li > input {
+  min-width: 0;
+}
+.milestone-task-editor .milestone-task-save-hint {
+  margin: 12px 0 0;
+}
+.milestone-task-children {
+  margin: 0 0 12px 18px;
+  min-width: 0;
+}
+.milestone-task-disclosure > summary {
+  padding: 10px 0;
+  min-height: 44px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--teal);
+}
+.milestone-task-list > li {
+  position: relative;
+  padding-left: 16px;
+}
+.milestone-task-list > li::before,
+.milestone-task-list > li::after {
+  content: "";
+  position: absolute;
+  background: #b9ccc5;
+  pointer-events: none;
+}
+.milestone-task-list > li::before {
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+.milestone-task-list > li:last-child::before {
+  bottom: auto;
+  height: 22px;
+}
+.milestone-task-list > li::after {
+  left: 0;
+  top: 22px;
+  width: 16px;
+  height: 1px;
+}
+.milestone-task-list label {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 4px 10px 8px;
+  min-height: 44px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.milestone-task-list label input {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.milestone-task-list label span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.milestone-task-list .is-completed span {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+.milestone-task-edit {
+  min-height: 44px;
+  text-align: left;
+  font-size: 0.8rem;
+}
+.milestone-task-children .error {
+  overflow-wrap: anywhere;
+}
 .overdue {
   color: #a73541;
 }

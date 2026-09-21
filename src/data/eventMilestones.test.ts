@@ -8,6 +8,7 @@ import {
   milestoneDeadlines,
   saveEventDetails,
   saveEventMilestone,
+  setMilestoneTaskCompleted,
 } from "./eventMilestones";
 import { createBackup, readBackup, restoreBackup } from "./backup";
 import { validateBackupRows } from "./backupValidation";
@@ -93,6 +94,10 @@ describe("event milestones", () => {
         dueDate: "2026-09-24",
         status: "achieved",
         completedDate: "2026-09-23",
+        tasks: [
+          { id: "first-half", title: "前半を覚える", completed: true },
+          { id: "second-half", title: "後半を覚える", completed: false },
+        ],
       },
       "調整",
     );
@@ -101,6 +106,10 @@ describe("event milestones", () => {
     const invalid = structuredClone(backup.tables);
     (invalid.events[0].milestones as EventMilestone[])[0].dueDate = "broken";
     expect(() => validateBackupRows(invalid)).toThrow();
+    const invalidTasks = structuredClone(backup.tables);
+    (invalidTasks.events[0].milestones as EventMilestone[])[0].tasks![0].title =
+      " ";
+    expect(() => validateBackupRows(invalidTasks)).toThrow();
     await db.events.clear();
     await restoreBackup(backup);
     expect(await get(source.id)).toEqual(expected);
@@ -127,7 +136,9 @@ describe("event milestones", () => {
     expect(await milestoneDeadlines("2026-09-01", "2026-09-30")).toEqual([]);
     await deleteEventMilestone(source.id, unfinished.id);
     expect((await get(source.id)).milestones).toHaveLength(2);
-    await expect(saveEventMilestone(source.id, unfinished, "", true)).rejects.toThrow("削除されています");
+    await expect(
+      saveEventMilestone(source.id, unfinished, "", true),
+    ).rejects.toThrow("削除されています");
     await remove("events", source.id);
     await expect(saveEventMilestone(source.id, unfinished)).rejects.toThrow(
       "見つかりません",
@@ -141,5 +152,111 @@ describe("event milestones", () => {
       saveEventMilestone(source.id, { ...item(), startDate: "2026-10-01" }),
     ).rejects.toThrow();
     expect(await get(source.id)).toEqual(before);
+  });
+  it("adds, edits and removes multiple tasks without changing sibling milestones", async () => {
+    const source = event();
+    await save("events", source);
+    const first = item();
+    const sibling = { ...item(), title: "音楽に合わせて通す" };
+    await saveEventMilestone(source.id, sibling);
+    await saveEventMilestone(source.id, {
+      ...first,
+      tasks: [
+        { id: "a", title: " 前半を覚える ", completed: false },
+        { id: "b", title: "後半を覚える", completed: false },
+      ],
+    });
+    const saved = (await get(source.id)).milestones!.find(
+      (value) => value.id === first.id,
+    )!;
+    expect(saved.tasks?.map((task) => task.title)).toEqual([
+      "前半を覚える",
+      "後半を覚える",
+    ]);
+    await saveEventMilestone(
+      source.id,
+      {
+        ...saved,
+        tasks: [
+          {
+            ...saved.tasks![1],
+            title: "後半を見本なしで踊る",
+            completed: true,
+          },
+        ],
+      },
+      "",
+      true,
+    );
+    const latest = (await get(source.id)).milestones!;
+    expect(latest.find((value) => value.id === first.id)?.tasks).toEqual([
+      { id: "b", title: "後半を見本なしで踊る", completed: true },
+    ]);
+    expect(latest.find((value) => value.id === sibling.id)?.title).toBe(
+      sibling.title,
+    );
+    expect(latest.find((value) => value.id === first.id)?.changes).toEqual([]);
+    const before = await get(source.id);
+    const latestItem = latest.find((value) => value.id === first.id)!;
+    await expect(
+      saveEventMilestone(source.id, {
+        ...latestItem,
+        tasks: [{ id: "empty", title: " ", completed: false }],
+      }),
+    ).rejects.toThrow("作業名");
+    expect(await get(source.id)).toEqual(before);
+  });
+  it("updates concurrent task checks without completing the milestone and rejects stale editor saves", async () => {
+    const source = event();
+    await save("events", source);
+    await saveEventMilestone(source.id, {
+      ...item(),
+      tasks: [
+        { id: "a", title: "前半", completed: false },
+        { id: "b", title: "後半", completed: false },
+      ],
+    });
+    const stale = (await get(source.id)).milestones![0];
+    await Promise.all([
+      setMilestoneTaskCompleted(source.id, stale.id, "a", true),
+      setMilestoneTaskCompleted(source.id, stale.id, "b", true),
+    ]);
+    let latest = (await get(source.id)).milestones![0];
+    expect(latest.tasks?.every((task) => task.completed)).toBe(true);
+    expect(latest.status).toBe("not_started");
+    expect(latest.completedDate).toBeUndefined();
+    expect(latest.baseline).toEqual(stale.baseline);
+    expect(latest.changes).toEqual(stale.changes);
+    expect(latest.updatedAt > stale.updatedAt).toBe(true);
+    await expect(
+      saveEventMilestone(source.id, stale, "", true),
+    ).rejects.toThrow("別の画面");
+    await setMilestoneTaskCompleted(source.id, stale.id, "a", false);
+    latest = (await get(source.id)).milestones![0];
+    expect(latest.tasks?.map((task) => task.completed)).toEqual([false, true]);
+  });
+  it("does not recreate deleted tasks, milestones or events when checking a stale list", async () => {
+    const source = event();
+    await save("events", source);
+    await saveEventMilestone(source.id, {
+      ...item(),
+      tasks: [{ id: "a", title: "前半", completed: false }],
+    });
+    const saved = (await get(source.id)).milestones![0];
+    await saveEventMilestone(source.id, { ...saved, tasks: [] }, "", true);
+    await expect(
+      setMilestoneTaskCompleted(source.id, saved.id, "a", true),
+    ).rejects.toThrow("削除されています");
+    expect((await get(source.id)).milestones![0].tasks).toEqual([]);
+    await deleteEventMilestone(source.id, saved.id);
+    await expect(
+      setMilestoneTaskCompleted(source.id, saved.id, "a", true),
+    ).rejects.toThrow("削除されています");
+    expect((await get(source.id)).milestones).toEqual([]);
+    await remove("events", source.id);
+    await expect(
+      setMilestoneTaskCompleted(source.id, saved.id, "a", true),
+    ).rejects.toThrow("見つかりません");
+    expect(await db.events.get(source.id)).toBeUndefined();
   });
 });
