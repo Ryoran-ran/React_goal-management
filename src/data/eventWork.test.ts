@@ -13,6 +13,7 @@ import {
   normalizeEventWork,
   validateEventWork,
   workSchedule,
+  withWorkStatus,
 } from "../lib/eventWork";
 import { ganttRange, milestoneTiming } from "../lib/milestones";
 import type { DanceEvent, EventMilestone, EventWorkItem } from "../types";
@@ -52,6 +53,94 @@ const work = (milestoneId?: string): EventWorkItem => ({
 const get = async (id: string) => (await db.events.get(id))!;
 
 describe("independent event work", () => {
+  it("uses the start as the omitted end date and records the effective plan", async () => {
+    const source = event();
+    await save("events", source);
+    const draft = { ...work(source.milestones![0].id), dueDate: undefined };
+    await saveEventWork(source.id, draft);
+    let saved = (await get(source.id)).workItems![0];
+    expect(saved.dueDate).toBe(draft.startDate);
+    expect(saved.baseline).toEqual({
+      startDate: draft.startDate,
+      dueDate: draft.startDate,
+    });
+    await saveEventWork(
+      source.id,
+      { ...saved, startDate: "2026-09-28", dueDate: undefined },
+      "一日練習を移動",
+      true,
+    );
+    saved = (await get(source.id)).workItems![0];
+    expect(saved.dueDate).toBe("2026-09-28");
+    expect(saved.baseline?.dueDate).toBe("2026-09-25");
+    expect(saved.changes[0].to).toEqual({
+      startDate: "2026-09-28",
+      dueDate: "2026-09-28",
+    });
+    expect(draft.dueDate).toBeUndefined();
+    expect(workSchedule(draft).dueDate).toBe(draft.startDate);
+  });
+  it("keeps dates absent when both are blank and preserves an explicit end", async () => {
+    const source = event();
+    await save("events", source);
+    await saveEventWork(source.id, {
+      ...work(),
+      startDate: undefined,
+      dueDate: undefined,
+    });
+    await saveEventWork(source.id, work());
+    const saved = (await get(source.id)).workItems!;
+    expect(saved[0].dueDate).toBeUndefined();
+    expect(saved[0].baseline).toBeUndefined();
+    expect(saved[1].dueDate).toBe("2026-10-01");
+  });
+  it("saves quick status transitions without changing the plan or other items", async () => {
+    const source = event();
+    await save("events", source);
+    await saveEventWork(source.id, work(source.milestones![0].id));
+    const initial = (await get(source.id)).workItems![0];
+    await saveEventWork(
+      source.id,
+      withWorkStatus(initial, "in_progress", "2026-09-19"),
+      "",
+      true,
+    );
+    let saved = (await get(source.id)).workItems![0];
+    expect(saved.actualStartDate).toBe("2026-09-19");
+    await saveEventWork(
+      source.id,
+      withWorkStatus(saved, "completed", "2026-09-20"),
+      "",
+      true,
+    );
+    saved = (await get(source.id)).workItems![0];
+    expect(saved.completedDate).toBe("2026-09-20");
+    expect(saved.actualStartDate).toBe("2026-09-19");
+    expect(saved.baseline).toEqual(initial.baseline);
+    expect(saved.changes).toEqual(initial.changes);
+    expect((await get(source.id)).milestones).toEqual(source.milestones);
+    await expect(
+      saveEventWork(source.id, withWorkStatus(initial, "completed"), "", true),
+    ).rejects.toThrow("別の画面");
+    await saveEventWork(
+      source.id,
+      withWorkStatus(saved, "in_progress", "2026-09-21"),
+      "",
+      true,
+    );
+    saved = (await get(source.id)).workItems![0];
+    expect(saved.completedDate).toBeUndefined();
+    expect(saved.actualStartDate).toBe("2026-09-19");
+    await saveEventWork(
+      source.id,
+      withWorkStatus(saved, "not_started"),
+      "",
+      true,
+    );
+    saved = (await get(source.id)).workItems![0];
+    expect(saved.actualStartDate).toBeUndefined();
+    expect(saved.completedDate).toBeUndefined();
+  });
   it("saves separate work schedules and supports reassignment and unassigned work", async () => {
     const source = event();
     await save("events", source);

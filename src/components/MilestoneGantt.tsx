@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { VerticalMilestoneGantt } from "./VerticalMilestoneGantt";
+import { ScheduleStatus } from "./ScheduleStatus";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { DanceEvent, EventMilestone, EventWorkItem } from "../types";
 import { workProgress, workSchedule } from "../lib/eventWork";
@@ -10,7 +11,6 @@ import {
   ganttDayStart,
   ganttRange,
   ganttSegment,
-  milestoneStatuses,
   milestoneTiming,
   milestonePlanDelay,
   type GanttScale,
@@ -60,6 +60,7 @@ export function MilestoneGantt({
     item: workSchedule(work),
     key: `work:${work.id}`,
     isWork: true,
+    statusTarget: { kind: "work" as const, item: work },
     open: () => onEditWork(work),
   });
   const rows = [
@@ -68,6 +69,7 @@ export function MilestoneGantt({
         item,
         key: `milestone:${item.id}`,
         isWork: false,
+        statusTarget: { kind: "milestone" as const, item },
         open: () => onEdit(item),
       },
       ...workItems.filter((work) => work.milestoneId === item.id).map(workRow),
@@ -316,66 +318,68 @@ export function MilestoneGantt({
                 {line(today, "today")}
               </div>
             </div>
-            {rows.map(({ item, key, isWork, open }) => (
+            {rows.map(({ item, key, isWork, open, statusTarget }) => (
               <div
                 className={`gantt-grid-row ${isWork ? "gantt-work-row" : "gantt-milestone-row"} ${item.status === "skipped" ? "is-skipped" : ""}`}
                 key={key}
               >
-                <button
-                  type="button"
-                  className="gantt-label"
-                  onClick={open}
-                  title={item.title}
-                >
-                  <strong>
-                    {isWork ? "作業：" : "◆ "}
-                    {item.title}
-                  </strong>
-                  <small>{milestoneStatuses[item.status]}</small>
-                  {!isWork &&
-                    workProgress(
-                      (event.workItems ?? []).filter(
-                        (work) => work.milestoneId === item.id,
-                      ),
-                    ).total > 0 && (
-                      <small>
-                        作業{" "}
-                        {
-                          workProgress(
-                            (event.workItems ?? []).filter(
-                              (work) => work.milestoneId === item.id,
-                            ),
-                          ).completed
-                        }{" "}
-                        /{" "}
-                        {
-                          workProgress(
-                            (event.workItems ?? []).filter(
-                              (work) => work.milestoneId === item.id,
-                            ),
-                          ).total
-                        }{" "}
-                        完了
+                <div className="gantt-label">
+                  <button
+                    type="button"
+                    className="gantt-item-edit"
+                    onClick={open}
+                    title={item.title}
+                  >
+                    <strong>
+                      {isWork ? "作業：" : "◆ "}
+                      {item.title}
+                    </strong>
+                    {!isWork &&
+                      workProgress(
+                        (event.workItems ?? []).filter(
+                          (work) => work.milestoneId === item.id,
+                        ),
+                      ).total > 0 && (
+                        <small>
+                          作業{" "}
+                          {
+                            workProgress(
+                              (event.workItems ?? []).filter(
+                                (work) => work.milestoneId === item.id,
+                              ),
+                            ).completed
+                          }{" "}
+                          /{" "}
+                          {
+                            workProgress(
+                              (event.workItems ?? []).filter(
+                                (work) => work.milestoneId === item.id,
+                              ),
+                            ).total
+                          }{" "}
+                          完了
+                        </small>
+                      )}
+                    {milestonePlanDelay(item) > 0 && (
+                      <small className="overdue">
+                        当初より{milestonePlanDelay(item)}日後ろ
                       </small>
                     )}
-                  {milestonePlanDelay(item) > 0 && (
-                    <small className="overdue">
-                      当初より{milestonePlanDelay(item)}日後ろ
+                    <small
+                      className={
+                        item.dueDate &&
+                        item.dueDate < today &&
+                        item.status !== "achieved" &&
+                        item.status !== "skipped"
+                          ? "overdue"
+                          : ""
+                      }
+                    >
+                      {milestoneTiming(item, today)}
                     </small>
-                  )}
-                  <small
-                    className={
-                      item.dueDate &&
-                      item.dueDate < today &&
-                      item.status !== "achieved" &&
-                      item.status !== "skipped"
-                        ? "overdue"
-                        : ""
-                    }
-                  >
-                    {milestoneTiming(item, today)}
-                  </small>
-                </button>
+                  </button>
+                  <ScheduleStatus eventId={event.id} target={statusTarget} />
+                </div>
                 <div className="gantt-track">
                   {line(event.date, "event")}
                   {line(today, "today")}

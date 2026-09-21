@@ -2729,6 +2729,57 @@ button p {
 .event-work-row:hover {
   background: #f4f8f6;
 }
+.work-list-entry {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  margin-bottom: 8px;
+  padding-bottom: 10px;
+}
+.work-list-entry .event-work-row {
+  border: 0;
+  margin-bottom: 0;
+}
+.work-list-entry > .schedule-status {
+  margin: 0 12px;
+}
+.schedule-status {
+  min-width: 0;
+}
+.schedule-status select {
+  width: auto;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 6px 8px;
+  font-size: 0.8rem;
+}
+.schedule-status .error {
+  margin: 4px 0;
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.milestone-status-row {
+  padding: 0 12px 12px 36px;
+}
+.gantt-item-edit {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  text-align: left;
+  padding: 0;
+}
+.gantt-label .schedule-status {
+  margin-top: 6px;
+}
+.vertical-column-heading .schedule-status select {
+  width: 100%;
+  font-size: 0.72rem;
+  padding-inline: 3px;
+}
+.vertical-heading-main:disabled {
+  opacity: 1;
+  cursor: default;
+}
 .event-work-row-heading {
   display: flex;
   align-items: flex-start;

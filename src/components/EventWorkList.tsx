@@ -1,6 +1,7 @@
 import { Plus } from "lucide-react";
 import type { EventWorkItem } from "../types";
-import { workProgress, workSchedule, workStatuses } from "../lib/eventWork";
+import { workProgress, workSchedule } from "../lib/eventWork";
+import { ScheduleStatus } from "./ScheduleStatus";
 import { milestoneTiming } from "../lib/milestones";
 
 export function EventWorkList({
@@ -9,12 +10,14 @@ export function EventWorkList({
   milestoneTitle,
   onEdit,
   onAdd,
+  eventId,
 }: {
   items: EventWorkItem[];
   totalItems?: EventWorkItem[];
   milestoneTitle?: string;
   onEdit: (item: EventWorkItem) => void;
   onAdd?: () => void;
+  eventId: string;
 }) {
   const progress = workProgress(totalItems);
   return (
@@ -39,7 +42,7 @@ export function EventWorkList({
             }
           >
             {items.map((item) => (
-              <li key={item.id}>
+              <li key={item.id} className="work-list-entry">
                 <button
                   type="button"
                   className="event-work-row"
@@ -47,11 +50,10 @@ export function EventWorkList({
                 >
                   <span className="event-work-row-heading">
                     <strong>{item.title}</strong>
-                    <span className="tag">{workStatuses[item.status]}</span>
                   </span>
                   <small>
                     {item.startDate || item.dueDate
-                      ? `${item.startDate ?? "開始未設定"} → ${item.dueDate ?? "期限未設定"}`
+                      ? `${item.startDate ?? "開始未設定"} → ${item.dueDate ?? item.startDate ?? "終了未設定"}`
                       : "予定未設定"}
                   </small>
                   {item.description && (
@@ -59,6 +61,10 @@ export function EventWorkList({
                   )}
                   <small>{milestoneTiming(workSchedule(item))}</small>
                 </button>
+                <ScheduleStatus
+                  eventId={eventId}
+                  target={{ kind: "work", item }}
+                />
               </li>
             ))}
           </ul>

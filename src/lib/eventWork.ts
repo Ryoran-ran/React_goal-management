@@ -1,6 +1,6 @@
 import type { DanceEvent, EventMilestone, EventWorkItem } from "../types";
 import { updateMilestonePlan, validateMilestones } from "./milestones";
-import { addDays } from "./dates";
+import { addDays, localDate } from "./dates";
 
 export const workStatuses = {
   not_started: "未着手",
@@ -9,9 +9,29 @@ export const workStatuses = {
 };
 export const workPriorities = { high: "高", medium: "中", low: "低" };
 
+export function withWorkStatus(
+  work: EventWorkItem,
+  status: EventWorkItem["status"],
+  today = localDate(),
+): EventWorkItem {
+  return {
+    ...work,
+    status,
+    actualStartDate:
+      status === "in_progress"
+        ? (work.actualStartDate ?? today)
+        : status === "not_started"
+          ? undefined
+          : work.actualStartDate,
+    completedDate:
+      status === "completed" ? (work.completedDate ?? today) : undefined,
+  };
+}
+
 // Common schedule calculations use the same dates and baseline rules for both kinds.
 export const workSchedule = (work: EventWorkItem): EventMilestone => ({
   ...work,
+  dueDate: work.dueDate ?? work.startDate,
   successCriteria: work.description,
   status: work.status === "completed" ? "achieved" : work.status,
 });

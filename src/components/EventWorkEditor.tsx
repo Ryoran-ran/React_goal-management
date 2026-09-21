@@ -4,7 +4,7 @@ import type { DanceEvent, EventWorkItem } from "../types";
 import { Field, SaveForm } from "./ui";
 import { DatePicker } from "./DatePicker";
 import { localDate } from "../lib/dates";
-import { workPriorities, workStatuses } from "../lib/eventWork";
+import { workPriorities, workStatuses, withWorkStatus } from "../lib/eventWork";
 import { deleteEventWork, saveEventWork } from "../data/eventWork";
 
 export function EventWorkEditor({
@@ -85,19 +85,7 @@ export function EventWorkEditor({
                 value={draft.status}
                 onChange={(e) => {
                   const status = e.target.value as EventWorkItem["status"];
-                  patch({
-                    status,
-                    actualStartDate:
-                      status === "in_progress"
-                        ? (draft.actualStartDate ?? localDate())
-                        : status === "not_started"
-                          ? undefined
-                          : draft.actualStartDate,
-                    completedDate:
-                      status === "completed"
-                        ? (draft.completedDate ?? localDate())
-                        : undefined,
-                  });
+                  setDraft(withWorkStatus(draft, status));
                 }}
               >
                 {Object.entries(workStatuses).map(([key, label]) => (
@@ -136,7 +124,7 @@ export function EventWorkEditor({
                   onChange={(date) => patch({ startDate: date || undefined })}
                 />
               </Field>
-              <Field label="期限（任意）">
+              <Field label="終了日（任意）">
                 <DatePicker
                   type="date"
                   allowClear
@@ -144,6 +132,9 @@ export function EventWorkEditor({
                   min={draft.startDate}
                   onChange={(date) => patch({ dueDate: date || undefined })}
                 />
+                <small className="muted">
+                  空欄の場合は、開始予定日と同じ日になります。
+                </small>
               </Field>
             </div>
             {exists &&

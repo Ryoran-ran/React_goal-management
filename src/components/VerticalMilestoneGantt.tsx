@@ -15,7 +15,7 @@ import {
   type GanttScale,
 } from "../lib/milestones";
 import { workOverview } from "../lib/verticalGantt";
-import { workStatuses } from "../lib/eventWork";
+import { ScheduleStatus } from "./ScheduleStatus";
 
 export function VerticalMilestoneGantt({
   event,
@@ -72,9 +72,12 @@ export function VerticalMilestoneGantt({
       children: unassigned,
       allChildren: allWork.filter((work) => !work.milestoneId),
     });
+  const visibleExpanded = expanded.filter((key) =>
+    groups.some((group) => group.key === key && group.children.length > 0),
+  );
   const columns = groups.flatMap((group) => [
     group,
-    ...(expanded.includes(group.key)
+    ...(visibleExpanded.includes(group.key)
       ? group.children.map((work): Column => ({
           key: `work:${work.id}`,
           title: work.title,
@@ -96,12 +99,14 @@ export function VerticalMilestoneGantt({
         aria-hidden="true"
       />
     ) : null;
-  const toggle = (key: string) =>
+  const toggle = (key: string) => {
+    if (!groups.find((group) => group.key === key)?.children.length) return;
     setExpanded((previous) =>
       previous.includes(key)
         ? previous.filter((value) => value !== key)
         : [...previous, key],
     );
+  };
   const period = (
     plan: MilestonePlan,
     kind: string,
@@ -127,7 +132,7 @@ export function VerticalMilestoneGantt({
   };
   return (
     <div className="vertical-gantt">
-      {expanded.length > 0 && (
+      {visibleExpanded.length > 0 && (
         <div className="vertical-gantt-actions">
           <button
             type="button"
@@ -169,7 +174,6 @@ export function VerticalMilestoneGantt({
                   >
                     <small>作業</small>
                     <strong>{column.title}</strong>
-                    <small>{workStatuses[column.work.status]}</small>
                     <small>編集する</small>
                   </button>
                 ) : (
@@ -177,18 +181,23 @@ export function VerticalMilestoneGantt({
                     <button
                       type="button"
                       className="vertical-heading-main"
-                      aria-expanded={expanded.includes(column.key)}
+                      aria-expanded={visibleExpanded.includes(column.key)}
+                      disabled={!column.children.length}
                       onClick={() => toggle(column.key)}
                     >
                       <small>{column.milestone ? "◆ 到達点" : "未分類"}</small>
                       <strong>{column.title}</strong>
                       <span>
-                        <ChevronDown
-                          size={14}
-                          className={
-                            expanded.includes(column.key) ? "is-open" : ""
-                          }
-                        />
+                        {column.children.length > 0 && (
+                          <ChevronDown
+                            size={14}
+                            className={
+                              visibleExpanded.includes(column.key)
+                                ? "is-open"
+                                : ""
+                            }
+                          />
+                        )}
                         作業 {column.children.length}件
                       </span>
                     </button>
@@ -209,6 +218,17 @@ export function VerticalMilestoneGantt({
                     )}
                   </>
                 )}
+                {column.work ? (
+                  <ScheduleStatus
+                    eventId={event.id}
+                    target={{ kind: "work", item: column.work }}
+                  />
+                ) : column.milestone ? (
+                  <ScheduleStatus
+                    eventId={event.id}
+                    target={{ kind: "milestone", item: column.milestone }}
+                  />
+                ) : null}
               </div>
             ))}
           </div>

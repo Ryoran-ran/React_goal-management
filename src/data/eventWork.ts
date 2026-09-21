@@ -13,6 +13,7 @@ export async function saveEventWork(
   reason = "",
   mustExist = false,
 ) {
+  draft = { ...draft, dueDate: draft.dueDate || draft.startDate || undefined };
   await db.transaction("rw", db.events, async () => {
     const raw = await db.events.get(eventId);
     if (!raw) throw new Error("イベントが見つかりません。");

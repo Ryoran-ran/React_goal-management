@@ -4,7 +4,6 @@ import type { DanceEvent, EventMilestone, EventWorkItem } from "../types";
 import { base } from "../data/repository";
 import { dateLabel, localDate } from "../lib/dates";
 import {
-  milestoneStatuses,
   milestoneTiming,
   sortedMilestones,
   unfinished,
@@ -15,6 +14,7 @@ import { MilestoneEditor } from "./MilestoneEditor";
 import { MilestoneGantt } from "./MilestoneGantt";
 import { EventWorkList } from "./EventWorkList";
 import { EventWorkEditor } from "./EventWorkEditor";
+import { ScheduleStatus } from "./ScheduleStatus";
 
 export function EventPreparation({
   event,
@@ -237,11 +237,15 @@ export function EventPreparation({
                               </small>
                             )}
                           </div>
-                          <span className="tag">
-                            {milestoneStatuses[item.status]}
-                          </span>
                         </button>
+                        <div className="milestone-status-row">
+                          <ScheduleStatus
+                            eventId={event.id}
+                            target={{ kind: "milestone", item }}
+                          />
+                        </div>
                         <EventWorkList
+                          eventId={event.id}
                           milestoneTitle={item.title}
                           items={visibleWork.filter(
                             (work) => work.milestoneId === item.id,
@@ -265,6 +269,7 @@ export function EventPreparation({
                           未分類の作業
                         </h3>
                         <EventWorkList
+                          eventId={event.id}
                           items={unassigned}
                           totalItems={allWork.filter(
                             (work) => !work.milestoneId,
