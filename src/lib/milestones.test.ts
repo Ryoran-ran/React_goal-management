@@ -4,6 +4,8 @@ import {
   ganttPosition,
   ganttDayStart,
   ganttRange,
+  plannedGanttRange,
+  scheduleTiming,
   ganttSegment,
   milestonePlanDelay,
   milestoneTiming,
@@ -37,6 +39,50 @@ const event = (items: EventMilestone[]): DanceEvent => ({
   milestones: items,
 });
 describe("milestone planning", () => {
+  it("uses only current plans for the simplified schedule and does not score completion timestamps", () => {
+    const item = {
+      ...milestone(),
+      baseline: { startDate: "2020-01-01", dueDate: "2020-01-02" },
+      actualStartDate: "2026-08-01",
+      completedDate: "2027-01-01",
+      status: "achieved" as const,
+    };
+    const source = event([item]);
+    expect(plannedGanttRange(source, "event", "2026-09-21")).toEqual({
+      start: "2026-09-20",
+      end: "2026-10-25",
+    });
+    source.workItems = [
+      {
+        ...base,
+        id: "work",
+        title: "練習",
+        description: "",
+        priority: "medium",
+        status: "completed",
+        startDate: "2026-09-01",
+        dueDate: "2026-09-05",
+        completedDate: "2027-02-01",
+        changes: [],
+      },
+    ];
+    expect(plannedGanttRange(source, "event", "2026-09-21")).toEqual({
+      start: "2026-09-01",
+      end: "2026-10-25",
+    });
+    expect(plannedGanttRange(source, "month", "2026-09-21")).toEqual({
+      start: "2026-09-01",
+      end: "2026-09-30",
+    });
+    expect(scheduleTiming(item, "2026-09-21")).toBe("達成");
+    expect(
+      scheduleTiming(
+        { ...item, status: "not_started", completedDate: undefined },
+        "2026-09-21",
+      ),
+    ).toBe("期限超過 1日");
+    expect(item.completedDate).toBe("2027-01-01");
+  });
   it("accepts legacy milestones and validates work items and their progress", () => {
     expect(() => validateMilestones([milestone()])).not.toThrow();
     expect(milestoneTaskProgress(milestone())).toEqual({

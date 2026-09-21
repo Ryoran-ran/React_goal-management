@@ -3,7 +3,7 @@ import type { EventWorkItem } from "../types";
 import { workProgress, workSchedule } from "../lib/eventWork";
 import { ScheduleStatus } from "./ScheduleStatus";
 import { ScheduleOrder } from "./ScheduleOrder";
-import { milestoneTiming } from "../lib/milestones";
+import { scheduleTiming } from "../lib/milestones";
 
 export function EventWorkList({
   items,
@@ -65,7 +65,11 @@ export function EventWorkList({
                     {item.description && (
                       <span className="clamp">{item.description}</span>
                     )}
-                    <small>{milestoneTiming(workSchedule(item))}</small>
+                    <small>
+                      {item.status === "completed"
+                        ? "完了"
+                        : scheduleTiming(workSchedule(item))}
+                    </small>
                   </button>
                   <div className="work-tree-actions">
                     <ScheduleStatus

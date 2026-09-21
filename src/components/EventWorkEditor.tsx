@@ -149,33 +149,39 @@ export function EventWorkEditor({
               )}
           </section>
           {draft.status !== "not_started" && (
-            <div className="form-grid">
-              <Field label="実際に始めた日（任意）">
-                <DatePicker
-                  type="date"
-                  allowClear
-                  value={draft.actualStartDate ?? ""}
-                  max={draft.completedDate ?? localDate()}
-                  onChange={(date) =>
-                    patch({ actualStartDate: date || undefined })
-                  }
-                />
-              </Field>
-              {draft.status === "completed" && (
-                <Field label="実際に完了した日（不明なら空欄）">
+            <details className="milestone-history">
+              <summary>記録日を修正（必要なときだけ）</summary>
+              <p className="muted">
+                状態を変更した日が入ります。実際の日付を残したい場合だけ修正してください。
+              </p>
+              <div className="form-grid">
+                <Field label="開始を記録した日（任意）">
                   <DatePicker
                     type="date"
                     allowClear
-                    value={draft.completedDate ?? ""}
-                    min={draft.actualStartDate}
-                    max={localDate()}
+                    value={draft.actualStartDate ?? ""}
+                    max={draft.completedDate ?? localDate()}
                     onChange={(date) =>
-                      patch({ completedDate: date || undefined })
+                      patch({ actualStartDate: date || undefined })
                     }
                   />
                 </Field>
-              )}
-            </div>
+                {draft.status === "completed" && (
+                  <Field label="完了を記録した日（任意）">
+                    <DatePicker
+                      type="date"
+                      allowClear
+                      value={draft.completedDate ?? ""}
+                      min={draft.actualStartDate}
+                      max={localDate()}
+                      onChange={(date) =>
+                        patch({ completedDate: date || undefined })
+                      }
+                    />
+                  </Field>
+                )}
+              </div>
+            </details>
           )}
           {draft.baseline && (
             <details className="milestone-history">

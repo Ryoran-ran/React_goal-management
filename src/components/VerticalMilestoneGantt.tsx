@@ -11,7 +11,7 @@ import {
   ganttDayStart,
   ganttPosition,
   ganttSegment,
-  milestoneTiming,
+  scheduleTiming,
   type GanttScale,
 } from "../lib/milestones";
 import { workOverview } from "../lib/verticalGantt";
@@ -56,6 +56,7 @@ export function VerticalMilestoneGantt({
     work?: EventWorkItem;
     children: EventWorkItem[];
     allChildren: EventWorkItem[];
+    parentTitle?: string;
   };
   const groups: Column[] = items.map((item) => ({
     key: `milestone:${item.id}`,
@@ -81,6 +82,7 @@ export function VerticalMilestoneGantt({
       ? group.children.map((work): Column => ({
           key: `work:${work.id}`,
           title: work.title,
+          parentTitle: group.title,
           work,
           children: [],
           allChildren: [],
@@ -164,7 +166,7 @@ export function VerticalMilestoneGantt({
             {columns.map((column) => (
               <div
                 key={column.key}
-                className={`vertical-column-heading ${column.work ? "is-work" : ""}`}
+                className={`vertical-column-heading ${column.work ? "is-work" : "is-group-start"}`}
               >
                 {column.work ? (
                   <button
@@ -172,7 +174,7 @@ export function VerticalMilestoneGantt({
                     onClick={() => onEditWork(column.work!)}
                     className="vertical-heading-main"
                   >
-                    <small>作業</small>
+                    <small>{column.parentTitle}の作業</small>
                     <strong>{column.title}</strong>
                     <small>編集する</small>
                   </button>
@@ -204,7 +206,7 @@ export function VerticalMilestoneGantt({
                     {column.milestone && (
                       <>
                         <small className="vertical-timing">
-                          {milestoneTiming(column.milestone, today)}
+                          {scheduleTiming(column.milestone, today)}
                         </small>
                         <button
                           type="button"
@@ -256,43 +258,14 @@ export function VerticalMilestoneGantt({
               const work = column.work;
               const overview = workOverview(column.allChildren, today);
               const planned = work ?? overview.planned;
-              const baseline =
-                work?.baseline ?? (work ? {} : overview.baseline);
-              const actual = work
-                ? {
-                    startDate: work.actualStartDate,
-                    dueDate:
-                      work.completedDate ??
-                      (work.status === "in_progress" && work.actualStartDate
-                        ? today
-                        : undefined),
-                  }
-                : overview.actual;
               const open = () => (work ? onEditWork(work) : toggle(column.key));
               const due = work?.dueDate ?? column.milestone?.dueDate;
-              const completed =
-                work?.completedDate ?? column.milestone?.completedDate;
-              const hasDates =
-                planned.startDate ||
-                planned.dueDate ||
-                baseline.startDate ||
-                baseline.dueDate ||
-                actual.startDate ||
-                actual.dueDate ||
-                due ||
-                completed;
+              const hasDates = planned.startDate || planned.dueDate || due;
               return (
                 <div
                   key={column.key}
-                  className={`vertical-gantt-column ${work ? "is-work" : ""}`}
+                  className={`vertical-gantt-column ${work ? "is-work" : "is-group-start"}`}
                 >
-                  {period(
-                    baseline,
-                    "baseline",
-                    `${column.title}・当初計画`,
-                    !work,
-                    open,
-                  )}
                   {period(
                     planned,
                     "planned",
@@ -300,14 +273,7 @@ export function VerticalMilestoneGantt({
                     !work,
                     open,
                   )}
-                  {period(
-                    actual,
-                    "actual",
-                    `${column.title}・実績`,
-                    !work,
-                    open,
-                  )}
-                  {inRange(due) && (
+                  {!work && column.milestone && inRange(due) && (
                     <button
                       type="button"
                       className="vertical-milestone-marker"
@@ -318,21 +284,7 @@ export function VerticalMilestoneGantt({
                       aria-label={`${column.title}・期限 ${due}・編集`}
                       title={`期限：${due}`}
                     >
-                      ◆<span>{work ? "期限" : "到達点"}</span>
-                    </button>
-                  )}
-                  {inRange(completed) && (
-                    <button
-                      type="button"
-                      className="vertical-completed-marker"
-                      style={{ top: `${ganttPosition(completed!, range)}%` }}
-                      onClick={() =>
-                        work ? onEditWork(work) : onEdit(column.milestone!)
-                      }
-                      aria-label={`${column.title}・完了 ${completed}・編集`}
-                      title={`完了：${completed}`}
-                    >
-                      ✓
+                      ◆<span>期限</span>
                     </button>
                   )}
                   {!hasDates && (

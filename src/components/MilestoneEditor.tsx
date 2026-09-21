@@ -172,20 +172,21 @@ export function MilestoneEditor({
             </select>
           </Field>
           {draft.status === "achieved" && (
-            <div className="form-grid">
-              {draft.status === "achieved" && (
-                <Field label="実際に達成した日">
-                  <DatePicker
-                    required
-                    type="date"
-                    value={draft.completedDate ?? ""}
-                    min={draft.actualStartDate}
-                    max={localDate()}
-                    onChange={(value) => patch({ completedDate: value })}
-                  />
-                </Field>
-              )}
-            </div>
+            <details className="milestone-history">
+              <summary>達成の記録日を修正（必要なときだけ）</summary>
+              <p className="muted">
+                達成に変更した日が入ります。実際に達成した日を残したい場合だけ修正してください。
+              </p>
+              <Field label="達成を記録した日">
+                <DatePicker
+                  type="date"
+                  value={draft.completedDate ?? ""}
+                  min={draft.actualStartDate}
+                  max={localDate()}
+                  onChange={(value) => patch({ completedDate: value })}
+                />
+              </Field>
+            </details>
           )}
           {(draft.baseline || draft.changes.length > 0) && (
             <details className="milestone-history">

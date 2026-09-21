@@ -45,6 +45,12 @@ export function milestoneTiming(item: EventMilestone, today = localDate()) {
       ? "今日が期限"
       : `あと${days}日`;
 }
+// Completion timestamps may be the day the user updated the status, not the day of practice.
+export function scheduleTiming(item: EventMilestone, today = localDate()) {
+  if (item.status === "achieved") return "達成";
+  if (item.status === "skipped") return "見送り";
+  return milestoneTiming(item, today);
+}
 export const milestonePlan = (item: MilestonePlan): MilestonePlan => ({
   ...(item.startDate ? { startDate: item.startDate } : {}),
   ...(item.dueDate ? { dueDate: item.dueDate } : {}),
@@ -185,6 +191,24 @@ export function validateMilestones(
 }
 
 export type GanttScale = "week" | "month" | "event";
+export function plannedGanttRange(
+  event: DanceEvent,
+  scale: GanttScale,
+  anchor: string,
+) {
+  if (scale !== "event") return ganttRange(event, scale, anchor);
+  const dates = [
+    event.date,
+    ...(event.milestones ?? []).map((item) => item.dueDate),
+    ...(event.workItems ?? []).flatMap((item) => [
+      item.startDate,
+      item.dueDate,
+    ]),
+  ]
+    .filter((date): date is string => !!date)
+    .sort();
+  return { start: dates[0], end: dates.at(-1)! };
+}
 export function ganttRange(
   event: DanceEvent,
   scale: GanttScale,

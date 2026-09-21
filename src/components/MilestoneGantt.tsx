@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { VerticalMilestoneGantt } from "./VerticalMilestoneGantt";
 import { ScheduleStatus } from "./ScheduleStatus";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import type { DanceEvent, EventMilestone, EventWorkItem } from "../types";
 import { workProgress, workSchedule } from "../lib/eventWork";
 import { addDays, daysUntil, localDate } from "../lib/dates";
@@ -9,10 +9,9 @@ import { shiftCalendarMonth } from "../lib/calendar";
 import {
   ganttPosition,
   ganttDayStart,
-  ganttRange,
+  plannedGanttRange,
   ganttSegment,
-  milestoneTiming,
-  milestonePlanDelay,
+  scheduleTiming,
   type GanttScale,
 } from "../lib/milestones";
 
@@ -38,6 +37,7 @@ export function MilestoneGantt({
   onAnchor: (date: string) => void;
 }) {
   const [optionsOpen, setOptionsOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState<string[]>([]);
   const optionsId = useId();
   const [mobile, setMobile] = useState(
     () => window.matchMedia("(max-width: 760px)").matches,
@@ -52,28 +52,50 @@ export function MilestoneGantt({
     return () => media.removeEventListener("change", update);
   }, []);
   const today = localDate();
-  const workRow = (work: EventWorkItem) => ({
+  const workRow = (
+    work: EventWorkItem,
+    groupEnd: boolean,
+    parentTitle: string,
+  ) => ({
     item: workSchedule(work),
     key: `work:${work.id}`,
     isWork: true,
+    groupEnd,
+    parentTitle,
+    childCount: 0,
     statusTarget: { kind: "work" as const, item: work },
     open: () => onEditWork(work),
   });
   const rows = [
-    ...items.flatMap((item) => [
-      {
-        item,
-        key: `milestone:${item.id}`,
-        isWork: false,
-        statusTarget: { kind: "milestone" as const, item },
-        open: () => onEdit(item),
-      },
-      ...workItems.filter((work) => work.milestoneId === item.id).map(workRow),
-    ]),
-    ...workItems.filter((work) => !work.milestoneId).map(workRow),
+    ...items.flatMap((item) => {
+      const children = workItems.filter((work) => work.milestoneId === item.id);
+      const isCollapsed = collapsed.includes(item.id);
+      return [
+        {
+          item,
+          key: `milestone:${item.id}`,
+          isWork: false,
+          groupEnd: isCollapsed || children.length === 0,
+          parentTitle: "",
+          childCount: children.length,
+          statusTarget: { kind: "milestone" as const, item },
+          open: () => onEdit(item),
+        },
+        ...(isCollapsed
+          ? []
+          : children.map((work, index) =>
+              workRow(work, index === children.length - 1, item.title),
+            )),
+      ];
+    }),
+    ...workItems
+      .filter((work) => !work.milestoneId)
+      .map((work, index, array) =>
+        workRow(work, index === array.length - 1, "未分類"),
+      ),
   ];
   const scroller = useRef<HTMLDivElement>(null);
-  const range = ganttRange(event, scale, anchor);
+  const range = plannedGanttRange(event, scale, anchor);
   const count = daysUntil(range.end, range.start) + 1;
   const width = Math.max(
     420,
@@ -231,10 +253,8 @@ export function MilestoneGantt({
           </div>
           <h3>グラフの見方</h3>
           <div className="gantt-legend">
-            <span className="baseline">当初計画</span>
-            <span className="planned">現在の計画</span>
-            <span className="actual">実績（開始〜達成）</span>
-            <span>◆ 到達点・期限　━ 作業期間</span>
+            <span>◆ マイルストーンの期限</span>
+            <span className="planned">▬ 作業の予定期間</span>
             <span className="today">
               赤線：今日の{vertical ? "中央" : "左端"}
             </span>
@@ -245,7 +265,7 @@ export function MilestoneGantt({
           <p className="muted gantt-hint">
             {vertical
               ? "日付は縦、マイルストーンは横に並びます。見出しをタップすると関連作業を展開できます。上下・左右にスクロールできます。"
-              : "日付部分は横にスクロールできます。項目名から編集できます。"}
+              : "マイルストーンと配下の作業を枠でまとめています。矢印で作業を開閉し、項目名から編集できます。"}
           </p>
           {vertical && (
             <p className="muted gantt-hint">
@@ -306,135 +326,136 @@ export function MilestoneGantt({
                 {line(today, "today")}
               </div>
             </div>
-            {rows.map(({ item, key, isWork, open, statusTarget }) => (
-              <div
-                className={`gantt-grid-row ${isWork ? "gantt-work-row" : "gantt-milestone-row"} ${item.status === "skipped" ? "is-skipped" : ""}`}
-                key={key}
-              >
-                <div className="gantt-label">
-                  <button
-                    type="button"
-                    className="gantt-item-edit"
-                    onClick={open}
-                    title={item.title}
-                  >
-                    <strong>
-                      {isWork ? "作業：" : "◆ "}
-                      {item.title}
-                    </strong>
-                    {!isWork &&
-                      workProgress(
-                        (event.workItems ?? []).filter(
-                          (work) => work.milestoneId === item.id,
-                        ),
-                      ).total > 0 && (
-                        <small>
-                          作業{" "}
-                          {
-                            workProgress(
-                              (event.workItems ?? []).filter(
-                                (work) => work.milestoneId === item.id,
-                              ),
-                            ).completed
-                          }{" "}
-                          /{" "}
-                          {
-                            workProgress(
-                              (event.workItems ?? []).filter(
-                                (work) => work.milestoneId === item.id,
-                              ),
-                            ).total
-                          }{" "}
-                          完了
+            {rows.map(
+              ({
+                item,
+                key,
+                isWork,
+                open,
+                statusTarget,
+                groupEnd,
+                parentTitle,
+                childCount,
+              }) => (
+                <div
+                  className={`gantt-grid-row ${isWork ? "gantt-work-row" : "gantt-milestone-row"} ${groupEnd ? "gantt-group-end" : ""} ${item.status === "skipped" ? "is-skipped" : ""}`}
+                  key={key}
+                >
+                  <div className="gantt-label">
+                    {!isWork && childCount > 0 && (
+                      <button
+                        type="button"
+                        className="text-button gantt-group-toggle"
+                        aria-expanded={!collapsed.includes(item.id)}
+                        aria-label={`${item.title}の作業を${collapsed.includes(item.id) ? "開く" : "たたむ"}`}
+                        onClick={() =>
+                          setCollapsed((current) =>
+                            current.includes(item.id)
+                              ? current.filter((id) => id !== item.id)
+                              : [...current, item.id],
+                          )
+                        }
+                      >
+                        <ChevronDown
+                          size={14}
+                          className={
+                            collapsed.includes(item.id) ? "is-closed" : ""
+                          }
+                        />
+                        作業 {childCount}件
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="gantt-item-edit"
+                      onClick={open}
+                      title={item.title}
+                    >
+                      <strong>
+                        {isWork ? "↳ " : "◆ "}
+                        {item.title}
+                      </strong>
+                      {isWork && (
+                        <small className="gantt-parent-name">
+                          {parentTitle}の作業
                         </small>
                       )}
-                    {milestonePlanDelay(item) > 0 && (
-                      <small className="overdue">
-                        当初より{milestonePlanDelay(item)}日後ろ
+                      {!isWork &&
+                        workProgress(
+                          (event.workItems ?? []).filter(
+                            (work) => work.milestoneId === item.id,
+                          ),
+                        ).total > 0 && (
+                          <small>
+                            作業{" "}
+                            {
+                              workProgress(
+                                (event.workItems ?? []).filter(
+                                  (work) => work.milestoneId === item.id,
+                                ),
+                              ).completed
+                            }{" "}
+                            /{" "}
+                            {
+                              workProgress(
+                                (event.workItems ?? []).filter(
+                                  (work) => work.milestoneId === item.id,
+                                ),
+                              ).total
+                            }{" "}
+                            完了
+                          </small>
+                        )}
+                      <small
+                        className={
+                          item.dueDate &&
+                          item.dueDate < today &&
+                          item.status !== "achieved" &&
+                          item.status !== "skipped"
+                            ? "overdue"
+                            : ""
+                        }
+                      >
+                        {isWork && item.status === "achieved"
+                          ? "完了"
+                          : scheduleTiming(item, today)}
                       </small>
+                    </button>
+                    <ScheduleStatus eventId={event.id} target={statusTarget} />
+                  </div>
+                  <div className="gantt-track">
+                    {line(event.date, "event")}
+                    {line(today, "today")}
+                    {isWork &&
+                      bar(
+                        item,
+                        item.startDate ?? item.dueDate,
+                        item.dueDate ?? item.startDate,
+                        "planned",
+                        "予定",
+                        open,
+                      )}
+                    {!isWork && inRange(item.dueDate) && (
+                      <button
+                        type="button"
+                        className="gantt-deadline"
+                        style={{
+                          left: `${ganttPosition(item.dueDate!, range)}%`,
+                        }}
+                        onClick={open}
+                        aria-label={`${item.title}の期限 ${item.dueDate}・編集`}
+                        title={`期限：${item.dueDate}`}
+                      >
+                        ◆
+                      </button>
                     )}
-                    <small
-                      className={
-                        item.dueDate &&
-                        item.dueDate < today &&
-                        item.status !== "achieved" &&
-                        item.status !== "skipped"
-                          ? "overdue"
-                          : ""
-                      }
-                    >
-                      {milestoneTiming(item, today)}
-                    </small>
-                  </button>
-                  <ScheduleStatus eventId={event.id} target={statusTarget} />
-                </div>
-                <div className="gantt-track">
-                  {line(event.date, "event")}
-                  {line(today, "today")}
-                  {bar(
-                    item,
-                    isWork ? item.baseline?.startDate : undefined,
-                    item.baseline?.dueDate,
-                    "baseline",
-                    "当初",
-                    open,
-                  )}
-                  {bar(
-                    item,
-                    isWork ? item.startDate : undefined,
-                    item.dueDate,
-                    "planned",
-                    "計画",
-                    open,
-                  )}
-                  {bar(
-                    item,
-                    isWork ? item.actualStartDate : undefined,
-                    item.completedDate ??
-                      (isWork &&
-                      item.status === "in_progress" &&
-                      item.actualStartDate
-                        ? today
-                        : undefined),
-                    "actual",
-                    item.completedDate
-                      ? "達成"
-                      : item.status === "in_progress"
-                        ? "実施中"
-                        : "開始",
-                    open,
-                  )}
-                  {inRange(item.dueDate) && (
-                    <span
-                      className="gantt-diamond planned"
-                      style={{
-                        left: `${ganttPosition(item.dueDate!, range)}%`,
-                      }}
-                      aria-hidden="true"
-                    >
-                      ◆
-                    </span>
-                  )}
-                  {inRange(item.completedDate) && (
-                    <span
-                      className="gantt-diamond actual"
-                      style={{
-                        left: `${ganttPosition(item.completedDate!, range)}%`,
-                      }}
-                      aria-hidden="true"
-                    >
-                      ◆
-                    </span>
-                  )}
-                  {(!isWork || !item.startDate) &&
-                    !item.dueDate &&
-                    (!isWork || !item.actualStartDate) &&
-                    !item.completedDate && (
+                    {!item.dueDate && (!isWork || !item.startDate) && (
                       <span className="gantt-unscheduled">日付未設定</span>
                     )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ),
+            )}
           </div>
         </div>
       )}

@@ -3320,6 +3320,43 @@ button p {
 .gantt-grid-row.is-skipped .gantt-track {
   opacity: 0.5;
 }
+.gantt-milestone-row {
+  border-top: 2px solid #9cb9af;
+}
+.gantt-milestone-row > .gantt-track {
+  background-color: #edf4f1;
+}
+.gantt-work-row > .gantt-label {
+  padding-left: 26px;
+  border-left: 3px solid #b9d0c7;
+}
+.gantt-work-row > .gantt-track {
+  background-color: #fbfdfc;
+}
+.gantt-group-end {
+  border-bottom: 2px solid #9cb9af;
+}
+.gantt-group-toggle {
+  font-size: 0.75rem;
+  min-height: 36px;
+}
+.gantt-group-toggle .is-closed {
+  transform: rotate(-90deg);
+}
+.gantt-parent-name {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.gantt-deadline {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 0;
+  min-width: 32px;
+  min-height: 44px;
+  font-size: 22px;
+  color: var(--teal);
+}
 .gantt-track {
   position: relative;
   min-height: 100%;
@@ -3374,7 +3411,8 @@ button p {
   border: 1px dashed #7d8b98;
 }
 .gantt-bar.planned {
-  top: 46px;
+  top: 50%;
+  transform: translateY(-50%);
   background: #27786c;
 }
 .gantt-bar.actual {
@@ -3486,6 +3524,14 @@ button p {
 .vertical-column-heading.is-work {
   background: #fff;
 }
+.vertical-column-heading.is-group-start,
+.vertical-gantt-column.is-group-start {
+  border-left: 3px solid #9cb9af;
+  background-color: #edf4f1;
+}
+.vertical-heading-main > small {
+  overflow-wrap: anywhere;
+}
 .vertical-heading-main {
   display: flex;
   flex-direction: column;
@@ -3589,7 +3635,8 @@ button p {
   border: 1px dashed #7d8b98;
 }
 .vertical-period.planned {
-  left: 41%;
+  left: 35%;
+  width: 30%;
   background: #27786c;
 }
 .vertical-period.actual {

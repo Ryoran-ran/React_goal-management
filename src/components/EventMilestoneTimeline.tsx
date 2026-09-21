@@ -3,8 +3,7 @@ import { ChevronDown, Flag, Pencil } from "lucide-react";
 import type { DanceEvent, EventMilestone, EventWorkItem } from "../types";
 import { dateLabel, localDate } from "../lib/dates";
 import {
-  milestoneTiming,
-  milestonePlanDelay,
+  scheduleTiming,
   sortedMilestones,
   unfinished,
 } from "../lib/milestones";
@@ -140,9 +139,7 @@ export function EventMilestoneTimeline({
                       : "muted"
                   }
                 >
-                  {milestoneTiming(item)}
-                  {milestonePlanDelay(item) > 0 &&
-                    ` · 当初より${milestonePlanDelay(item)}日後ろ`}
+                  {scheduleTiming(item)}
                 </small>
                 <ScheduleOrder
                   eventId={event.id}
