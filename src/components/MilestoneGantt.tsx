@@ -26,8 +26,6 @@ export function MilestoneGantt({
   onScale,
   anchor,
   onAnchor,
-  showFinished,
-  onShowFinished,
 }: {
   event: DanceEvent;
   items: EventMilestone[];
@@ -38,8 +36,6 @@ export function MilestoneGantt({
   onScale: (scale: GanttScale) => void;
   anchor: string;
   onAnchor: (date: string) => void;
-  showFinished: boolean;
-  onShowFinished: (value: boolean) => void;
 }) {
   const [optionsOpen, setOptionsOpen] = useState(false);
   const optionsId = useId();
@@ -211,7 +207,7 @@ export function MilestoneGantt({
           aria-controls={optionsId}
           onClick={() => setOptionsOpen(!optionsOpen)}
         >
-          表示設定{showFinished ? "・完了を含む" : ""}
+          表示設定
           {optionsOpen ? " ▴" : " ▾"}
         </button>
         <div
@@ -231,14 +227,6 @@ export function MilestoneGantt({
                 <option value="vertical">縦</option>
                 <option value="horizontal">横</option>
               </select>
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={showFinished}
-                onChange={(e) => onShowFinished(e.target.checked)}
-              />
-              達成・完了・見送りも表示
             </label>
           </div>
           <h3>グラフの見方</h3>

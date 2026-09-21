@@ -3,11 +3,7 @@ import { ArrowLeft, Plus, Pencil } from "lucide-react";
 import type { DanceEvent, EventMilestone, EventWorkItem } from "../types";
 import { base } from "../data/repository";
 import { dateLabel, localDate } from "../lib/dates";
-import {
-  sortedMilestones,
-  unfinished,
-  type GanttScale,
-} from "../lib/milestones";
+import { sortedMilestones, type GanttScale } from "../lib/milestones";
 import { MilestoneEditor } from "./MilestoneEditor";
 import { MilestoneGantt } from "./MilestoneGantt";
 import { EventMilestoneTimeline } from "./EventMilestoneTimeline";
@@ -26,21 +22,10 @@ export function EventPreparation({
   const [view, setView] = useState("list");
   const [scale, setScale] = useState<GanttScale>("event");
   const [anchor, setAnchor] = useState(localDate);
-  const [showFinished, setShowFinished] = useState(false);
   const [editing, setEditing] = useState<EventMilestone>();
   const [editingWork, setEditingWork] = useState<EventWorkItem>();
   const all = sortedMilestones(event.milestones ?? []);
   const allWork = sortedEventWork(event.workItems ?? []);
-  const visibleWork = allWork.filter(
-    (item) => showFinished || item.status !== "completed",
-  );
-  const items = all.filter(
-    (item) =>
-      showFinished ||
-      unfinished(item) ||
-      visibleWork.some((work) => work.milestoneId === item.id),
-  );
-  const unassigned = visibleWork.filter((item) => !item.milestoneId);
   const openWork = (item: EventWorkItem) => {
     setEditingWork(item);
     window.scrollTo({ top: 0 });
@@ -135,43 +120,25 @@ export function EventPreparation({
             </button>
           </div>
         </div>
-        {(view !== "gantt" || (!items.length && !unassigned.length)) && (
-          <div className="milestone-summary">
-            <label>
-              <input
-                type="checkbox"
-                checked={showFinished}
-                onChange={(e) => setShowFinished(e.target.checked)}
-              />
-              達成・完了・見送りも表示
-            </label>
-          </div>
-        )}
         {!all.length && !allWork.length ? (
           <p className="empty">大会までに準備したい到達点を追加しましょう。</p>
-        ) : !items.length && !unassigned.length ? (
-          <p className="empty">
-            未達成のマイルストーン・未完了の作業はありません。
-          </p>
         ) : view === "gantt" ? (
           <MilestoneGantt
             event={event}
-            items={items}
+            items={all}
             onEdit={open}
-            workItems={visibleWork}
+            workItems={allWork}
             onEditWork={openWork}
             scale={scale}
             onScale={setScale}
             anchor={anchor}
             onAnchor={setAnchor}
-            showFinished={showFinished}
-            onShowFinished={setShowFinished}
           />
         ) : (
           <EventMilestoneTimeline
             event={event}
-            items={items}
-            workItems={visibleWork}
+            items={all}
+            workItems={allWork}
             onEdit={open}
             onEditWork={openWork}
             onAddWork={addWork}
