@@ -14,6 +14,7 @@ export interface DanceEvent extends Base {
   status: "planned" | "active" | "completed" | "cancelled";
   goalIds: string[];
   milestones?: EventMilestone[];
+  workItems?: EventWorkItem[];
 }
 export interface MilestonePlan {
   startDate?: string;
@@ -24,6 +25,17 @@ export interface MilestoneTask {
   title: string;
   completed: boolean;
 }
+export interface EventWorkItem extends Base, MilestonePlan {
+  milestoneId?: string;
+  title: string;
+  description: string;
+  priority: Priority;
+  status: "not_started" | "in_progress" | "completed";
+  actualStartDate?: string;
+  completedDate?: string;
+  baseline?: MilestonePlan;
+  changes: EventMilestone["changes"];
+}
 export interface EventMilestone extends Base, MilestonePlan {
   title: string;
   successCriteria: string;
@@ -31,6 +43,7 @@ export interface EventMilestone extends Base, MilestonePlan {
   actualStartDate?: string;
   completedDate?: string;
   baseline?: MilestonePlan;
+  /** Legacy checklist, converted to event.workItems on startup/import. */
   tasks?: MilestoneTask[];
   changes: {
     changedAt: string;

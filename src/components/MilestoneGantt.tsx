@@ -1,6 +1,7 @@
 import { useEffect, useRef, type CSSProperties } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import type { DanceEvent, EventMilestone } from "../types";
+import type { DanceEvent, EventMilestone, EventWorkItem } from "../types";
+import { workProgress, workSchedule } from "../lib/eventWork";
 import { addDays, daysUntil, localDate } from "../lib/dates";
 import { shiftCalendarMonth } from "../lib/calendar";
 import {
@@ -10,7 +11,6 @@ import {
   milestoneStatuses,
   milestoneTiming,
   milestonePlanDelay,
-  milestoneTaskProgress,
   type GanttScale,
 } from "../lib/milestones";
 
@@ -18,6 +18,8 @@ export function MilestoneGantt({
   event,
   items,
   onEdit,
+  workItems,
+  onEditWork,
   scale,
   onScale,
   anchor,
@@ -26,12 +28,32 @@ export function MilestoneGantt({
   event: DanceEvent;
   items: EventMilestone[];
   onEdit: (item: EventMilestone) => void;
+  workItems: EventWorkItem[];
+  onEditWork: (item: EventWorkItem) => void;
   scale: GanttScale;
   onScale: (scale: GanttScale) => void;
   anchor: string;
   onAnchor: (date: string) => void;
 }) {
   const today = localDate();
+  const workRow = (work: EventWorkItem) => ({
+    item: workSchedule(work),
+    key: `work:${work.id}`,
+    isWork: true,
+    open: () => onEditWork(work),
+  });
+  const rows = [
+    ...items.flatMap((item) => [
+      {
+        item,
+        key: `milestone:${item.id}`,
+        isWork: false,
+        open: () => onEdit(item),
+      },
+      ...workItems.filter((work) => work.milestoneId === item.id).map(workRow),
+    ]),
+    ...workItems.filter((work) => !work.milestoneId).map(workRow),
+  ];
   const scroller = useRef<HTMLDivElement>(null);
   const range = ganttRange(event, scale, anchor);
   const count = daysUntil(range.end, range.start) + 1;
@@ -76,6 +98,7 @@ export function MilestoneGantt({
     end: string | undefined,
     kind: string,
     label: string,
+    onOpen: () => void,
   ) => {
     if (!end && !start) return null;
     const first = start ?? end!,
@@ -95,7 +118,7 @@ export function MilestoneGantt({
               }
             : position
         }
-        onClick={() => onEdit(item)}
+        onClick={onOpen}
         title={`${label}：${first}〜${last}`}
         aria-label={`${item.title}、${label}：${first}〜${last}、編集する`}
       >
@@ -152,7 +175,7 @@ export function MilestoneGantt({
         <span className="baseline">当初計画</span>
         <span className="planned">現在の計画</span>
         <span className="actual">実績（開始〜達成）</span>
-        <span>◆ 期限・達成日</span>
+        <span>◆ 到達点・期限　━ 作業期間</span>
         <span className="today">赤線：今日</span>
         <span className="event">紫線：開催日</span>
       </div>
@@ -186,25 +209,48 @@ export function MilestoneGantt({
               {line(today, "today")}
             </div>
           </div>
-          {items.map((item) => (
+          {rows.map(({ item, key, isWork, open }) => (
             <div
-              className={`gantt-grid-row ${item.status === "skipped" ? "is-skipped" : ""}`}
-              key={item.id}
+              className={`gantt-grid-row ${isWork ? "gantt-work-row" : "gantt-milestone-row"} ${item.status === "skipped" ? "is-skipped" : ""}`}
+              key={key}
             >
               <button
                 type="button"
                 className="gantt-label"
-                onClick={() => onEdit(item)}
+                onClick={open}
                 title={item.title}
               >
-                <strong>{item.title}</strong>
+                <strong>
+                  {isWork ? "作業：" : "◆ "}
+                  {item.title}
+                </strong>
                 <small>{milestoneStatuses[item.status]}</small>
-                {milestoneTaskProgress(item).total > 0 && (
-                  <small>
-                    作業 {milestoneTaskProgress(item).completed} /{" "}
-                    {milestoneTaskProgress(item).total} 完了
-                  </small>
-                )}
+                {!isWork &&
+                  workProgress(
+                    (event.workItems ?? []).filter(
+                      (work) => work.milestoneId === item.id,
+                    ),
+                  ).total > 0 && (
+                    <small>
+                      作業{" "}
+                      {
+                        workProgress(
+                          (event.workItems ?? []).filter(
+                            (work) => work.milestoneId === item.id,
+                          ),
+                        ).completed
+                      }{" "}
+                      /{" "}
+                      {
+                        workProgress(
+                          (event.workItems ?? []).filter(
+                            (work) => work.milestoneId === item.id,
+                          ),
+                        ).total
+                      }{" "}
+                      完了
+                    </small>
+                  )}
                 {milestonePlanDelay(item) > 0 && (
                   <small className="overdue">
                     当初より{milestonePlanDelay(item)}日後ろ
@@ -235,17 +281,27 @@ export function MilestoneGantt({
                 {line(today, "today")}
                 {bar(
                   item,
-                  item.baseline?.startDate,
+                  isWork ? item.baseline?.startDate : undefined,
                   item.baseline?.dueDate,
                   "baseline",
                   "当初",
+                  open,
                 )}
-                {bar(item, item.startDate, item.dueDate, "planned", "計画")}
                 {bar(
                   item,
-                  item.actualStartDate,
+                  isWork ? item.startDate : undefined,
+                  item.dueDate,
+                  "planned",
+                  "計画",
+                  open,
+                )}
+                {bar(
+                  item,
+                  isWork ? item.actualStartDate : undefined,
                   item.completedDate ??
-                    (item.status === "in_progress" && item.actualStartDate
+                    (isWork &&
+                    item.status === "in_progress" &&
+                    item.actualStartDate
                       ? today
                       : undefined),
                   "actual",
@@ -254,6 +310,7 @@ export function MilestoneGantt({
                     : item.status === "in_progress"
                       ? "実施中"
                       : "開始",
+                  open,
                 )}
                 {inRange(item.dueDate) && (
                   <span
@@ -275,9 +332,9 @@ export function MilestoneGantt({
                     ◆
                   </span>
                 )}
-                {!item.startDate &&
+                {(!isWork || !item.startDate) &&
                   !item.dueDate &&
-                  !item.actualStartDate &&
+                  (!isWork || !item.actualStartDate) &&
                   !item.completedDate && (
                     <span className="gantt-unscheduled">日付未設定</span>
                   )}

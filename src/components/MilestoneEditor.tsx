@@ -9,7 +9,6 @@ import {
 } from "../data/eventMilestones";
 import { DatePicker } from "./DatePicker";
 import { Field, SaveForm } from "./ui";
-import { MilestoneTasksEditor } from "./MilestoneTasks";
 
 export function MilestoneEditor({
   event,
@@ -64,7 +63,7 @@ export function MilestoneEditor({
                 }
               : undefined
           }
-          deleteConfirmation="このマイルストーンと配下の作業・計画変更の履歴を削除しますか？レッスンや練習記録は残ります。"
+          deleteConfirmation="このマイルストーンを削除しますか？関連する作業は「未分類」に移し、予定・実績を残します。"
         >
           <Field label="到達点">
             <input
@@ -82,20 +81,10 @@ export function MilestoneEditor({
               placeholder="例：見本を見ず、最後まで順番を再現できる"
             />
           </Field>
-          <MilestoneTasksEditor
-            tasks={draft.tasks ?? []}
-            onChange={(tasks) => patch({ tasks })}
-          />
-          <div className="form-grid">
-            <Field label="開始予定日（任意）">
-              <DatePicker
-                type="date"
-                allowClear
-                value={draft.startDate ?? ""}
-                max={draft.dueDate}
-                onChange={(value) => patch({ startDate: value || undefined })}
-              />
-            </Field>
+          <p className="muted milestone-definition">
+            ここでは到達点と期限を設定します。具体的な作業と予定期間は、一覧の「作業を追加」から登録できます。
+          </p>
+          <div>
             <Field label="期限の指定方法">
               <select
                 value={dueMode}
@@ -112,7 +101,6 @@ export function MilestoneEditor({
                 type="date"
                 allowClear
                 value={draft.dueDate ?? ""}
-                min={draft.startDate}
                 onChange={(value) => {
                   patch({ dueDate: value || undefined });
                   setDaysBefore(
@@ -173,12 +161,6 @@ export function MilestoneEditor({
                     status === "achieved"
                       ? (draft.completedDate ?? localDate())
                       : undefined,
-                  actualStartDate:
-                    status === "in_progress"
-                      ? (draft.actualStartDate ?? localDate())
-                      : status === "not_started"
-                        ? undefined
-                        : draft.actualStartDate,
                 });
               }}
             >
@@ -189,19 +171,8 @@ export function MilestoneEditor({
               ))}
             </select>
           </Field>
-          {(draft.status !== "not_started" || draft.actualStartDate) && (
+          {draft.status === "achieved" && (
             <div className="form-grid">
-              <Field label="実際に始めた日（任意）">
-                <DatePicker
-                  type="date"
-                  allowClear
-                  value={draft.actualStartDate ?? ""}
-                  max={draft.completedDate ?? localDate()}
-                  onChange={(value) =>
-                    patch({ actualStartDate: value || undefined })
-                  }
-                />
-              </Field>
               {draft.status === "achieved" && (
                 <Field label="実際に達成した日">
                   <DatePicker
@@ -235,6 +206,31 @@ export function MilestoneEditor({
                   {change.reason && <p>{change.reason}</p>}
                 </div>
               ))}
+            </details>
+          )}
+          {(draft.startDate || draft.actualStartDate) && (
+            <details className="milestone-history">
+              <summary>以前に登録した開始日</summary>
+              <Field label="以前の開始予定日（不要なら解除）">
+                <DatePicker
+                  type="date"
+                  allowClear
+                  value={draft.startDate ?? ""}
+                  max={draft.dueDate}
+                  onChange={(date) => patch({ startDate: date || undefined })}
+                />
+              </Field>
+              <Field label="以前の実際に始めた日（不要なら解除）">
+                <DatePicker
+                  type="date"
+                  allowClear
+                  value={draft.actualStartDate ?? ""}
+                  max={draft.completedDate ?? localDate()}
+                  onChange={(date) =>
+                    patch({ actualStartDate: date || undefined })
+                  }
+                />
+              </Field>
             </details>
           )}
         </SaveForm>

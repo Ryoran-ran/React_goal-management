@@ -28,6 +28,7 @@ export const milestonePlanDelay = (item: EventMilestone) =>
     : 0;
 export function milestoneTiming(item: EventMilestone, today = localDate()) {
   if (item.status === "skipped") return "見送り";
+  if (item.status === "achieved" && !item.completedDate) return "完了日未記録";
   if (!item.dueDate) return "期限未設定";
   if (item.status === "achieved") {
     const late = item.completedDate
@@ -191,7 +192,7 @@ export function ganttRange(
   if (scale === "month") return monthRange(anchor.slice(0, 7));
   const dates = [
     event.date,
-    ...(event.milestones ?? [])
+    ...[...(event.milestones ?? []), ...(event.workItems ?? [])]
       .flatMap((item) => [
         item.startDate,
         item.dueDate,

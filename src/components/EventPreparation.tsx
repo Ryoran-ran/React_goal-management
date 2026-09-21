@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ArrowLeft, Plus, Pencil, ChevronRight, Flag } from "lucide-react";
-import type { DanceEvent, EventMilestone } from "../types";
+import type { DanceEvent, EventMilestone, EventWorkItem } from "../types";
 import { base } from "../data/repository";
 import { dateLabel, localDate } from "../lib/dates";
 import {
@@ -13,7 +13,8 @@ import {
 } from "../lib/milestones";
 import { MilestoneEditor } from "./MilestoneEditor";
 import { MilestoneGantt } from "./MilestoneGantt";
-import { MilestoneTasks } from "./MilestoneTasks";
+import { EventWorkList } from "./EventWorkList";
+import { EventWorkEditor } from "./EventWorkEditor";
 
 export function EventPreparation({
   event,
@@ -29,8 +30,46 @@ export function EventPreparation({
   const [anchor, setAnchor] = useState(localDate);
   const [showFinished, setShowFinished] = useState(false);
   const [editing, setEditing] = useState<EventMilestone>();
+  const [editingWork, setEditingWork] = useState<EventWorkItem>();
   const all = sortedMilestones(event.milestones ?? []);
-  const items = all.filter((item) => showFinished || unfinished(item));
+  const allWork = event.workItems ?? [];
+  const visibleWork = allWork.filter(
+    (item) => showFinished || item.status !== "completed",
+  );
+  const items = all.filter(
+    (item) =>
+      showFinished ||
+      unfinished(item) ||
+      visibleWork.some((work) => work.milestoneId === item.id),
+  );
+  const unassigned = visibleWork.filter((item) => !item.milestoneId);
+  const openWork = (item: EventWorkItem) => {
+    setEditingWork(item);
+    window.scrollTo({ top: 0 });
+  };
+  const addWork = (milestoneId?: string) =>
+    openWork({
+      ...base(),
+      milestoneId,
+      title: "",
+      description: "",
+      priority: "medium",
+      status: "not_started",
+      changes: [],
+    });
+  if (editingWork)
+    return (
+      <EventWorkEditor
+        key={editingWork.id}
+        event={event}
+        value={editingWork}
+        onClose={() => {
+          setEditingWork(undefined);
+          window.scrollTo({ top: 0 });
+        }}
+        onNext={addWork}
+      />
+    );
   const open = (item: EventMilestone) => {
     setEditing(item);
     window.scrollTo({ top: 0 });
@@ -103,18 +142,22 @@ export function EventPreparation({
               checked={showFinished}
               onChange={(e) => setShowFinished(e.target.checked)}
             />
-            達成・見送りも表示
+            達成・完了・見送りも表示
           </label>
         </div>
-        {!all.length ? (
+        {!all.length && !allWork.length ? (
           <p className="empty">大会までに準備したい到達点を追加しましょう。</p>
-        ) : !items.length ? (
-          <p className="empty">未達成のマイルストーンはありません。</p>
+        ) : !items.length && !unassigned.length ? (
+          <p className="empty">
+            未達成のマイルストーン・未完了の作業はありません。
+          </p>
         ) : view === "gantt" ? (
           <MilestoneGantt
             event={event}
             items={items}
             onEdit={open}
+            workItems={visibleWork}
+            onEditWork={openWork}
             scale={scale}
             onScale={setScale}
             anchor={anchor}
@@ -134,7 +177,9 @@ export function EventPreparation({
                   <span className="milestone-tree-event-name">
                     {event.title}
                   </span>
-                  <span className="milestone-tree-count">{items.length}件</span>
+                  <span className="milestone-tree-count">
+                    節目 {items.length} · 作業 {visibleWork.length}
+                  </span>
                 </summary>
                 <ul
                   className="milestone-list"
@@ -154,9 +199,7 @@ export function EventPreparation({
                         <div>
                           <strong>{item.title}</strong>
                           <p>
-                            {item.startDate
-                              ? `${item.startDate.replaceAll("-", "/")}〜`
-                              : "期限："}
+                            期限：
                             {item.dueDate?.replaceAll("-", "/") ?? "未設定"}
                           </p>
                           {item.successCriteria && (
@@ -184,34 +227,60 @@ export function EventPreparation({
                           {milestoneStatuses[item.status]}
                         </span>
                       </button>
-                      <MilestoneTasks
-                        eventId={event.id}
-                        milestone={item}
-                        onEdit={() => open(item)}
+                      <EventWorkList
+                        items={visibleWork.filter(
+                          (work) => work.milestoneId === item.id,
+                        )}
+                        totalItems={allWork.filter(
+                          (work) => work.milestoneId === item.id,
+                        )}
+                        onEdit={openWork}
+                        onAdd={() => addWork(item.id)}
                       />
                     </li>
                   ))}
+                  {allWork.some((work) => !work.milestoneId) && (
+                    <li className="milestone-branch">
+                      <h3 className="unassigned-work-heading">未分類の作業</h3>
+                      <EventWorkList
+                        items={unassigned}
+                        totalItems={allWork.filter((work) => !work.milestoneId)}
+                        onEdit={openWork}
+                        onAdd={() => addWork()}
+                      />
+                    </li>
+                  )}
                 </ul>
               </details>
             </li>
           </ul>
         )}
-        <button
-          type="button"
-          className="secondary milestone-add"
-          onClick={() =>
-            open({
-              ...base(),
-              title: "",
-              successCriteria: "",
-              status: "not_started",
-              changes: [],
-            })
-          }
-        >
-          <Plus size={18} />
-          マイルストーンを追加
-        </button>
+        <div className="preparation-add-actions">
+          <button
+            type="button"
+            className="secondary milestone-add"
+            onClick={() =>
+              open({
+                ...base(),
+                title: "",
+                successCriteria: "",
+                status: "not_started",
+                changes: [],
+              })
+            }
+          >
+            <Plus size={18} />
+            マイルストーンを追加
+          </button>
+          <button
+            type="button"
+            className="secondary milestone-add"
+            onClick={() => addWork()}
+          >
+            <Plus size={18} />
+            作業を追加
+          </button>
+        </div>
       </section>
     </section>
   );

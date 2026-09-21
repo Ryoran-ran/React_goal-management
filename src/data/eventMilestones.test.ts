@@ -12,6 +12,7 @@ import {
 } from "./eventMilestones";
 import { createBackup, readBackup, restoreBackup } from "./backup";
 import { validateBackupRows } from "./backupValidation";
+import { normalizeEventWork } from "../lib/eventWork";
 
 beforeEach(async () => {
   await db.transaction("rw", db.tables, async () => {
@@ -112,7 +113,7 @@ describe("event milestones", () => {
     expect(() => validateBackupRows(invalidTasks)).toThrow();
     await db.events.clear();
     await restoreBackup(backup);
-    expect(await get(source.id)).toEqual(expected);
+    expect(await get(source.id)).toEqual(normalizeEventWork(expected));
   });
   it("shows unfinished deadlines only for active events and removes only the requested milestone", async () => {
     const source = event();

@@ -1,5 +1,7 @@
 import { goalCategories } from "../lib/goalCategories";
 import { validateMilestones } from "../lib/milestones";
+import { validateEventWork } from "../lib/eventWork";
+import type { DanceEvent } from "../types";
 
 export const backupTables = [
   "events",
@@ -246,6 +248,7 @@ export function validateBackupRows(
     const keys = new Set<string>();
     const unique = new Set<string>();
     for (const row of rows as Record<string, unknown>[]) {
+      if (name === "events") validateEventWork(row as unknown as DanceEvent);
       const key = row.id as string;
       if (keys.has(key))
         throw new Error(`バックアップの ${name} に重複があります。`);

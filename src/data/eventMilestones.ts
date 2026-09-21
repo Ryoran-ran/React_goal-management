@@ -2,6 +2,7 @@ import type { DanceEvent, EventMilestone } from "../types";
 import { db } from "./db";
 import { save } from "./repository";
 import { daysUntil, localDate } from "../lib/dates";
+import { normalizeEventWork, shiftEventWork } from "../lib/eventWork";
 import {
   milestonePlan,
   shiftMilestones,
@@ -103,9 +104,23 @@ export async function deleteEventMilestone(eventId: string, id: string) {
   await db.transaction("rw", db.events, async () => {
     const event = await db.events.get(eventId);
     if (!event) throw new Error("イベントが見つかりません。");
+    const normalized = normalizeEventWork(event);
     await db.events.put({
-      ...event,
-      milestones: (event.milestones ?? []).filter((item) => item.id !== id),
+      ...normalized,
+      milestones: (normalized.milestones ?? []).filter(
+        (item) => item.id !== id,
+      ),
+      workItems: normalized.workItems?.map((item) =>
+        item.milestoneId === id
+          ? {
+              ...item,
+              milestoneId: undefined,
+              updatedAt: new Date(
+                Math.max(Date.now(), Date.parse(item.updatedAt) + 1),
+              ).toISOString(),
+            }
+          : item,
+      ),
       updatedAt: new Date().toISOString(),
     });
   });
@@ -123,10 +138,15 @@ export async function saveEventDetails(
         "イベントが別の画面で変更されています。開き直してください。",
       );
     const milestones = previous?.milestones ?? event.milestones;
+    const workItems = previous?.workItems ?? event.workItems;
     await save(
       "events",
       {
         ...event,
+        workItems:
+          shift && previous && workItems
+            ? shiftEventWork(workItems, daysUntil(event.date, previous.date))
+            : workItems,
         milestones:
           shift && previous && milestones
             ? shiftMilestones(milestones, daysUntil(event.date, previous.date))

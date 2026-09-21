@@ -1,5 +1,7 @@
 import { liveQuery } from "dexie";
 import { validateMilestones } from "../lib/milestones";
+import { validateEventWork } from "../lib/eventWork";
+import { migrateEventWork } from "./eventWorkMigration";
 import { db } from "./db";
 import { removeUnusedDefaultGoals } from "./migrations";
 import { retireTechnicalGoals } from "./retireGoals";
@@ -51,6 +53,7 @@ export async function initialize() {
   await db.transaction("rw", db.tables, async () => {
     await removeUnusedDefaultGoals();
     await retireTechnicalGoals();
+    await migrateEventWork();
     if (await db.settings.get("initialized")) return;
     await db.settings.put({ id: "initialized", value: true });
   });
@@ -235,6 +238,7 @@ export async function home(today: string) {
   };
 }
 function validate<K extends Kind>(kind: K, record: Records[K]) {
+  if (kind === "events") validateEventWork(record as DanceEvent);
   if (kind === "events" && (record as DanceEvent).milestones !== undefined)
     validateMilestones((record as DanceEvent).milestones);
   if (kind === "learningNotes") {
