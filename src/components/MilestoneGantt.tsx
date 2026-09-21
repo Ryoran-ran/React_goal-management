@@ -6,6 +6,7 @@ import { addDays, daysUntil, localDate } from "../lib/dates";
 import { shiftCalendarMonth } from "../lib/calendar";
 import {
   ganttPosition,
+  ganttDayStart,
   ganttRange,
   ganttSegment,
   milestoneStatuses,
@@ -61,10 +62,10 @@ export function MilestoneGantt({
     420,
     Math.min(
       1600,
-      count * (scale === "week" ? 56 : scale === "month" ? 26 : 18),
+      count * (scale === "week" ? 56 : scale === "month" ? 40 : 32),
     ),
   );
-  const stride = Math.max(1, Math.ceil(count / (scale === "week" ? 7 : 18)));
+  const stride = Math.max(1, Math.ceil(count / Math.floor(width / 32)));
   useEffect(() => {
     if (!scroller.current) return;
     const offset =
@@ -82,7 +83,7 @@ export function MilestoneGantt({
     inRange(date) ? (
       <span
         className={`gantt-marker-line ${className}`}
-        style={{ left: `${ganttPosition(date, range)}%` }}
+        style={{ left: `${ganttDayStart(date, range)}%` }}
         aria-hidden="true"
       />
     ) : null;
@@ -176,8 +177,8 @@ export function MilestoneGantt({
         <span className="planned">現在の計画</span>
         <span className="actual">実績（開始〜達成）</span>
         <span>◆ 到達点・期限　━ 作業期間</span>
-        <span className="today">赤線：今日</span>
-        <span className="event">紫線：開催日</span>
+        <span className="today">赤線：今日の左端</span>
+        <span className="event">紫線：開催日の左端</span>
       </div>
       <p className="muted gantt-hint">
         日付部分は横にスクロールできます。項目名から編集できます。
@@ -191,7 +192,12 @@ export function MilestoneGantt({
       >
         <div
           className="gantt-grid"
-          style={{ "--timeline-width": `${width}px` } as CSSProperties}
+          style={
+            {
+              "--timeline-width": `${width}px`,
+              "--day-width": `${100 / count}%`,
+            } as CSSProperties
+          }
         >
           <div className="gantt-grid-header">
             <div className="gantt-label">到達点</div>
@@ -200,9 +206,18 @@ export function MilestoneGantt({
                 <span
                   key={date}
                   className="gantt-tick"
-                  style={{ left: `${ganttPosition(date, range)}%` }}
+                  style={{
+                    left: `${ganttDayStart(date, range)}%`,
+                    width: `${100 / count}%`,
+                  }}
+                  title={date}
                 >
-                  {Number(date.slice(5, 7))}/{Number(date.slice(8))}
+                  {scale === "week" ||
+                  date === range.start ||
+                  date.endsWith("-01")
+                    ? `${Number(date.slice(5, 7))}/`
+                    : ""}
+                  {Number(date.slice(8))}
                 </span>
               ))}
               {line(event.date, "event")}
@@ -270,13 +285,6 @@ export function MilestoneGantt({
                 </small>
               </button>
               <div className="gantt-track">
-                {ticks.map((date) => (
-                  <span
-                    key={date}
-                    className="gantt-grid-line"
-                    style={{ left: `${ganttPosition(date, range)}%` }}
-                  />
-                ))}
                 {line(event.date, "event")}
                 {line(today, "today")}
                 {bar(

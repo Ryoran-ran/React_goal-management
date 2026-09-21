@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { DanceEvent, EventMilestone } from "../types";
 import {
   ganttPosition,
+  ganttDayStart,
   ganttRange,
   ganttSegment,
   milestonePlanDelay,
@@ -168,6 +169,23 @@ describe("milestone planning", () => {
   });
 });
 describe("gantt dates", () => {
+  it("aligns inclusive work ranges to day boundaries rather than date centres", () => {
+    const range = { start: "2026-09-21", end: "2026-09-30" };
+    const work = ganttSegment("2026-09-21", "2026-09-23", range)!;
+    expect(ganttDayStart("2026-09-21", range)).toBe(0);
+    expect(work).toEqual({ left: "0%", width: "30%" });
+    expect(parseFloat(work.left) + parseFloat(work.width)).toBe(
+      ganttDayStart("2026-09-24", range),
+    );
+    expect(ganttPosition("2026-09-23", range)).toBe(25);
+    const oneDay = { start: "2026-09-30", end: "2026-09-30" };
+    expect(ganttDayStart(oneDay.start, oneDay)).toBe(0);
+    expect(ganttDayStart("2026-10-01", oneDay)).toBe(100);
+    expect(ganttSegment(oneDay.start, oneDay.end, oneDay)).toEqual({
+      left: "0%",
+      width: "100%",
+    });
+  });
   it("includes first plans and actual completion in the full event range", () => {
     const item = {
       ...milestone(),

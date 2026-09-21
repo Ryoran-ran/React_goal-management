@@ -208,6 +208,16 @@ export function ganttRange(
   ].sort();
   return { start: dates[0], end: dates.at(-1)! };
 }
+// A date occupies a whole column; boundaries and date-centred markers are distinct.
+export function ganttDayStart(
+  date: string,
+  range: { start: string; end: string },
+) {
+  return (
+    (daysUntil(date, range.start) / (daysUntil(range.end, range.start) + 1)) *
+    100
+  );
+}
 // Percentages keep even long event timelines bounded; dates are never rendered as thousands of cells.
 export function ganttPosition(
   date: string,

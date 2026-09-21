@@ -2941,15 +2941,18 @@ button p {
   position: relative;
   min-height: 100%;
   overflow: hidden;
+  background-image: linear-gradient(to right, #dce6e2 1px, transparent 1px);
+  background-size: var(--day-width) 100%;
+  background-repeat: repeat-x;
+  box-shadow: inset -1px 0 #dce6e2;
 }
 .gantt-tick {
   position: absolute;
   top: 12px;
-  transform: translateX(-50%);
+  text-align: center;
   white-space: nowrap;
   font-size: 0.72rem;
 }
-.gantt-grid-line,
 .gantt-marker-line {
   position: absolute;
   top: 0;
