@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Plus, Pencil } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, ChevronRight, Flag } from "lucide-react";
 import type { DanceEvent, EventMilestone } from "../types";
 import { base } from "../data/repository";
 import { dateLabel, localDate } from "../lib/dates";
@@ -120,50 +120,75 @@ export function EventPreparation({
             onAnchor={setAnchor}
           />
         ) : (
-          <div className="milestone-list">
-            {items.map((item) => (
-              <button
-                type="button"
-                className="milestone-list-row"
-                key={item.id}
-                onClick={() => open(item)}
-              >
-                <span className="milestone-dot" aria-hidden="true">
-                  {item.status === "achieved" ? "✓" : "◆"}
-                </span>
-                <div>
-                  <strong>{item.title}</strong>
-                  <p>
-                    {item.startDate
-                      ? `${item.startDate.replaceAll("-", "/")}〜`
-                      : "期限："}
-                    {item.dueDate?.replaceAll("-", "/") ?? "未設定"}
-                  </p>
-                  {item.successCriteria && (
-                    <p className="clamp">{item.successCriteria}</p>
-                  )}
-                  <small
-                    className={
-                      unfinished(item) &&
-                      item.dueDate &&
-                      item.dueDate < localDate()
-                        ? "overdue"
-                        : ""
-                    }
-                  >
-                    {milestoneTiming(item)}
-                  </small>
-                  {milestonePlanDelay(item) > 0 && (
-                    <small className="overdue">
-                      {" "}
-                      · 当初より{milestonePlanDelay(item)}日後ろ
-                    </small>
-                  )}
-                </div>
-                <span className="tag">{milestoneStatuses[item.status]}</span>
-              </button>
-            ))}
-          </div>
+          <ul className="milestone-tree" role="list">
+            <li>
+              <details className="milestone-tree-event" open>
+                <summary>
+                  <ChevronRight
+                    className="milestone-tree-toggle"
+                    size={18}
+                    aria-hidden="true"
+                  />
+                  <Flag size={18} aria-hidden="true" />
+                  <span className="milestone-tree-event-name">
+                    {event.title}
+                  </span>
+                  <span className="milestone-tree-count">{items.length}件</span>
+                </summary>
+                <ul
+                  className="milestone-list"
+                  role="list"
+                  aria-label={`${event.title}のマイルストーン`}
+                >
+                  {items.map((item) => (
+                    <li className="milestone-branch" key={item.id}>
+                      <button
+                        type="button"
+                        className="milestone-list-row"
+                        onClick={() => open(item)}
+                      >
+                        <span className="milestone-dot" aria-hidden="true">
+                          {item.status === "achieved" ? "✓" : "◆"}
+                        </span>
+                        <div>
+                          <strong>{item.title}</strong>
+                          <p>
+                            {item.startDate
+                              ? `${item.startDate.replaceAll("-", "/")}〜`
+                              : "期限："}
+                            {item.dueDate?.replaceAll("-", "/") ?? "未設定"}
+                          </p>
+                          {item.successCriteria && (
+                            <p className="clamp">{item.successCriteria}</p>
+                          )}
+                          <small
+                            className={
+                              unfinished(item) &&
+                              item.dueDate &&
+                              item.dueDate < localDate()
+                                ? "overdue"
+                                : ""
+                            }
+                          >
+                            {milestoneTiming(item)}
+                          </small>
+                          {milestonePlanDelay(item) > 0 && (
+                            <small className="overdue">
+                              {" "}
+                              · 当初より{milestonePlanDelay(item)}日後ろ
+                            </small>
+                          )}
+                        </div>
+                        <span className="tag">
+                          {milestoneStatuses[item.status]}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            </li>
+          </ul>
         )}
         <button
           type="button"
