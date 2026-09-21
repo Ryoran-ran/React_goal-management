@@ -2558,6 +2558,40 @@ button p {
   background: white;
   box-shadow: 0 3px 10px #193d3d08;
 }
+.preparation-timeline-step.is-card-hidden {
+  min-height: 64px;
+}
+.preparation-timeline-step.is-card-hidden::after {
+  display: none;
+}
+.preparation-number-toggle {
+  top: 10px;
+  left: -43px;
+  width: 45px;
+  height: 45px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.preparation-number-toggle > span {
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  border: 3px solid white;
+  border-radius: 50%;
+  background: var(--step-color);
+  box-shadow: 0 2px 6px #193d3d26;
+}
+.preparation-number-toggle[aria-expanded="false"] > span {
+  color: var(--step-color);
+  background: white;
+  border-color: var(--step-color);
+}
+.preparation-number-toggle:hover > span {
+  box-shadow: 0 0 0 3px #63926026;
+}
 .is-achieved > .preparation-step-card {
   background: #fbfefb;
 }

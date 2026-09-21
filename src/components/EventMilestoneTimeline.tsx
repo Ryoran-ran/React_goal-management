@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { ChevronDown, Flag, Pencil } from "lucide-react";
 import type { DanceEvent, EventMilestone, EventWorkItem } from "../types";
 import { dateLabel, localDate } from "../lib/dates";
@@ -31,6 +31,8 @@ export function EventMilestoneTimeline({
   onEditEvent: () => void;
 }) {
   const [collapsed, setCollapsed] = useState<string[]>([]);
+  const [hiddenCompleted, setHiddenCompleted] = useState<string[]>([]);
+  const timelineId = useId();
   const unassigned = workItems.filter((work) => !work.milestoneId);
   const all = sortedMilestones(event.milestones ?? []);
   const numbers = new Map(all.map((item, index) => [item.id, index + 1]));
@@ -43,6 +45,9 @@ export function EventMilestoneTimeline({
     >
       {items.map((item, index) => {
         const number = numbers.get(item.id)!;
+        const isHidden =
+          item.status === "achieved" && hiddenCompleted.includes(item.id);
+        const cardId = `${timelineId}-${item.id}`;
         const children = workItems.filter(
           (work) => work.milestoneId === item.id,
         );
@@ -56,12 +61,36 @@ export function EventMilestoneTimeline({
           <li
             key={item.id}
             value={number}
-            className={`preparation-timeline-step is-${item.status}`}
+            className={`preparation-timeline-step is-${item.status} ${isHidden ? "is-card-hidden" : ""}`}
           >
-            <span className="preparation-step-number" aria-hidden="true">
-              {number}
-            </span>
+            {item.status === "achieved" ? (
+              <button
+                type="button"
+                className="preparation-step-number preparation-number-toggle"
+                aria-label={`マイルストーン${number}「${item.title}」を${isHidden ? "表示" : "非表示"}`}
+                aria-expanded={!isHidden}
+                aria-controls={cardId}
+                title={
+                  isHidden ? "クリックして再表示" : "クリックしてカードを非表示"
+                }
+                onClick={() =>
+                  setHiddenCompleted((current) =>
+                    current.includes(item.id)
+                      ? current.filter((id) => id !== item.id)
+                      : [...current, item.id],
+                  )
+                }
+              >
+                <span>{number}</span>
+              </button>
+            ) : (
+              <span className="preparation-step-number" aria-hidden="true">
+                {number}
+              </span>
+            )}
             <article
+              id={cardId}
+              hidden={isHidden}
               className="preparation-step-card"
               aria-label={`マイルストーン「${item.title}」`}
             >
