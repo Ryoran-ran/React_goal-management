@@ -19,6 +19,11 @@ import { agendaStatus, practiceAgenda } from "../data/practiceAgenda";
 import { ensureLessonSchedules } from "../data/lessonSchedule";
 import { useQuery } from "../lib/hooks";
 import { addDays, dateLabel, monthRange } from "../lib/dates";
+import {
+  readAgendaView,
+  saveAgendaView,
+  type AgendaView,
+} from "../lib/agendaView";
 import { lessonCategoryLabel } from "../lib/lessonCategories";
 import { PageHeading, Empty } from "../components/ui";
 import { FloatingAddButton } from "../components/FloatingAddButton";
@@ -38,7 +43,12 @@ export function Practice({
   const [selectedDate, setSelectedDate] = useState(
     entry?.type === "edit" ? entry.item.record.date : today,
   );
-  const [view, setView] = useState<"month" | "day">("month");
+  const [view, setView] = useState<AgendaView>(readAgendaView);
+  const changeView = (nextView: AgendaView) => {
+    setView(nextView);
+    saveAgendaView(nextView);
+    setNotice("");
+  };
   const month = selectedDate.slice(0, 7);
   const period = view === "day" ? selectedDate : month;
   const [filter, setFilter] = useState<"all" | ReturnType<typeof agendaStatus>>(
@@ -203,8 +213,7 @@ export function Practice({
                   className={view === "month" ? "active" : ""}
                   aria-pressed={view === "month"}
                   onClick={() => {
-                    setView("month");
-                    setNotice("");
+                    changeView("month");
                   }}
                 >
                   月ごと
@@ -214,8 +223,7 @@ export function Practice({
                   className={view === "day" ? "active" : ""}
                   aria-pressed={view === "day"}
                   onClick={() => {
-                    setView("day");
-                    setNotice("");
+                    changeView("day");
                   }}
                 >
                   日ごと
