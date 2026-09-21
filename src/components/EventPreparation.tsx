@@ -15,6 +15,7 @@ import { MilestoneGantt } from "./MilestoneGantt";
 import { EventWorkList } from "./EventWorkList";
 import { EventWorkEditor } from "./EventWorkEditor";
 import { ScheduleStatus } from "./ScheduleStatus";
+import { sortedEventWork } from "../lib/eventWork";
 
 export function EventPreparation({
   event,
@@ -32,7 +33,7 @@ export function EventPreparation({
   const [editing, setEditing] = useState<EventMilestone>();
   const [editingWork, setEditingWork] = useState<EventWorkItem>();
   const all = sortedMilestones(event.milestones ?? []);
-  const allWork = event.workItems ?? [];
+  const allWork = sortedEventWork(event.workItems ?? []);
   const visibleWork = allWork.filter(
     (item) => showFinished || item.status !== "completed",
   );

@@ -9,6 +9,16 @@ export const workStatuses = {
 };
 export const workPriorities = { high: "高", medium: "中", low: "低" };
 
+export const sortedEventWork = (items: EventWorkItem[]) =>
+  [...items].sort(
+    (a, b) =>
+      (a.startDate ?? "9999-12-31").localeCompare(
+        b.startDate ?? "9999-12-31",
+      ) ||
+      a.createdAt.localeCompare(b.createdAt) ||
+      a.id.localeCompare(b.id),
+  );
+
 export function withWorkStatus(
   work: EventWorkItem,
   status: EventWorkItem["status"],
