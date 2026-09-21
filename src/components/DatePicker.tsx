@@ -16,7 +16,6 @@ import {
   dateAllowed,
   monthAllowed,
   readWeekStart,
-  saveWeekStart,
   shiftCalendarMonth,
 } from "../lib/calendar";
 import { calendarLessons } from "../data/calendarLessons";
@@ -147,7 +146,7 @@ function CalendarDialog({
   const [view, setView] = useState<"day" | "month" | "year">(
     type === "month" ? "month" : "day",
   );
-  const [weekStart, setWeekStart] = useState(readWeekStart);
+  const [weekStart] = useState(readWeekStart);
   const [focusedDate, setFocusedDate] = useState(
     initial.length === 10 ? initial : `${month}-01`,
   );
@@ -398,23 +397,6 @@ function CalendarDialog({
                 </p>
               )
             )}
-            <label className="calendar-week-start">
-              <span>週の開始曜日</span>
-              <select
-                value={weekStart}
-                onChange={(event) => {
-                  const next = Number(event.target.value);
-                  setWeekStart(next);
-                  saveWeekStart(next);
-                }}
-              >
-                {calendarWeekdays.map((day, index) => (
-                  <option key={day} value={index}>
-                    {day}曜日
-                  </option>
-                ))}
-              </select>
-            </label>
           </>
         )}
         {view === "month" && (

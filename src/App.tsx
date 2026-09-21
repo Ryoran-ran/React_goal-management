@@ -8,6 +8,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { initialize } from "./data/repository";
+import { CalendarSettings } from "./components/CalendarSettings";
 import { localDate } from "./lib/dates";
 import { Learning } from "./pages/Learning";
 import { Events } from "./pages/Events";
@@ -184,6 +185,7 @@ export default function App() {
                   <h2>以前のレッスン・練習記録</h2>
                   <p>これまでの記録・添付資料・繰り返し予定を開く。</p>
                 </button>
+                <CalendarSettings />
               </div>
             </section>
           ) : (
