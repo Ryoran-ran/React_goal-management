@@ -1,22 +1,18 @@
 import { useState } from "react";
-import { ArrowLeft, Plus, Pencil, ChevronRight, Flag } from "lucide-react";
+import { ArrowLeft, Plus, Pencil } from "lucide-react";
 import type { DanceEvent, EventMilestone, EventWorkItem } from "../types";
 import { base } from "../data/repository";
 import { dateLabel, localDate } from "../lib/dates";
 import {
-  milestoneTiming,
   sortedMilestones,
   unfinished,
-  milestonePlanDelay,
   type GanttScale,
 } from "../lib/milestones";
 import { MilestoneEditor } from "./MilestoneEditor";
 import { MilestoneGantt } from "./MilestoneGantt";
-import { EventWorkList } from "./EventWorkList";
+import { EventMilestoneTimeline } from "./EventMilestoneTimeline";
 import { EventWorkEditor } from "./EventWorkEditor";
-import { ScheduleStatus } from "./ScheduleStatus";
 import { sortedEventWork } from "../lib/eventWork";
-import { ScheduleOrder } from "./ScheduleOrder";
 
 export function EventPreparation({
   event,
@@ -31,7 +27,6 @@ export function EventPreparation({
   const [scale, setScale] = useState<GanttScale>("event");
   const [anchor, setAnchor] = useState(localDate);
   const [showFinished, setShowFinished] = useState(false);
-  const [collapsed, setCollapsed] = useState<string[]>([]);
   const [editing, setEditing] = useState<EventMilestone>();
   const [editingWork, setEditingWork] = useState<EventWorkItem>();
   const all = sortedMilestones(event.milestones ?? []);
@@ -173,159 +168,15 @@ export function EventPreparation({
             onShowFinished={setShowFinished}
           />
         ) : (
-          <ul className="milestone-tree" role="list">
-            <li>
-              <details className="milestone-tree-event" open>
-                <summary>
-                  <ChevronRight
-                    className="milestone-tree-toggle"
-                    size={18}
-                    aria-hidden="true"
-                  />
-                  <Flag size={18} aria-hidden="true" />
-                  <span className="milestone-tree-event-name">
-                    {event.title}
-                  </span>
-                  <span className="milestone-tree-count">
-                    節目 {items.length} · 作業 {visibleWork.length}
-                  </span>
-                </summary>
-                <ul
-                  className="milestone-list"
-                  role="list"
-                  aria-label={`${event.title}のマイルストーン`}
-                >
-                  {items.map((item, index) => (
-                    <li className="milestone-branch" key={item.id}>
-                      <article
-                        className="milestone-work-group"
-                        aria-label={`マイルストーン「${item.title}」とその作業`}
-                      >
-                        <div className="milestone-tree-heading">
-                          <button
-                            type="button"
-                            className="icon-button milestone-expand"
-                            aria-label={`${item.title}の作業を${collapsed.includes(item.id) ? "展開" : "折りたたむ"}`}
-                            aria-expanded={!collapsed.includes(item.id)}
-                            onClick={() =>
-                              setCollapsed((current) =>
-                                current.includes(item.id)
-                                  ? current.filter((id) => id !== item.id)
-                                  : [...current, item.id],
-                              )
-                            }
-                          >
-                            <ChevronRight
-                              size={18}
-                              className={
-                                collapsed.includes(item.id) ? "" : "is-open"
-                              }
-                            />
-                          </button>
-                          <button
-                            type="button"
-                            className="milestone-list-row"
-                            onClick={() => open(item)}
-                            aria-label={`マイルストーン「${item.title}」を編集`}
-                          >
-                            <span className="milestone-dot" aria-hidden="true">
-                              {item.status === "achieved" ? "✓" : "◆"}
-                            </span>
-                            <div>
-                              <span className="milestone-role-label">
-                                マイルストーン · 到達点
-                              </span>
-                              <strong>{item.title}</strong>
-                              <p>
-                                期限：
-                                {item.dueDate?.replaceAll("-", "/") ?? "未設定"}
-                              </p>
-                              {item.successCriteria && (
-                                <p className="clamp">{item.successCriteria}</p>
-                              )}
-                              <small
-                                className={
-                                  unfinished(item) &&
-                                  item.dueDate &&
-                                  item.dueDate < localDate()
-                                    ? "overdue"
-                                    : ""
-                                }
-                              >
-                                {milestoneTiming(item)}
-                              </small>
-                              {milestonePlanDelay(item) > 0 && (
-                                <small className="overdue">
-                                  {" "}
-                                  · 当初より{milestonePlanDelay(item)}日後ろ
-                                </small>
-                              )}
-                            </div>
-                          </button>
-                        </div>
-                        <div className="milestone-status-row">
-                          <ScheduleStatus
-                            eventId={event.id}
-                            target={{ kind: "milestone", item }}
-                          />
-                          <ScheduleOrder
-                            eventId={event.id}
-                            kind="milestone"
-                            item={item}
-                            previous={
-                              index > 0 &&
-                              items[index - 1].dueDate === item.dueDate
-                                ? items[index - 1]
-                                : undefined
-                            }
-                            next={
-                              items[index + 1]?.dueDate === item.dueDate
-                                ? items[index + 1]
-                                : undefined
-                            }
-                          />
-                        </div>
-                        {!collapsed.includes(item.id) && (
-                          <EventWorkList
-                            eventId={event.id}
-                            milestoneTitle={item.title}
-                            items={visibleWork.filter(
-                              (work) => work.milestoneId === item.id,
-                            )}
-                            totalItems={allWork.filter(
-                              (work) => work.milestoneId === item.id,
-                            )}
-                            onEdit={openWork}
-                            onAdd={() => addWork(item.id)}
-                          />
-                        )}
-                      </article>
-                    </li>
-                  ))}
-                  {allWork.some((work) => !work.milestoneId) && (
-                    <li className="milestone-branch">
-                      <article
-                        className="milestone-work-group is-unassigned"
-                        aria-label="マイルストーン未設定の作業"
-                      >
-                        <h3 className="unassigned-work-heading">
-                          未分類の作業
-                        </h3>
-                        <EventWorkList
-                          eventId={event.id}
-                          items={unassigned}
-                          totalItems={allWork.filter(
-                            (work) => !work.milestoneId,
-                          )}
-                          onEdit={openWork}
-                        />
-                      </article>
-                    </li>
-                  )}
-                </ul>
-              </details>
-            </li>
-          </ul>
+          <EventMilestoneTimeline
+            event={event}
+            items={items}
+            workItems={visibleWork}
+            onEdit={open}
+            onEditWork={openWork}
+            onAddWork={addWork}
+            onEditEvent={onEditEvent}
+          />
         )}
         <div className="preparation-add-actions">
           <button

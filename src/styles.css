@@ -2489,6 +2489,230 @@ button p {
   color: var(--muted);
   font-size: 0.8rem;
 }
+.preparation-timeline {
+  list-style: none;
+  padding: 0 0 0 36px;
+  margin: 12px 0 0;
+}
+.preparation-timeline-step {
+  --step-color: #a47e51;
+  position: relative;
+  margin: 0 0 20px;
+  min-width: 0;
+}
+.preparation-timeline-step::before {
+  content: "";
+  position: absolute;
+  left: -22px;
+  top: 32px;
+  bottom: -52px;
+  width: 3px;
+  background: var(--step-color);
+  opacity: 0.65;
+}
+.preparation-timeline-step:last-child::before {
+  display: none;
+}
+.preparation-timeline-step::after {
+  content: "";
+  position: absolute;
+  left: -22px;
+  top: 32px;
+  width: 22px;
+  border-top: 2px solid var(--step-color);
+}
+.preparation-timeline-step.is-in_progress {
+  --step-color: #27786c;
+}
+.preparation-timeline-step.is-achieved {
+  --step-color: #639260;
+}
+.preparation-timeline-step.is-skipped,
+.preparation-timeline-step.is-unassigned {
+  --step-color: #84928e;
+}
+.preparation-step-number {
+  position: absolute;
+  z-index: 1;
+  top: 18px;
+  left: -35px;
+  width: 29px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  border: 3px solid white;
+  border-radius: 50%;
+  background: var(--step-color);
+  color: white;
+  box-shadow: 0 2px 6px #193d3d26;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.preparation-step-card {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--step-color) 60%, white);
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 3px 10px #193d3d08;
+}
+.is-achieved > .preparation-step-card {
+  background: #fbfefb;
+}
+.preparation-step-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+.preparation-step-title {
+  flex: 1 1 170px;
+  min-width: 0;
+  text-align: left;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  overflow-wrap: anywhere;
+}
+.preparation-step-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--step-color);
+}
+.preparation-step-title h3 {
+  font-size: 1rem;
+  line-height: 1.5;
+  margin: 0;
+}
+.preparation-step-date {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.preparation-step-controls {
+  display: flex;
+  gap: 4px;
+  align-items: start;
+  margin-left: auto;
+  min-width: 0;
+  max-width: 100%;
+}
+.preparation-step-controls .icon-button {
+  min-height: 44px;
+  min-width: 32px;
+}
+.preparation-step-controls .schedule-status select {
+  background: #f1f5f3;
+  border-color: transparent;
+  border-radius: 24px;
+}
+.is-achieved > .preparation-step-card .preparation-step-controls select {
+  background: #e6f5e6;
+  color: #386b38;
+}
+.preparation-step-criteria {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f5f8f7;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.preparation-step-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0;
+}
+.preparation-step-meta > small {
+  font-size: 0.75rem;
+}
+.preparation-work-toolbar {
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 0.8rem;
+}
+.preparation-work-toolbar > span {
+  color: var(--muted);
+}
+.preparation-work-toolbar small {
+  margin-left: 6px;
+}
+.preparation-work-toolbar button {
+  min-height: 44px;
+  font-size: 0.75rem;
+}
+.preparation-work-toolbar .is-closed {
+  transform: rotate(-90deg);
+}
+.preparation-step-card .milestone-task-children.is-compact {
+  padding: 0;
+  margin: 8px 0 0;
+}
+.is-compact .milestone-task-list {
+  padding: 0 0 0 10px;
+  border-left: 2px solid #dce9e4;
+}
+.is-compact .work-list-entry {
+  background: #f5f8f7;
+  border: 0;
+  border-radius: 8px;
+}
+.is-compact .work-list-entry::before,
+.is-compact .work-list-entry::after {
+  display: none;
+}
+.is-compact .event-work-row {
+  background: transparent;
+  padding: 10px;
+}
+.is-compact .work-tree-actions {
+  padding: 0 10px;
+}
+.is-compact .schedule-status select {
+  border-radius: 20px;
+  background: white;
+}
+.is-compact .milestone-task-edit {
+  width: 100%;
+  justify-content: center;
+  border-style: dashed;
+  border-color: #b1cbb8;
+  background: transparent;
+  color: var(--teal);
+}
+.preparation-event-card {
+  border-width: 2px;
+  text-align: center;
+  padding: 24px 16px;
+}
+.preparation-event-title {
+  display: block;
+  margin: 8px auto;
+  font-size: 1.1rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+.preparation-event-card p,
+.preparation-event-card > small {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.preparation-event-card p {
+  margin: 0 0 8px;
+}
 .milestone-summary {
   display: flex;
   justify-content: space-between;
