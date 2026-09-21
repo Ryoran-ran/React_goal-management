@@ -13,6 +13,46 @@ export interface DanceEvent extends Base {
   description?: string;
   status: "planned" | "active" | "completed" | "cancelled";
   goalIds: string[];
+  milestones?: EventMilestone[];
+  workItems?: EventWorkItem[];
+}
+export interface MilestonePlan {
+  startDate?: string;
+  dueDate?: string;
+}
+export interface MilestoneTask {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+export interface EventWorkItem extends Base, MilestonePlan {
+  sortOrder?: number;
+  milestoneId?: string;
+  title: string;
+  description: string;
+  priority: Priority;
+  status: "not_started" | "in_progress" | "completed";
+  actualStartDate?: string;
+  completedDate?: string;
+  baseline?: MilestonePlan;
+  changes: EventMilestone["changes"];
+}
+export interface EventMilestone extends Base, MilestonePlan {
+  sortOrder?: number;
+  title: string;
+  successCriteria: string;
+  status: "not_started" | "in_progress" | "achieved" | "skipped";
+  actualStartDate?: string;
+  completedDate?: string;
+  baseline?: MilestonePlan;
+  /** Legacy checklist, converted to event.workItems on startup/import. */
+  tasks?: MilestoneTask[];
+  changes: {
+    changedAt: string;
+    from: MilestonePlan;
+    to: MilestonePlan;
+    reason: string;
+  }[];
 }
 export type GoalStatus = "not_started" | "in_progress" | "achieved" | "paused";
 export type GoalCategory =

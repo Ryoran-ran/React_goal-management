@@ -20,6 +20,7 @@ import { agendaStatus } from "../data/practiceAgenda";
 import { ensureLessonSchedules } from "../data/lessonSchedule";
 import { useQuery } from "../lib/hooks";
 import { addDays, dateLabel, daysUntil } from "../lib/dates";
+import { nextMilestone, milestoneTiming } from "../lib/milestones";
 import { FloatingAddButton } from "../components/FloatingAddButton";
 import { ThemeEditor } from "../components/ThemeEditor";
 import { LearningJournal } from "../components/LearningJournal";
@@ -47,7 +48,7 @@ export function Learning({
   mode: "themes" | "notes";
   entry?: LearningEntry;
   onSchedule: () => void;
-  onEvents: () => void;
+  onEvents: (id?: string) => void;
   onLegacy: (item: AgendaItem, sectionId?: string) => void;
 }) {
   const [view, setView] = useState<View>(
@@ -369,6 +370,21 @@ export function Learning({
                           {dateLabel(event.date)} · あと
                           {daysUntil(event.date, today)}日
                         </span>
+                        {nextMilestone(event) && (
+                          <button
+                            type="button"
+                            className="text-button next-milestone-link"
+                            onClick={() => onEvents(event.id)}
+                          >
+                            <span>
+                              次の節目：{nextMilestone(event)!.title}
+                              <small>
+                                {milestoneTiming(nextMilestone(event)!, today)}
+                              </small>
+                            </span>
+                            <ArrowUpRight size={16} />
+                          </button>
+                        )}
                       </div>
                     ))
                   ) : (
@@ -380,7 +396,7 @@ export function Learning({
                 <button
                   type="button"
                   className="text-button"
-                  onClick={onEvents}
+                  onClick={() => onEvents()}
                 >
                   大会・イベントを見る
                   <ArrowUpRight size={16} />

@@ -1,5 +1,6 @@
 import { db } from "./db";
 import { retireTechnicalGoals } from "./retireGoals";
+import { migrateEventWork } from "./eventWorkMigration";
 import type { AttachmentFile } from "../types";
 import {
   backupTables,
@@ -270,6 +271,7 @@ export async function restoreBackup(backup: PreparedBackup) {
       await db.table(name).bulkAdd(backup.tables[name]);
     await db.attachmentFiles.bulkAdd(backup.files);
     await retireTechnicalGoals(true);
+    await migrateEventWork();
   });
 }
 

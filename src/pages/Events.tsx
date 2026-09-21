@@ -1,8 +1,10 @@
 import { DatePicker } from "../components/DatePicker";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { CalendarDays, ArrowUpRight } from "lucide-react";
 import type { DanceEvent } from "../types";
-import { allEvents, base, remove, save } from "../data/repository";
+import { allEvents, base, remove } from "../data/repository";
+import { saveEventDetails } from "../data/eventMilestones";
+import { nextMilestone, milestoneTiming, unfinished } from "../lib/milestones";
 import { useQuery } from "../lib/hooks";
 import { dateLabel, daysUntil, localDate } from "../lib/dates";
 import {
@@ -11,6 +13,11 @@ import {
 } from "../lib/eventView";
 import { Editor, Empty, Field, PageHeading, SaveForm } from "../components/ui";
 import { Attachments, type ImageDraft } from "../components/Attachments";
+const EventPreparation = lazy(() =>
+  import("../components/EventPreparation").then((module) => ({
+    default: module.EventPreparation,
+  })),
+);
 export const eventTypes = {
   competition: "競技会",
   medal_test: "メダルテスト",
@@ -24,9 +31,11 @@ const statuses = {
   completed: "完了",
   cancelled: "中止",
 };
-export function Events() {
+export function Events({ initialEventId }: { initialEventId?: string }) {
   const { data: events, error } = useQuery(allEvents);
   const [editing, setEditing] = useState<DanceEvent>();
+  const [selectedId, setSelectedId] = useState(initialEventId);
+  const selected = events?.find((event) => event.id === selectedId);
   const [showFinished, setShowFinished] = useState(readShowFinishedEvents);
   const visibleEvents = events?.filter(
     (event) =>
@@ -43,20 +52,51 @@ export function Events() {
     });
   return (
     <>
-      <PageHeading
-        eyebrow="EVENTS"
-        title="イベント"
-        description="大会までの時間を意識して、目指す踊りを育てましょう。取り組むテーマとの関連付けは「テーマを整える」から。"
-        action={editing ? undefined : "イベントを追加"}
-        onAction={create}
-      />
+      {!selectedId && (
+        <PageHeading
+          eyebrow="EVENTS"
+          title="イベント"
+          description="大会までの時間を意識して、目指す踊りを育てましょう。取り組むテーマとの関連付けは「テーマを整える」から。"
+          action={editing ? undefined : "イベントを追加"}
+          onAction={create}
+        />
+      )}
       {editing ? (
         <EventEditor
           key={editing.id}
           value={editing}
           onClose={() => setEditing(undefined)}
+          onDeleted={() => {
+            setEditing(undefined);
+            setSelectedId(undefined);
+          }}
+          onSaved={() => {
+            setSelectedId(editing.id);
+            setEditing(undefined);
+          }}
           exists={events?.some((e) => e.id === editing.id) ?? false}
         />
+      ) : selected ? (
+        <Suspense fallback={<p role="status">準備スケジュールを読み込み中…</p>}>
+          <EventPreparation
+            event={selected}
+            onBack={() => setSelectedId(undefined)}
+            onEditEvent={() => setEditing(selected)}
+          />
+        </Suspense>
+      ) : selectedId ? (
+        <div className="card">
+          <p>
+            {error ?? (events ? "イベントが見つかりません。" : "読み込み中…")}
+          </p>
+          <button
+            type="button"
+            className="text-button"
+            onClick={() => setSelectedId(undefined)}
+          >
+            イベント一覧に戻る
+          </button>
+        </div>
       ) : (
         <div className="card-list with-floating-add">
           <div className="toolbar">
@@ -81,7 +121,10 @@ export function Events() {
             <button
               className="event-row card"
               key={event.id}
-              onClick={() => setEditing(event)}
+              onClick={() => {
+                setSelectedId(event.id);
+                window.scrollTo({ top: 0 });
+              }}
             >
               <div className="date-tile">
                 <span>
@@ -98,6 +141,12 @@ export function Events() {
                 </p>
                 {event.description && (
                   <p className="clamp">{event.description}</p>
+                )}
+                {nextMilestone(event) && (
+                  <p className="event-next-milestone">
+                    次の節目：{nextMilestone(event)!.title} ·{" "}
+                    {milestoneTiming(nextMilestone(event)!)}
+                  </p>
                 )}
               </div>
 
@@ -139,13 +188,18 @@ function EventEditor({
   value,
   onClose,
   exists,
+  onDeleted,
+  onSaved,
 }: {
   value: DanceEvent;
   onClose: () => void;
   exists: boolean;
+  onDeleted: () => void;
+  onSaved: () => void;
 }) {
   const [event, setEvent] = useState(value);
   const [images, setImages] = useState<ImageDraft>({ files: [], removed: [] });
+  const [shift, setShift] = useState(false);
   const patch = (value: Partial<DanceEvent>) =>
     setEvent((old) => ({ ...old, ...value }));
   return (
@@ -157,14 +211,14 @@ function EventEditor({
         <SaveForm
           onCancel={onClose}
           onSave={async () => {
-            await save("events", event, images.files, images.removed);
-            onClose();
+            await saveEventDetails(event, images.files, images.removed, shift);
+            onSaved();
           }}
           onDelete={
             exists
               ? async () => {
                   await remove("events", event.id);
-                  onClose();
+                  onDeleted();
                 }
               : undefined
           }
@@ -202,6 +256,25 @@ function EventEditor({
               />
             </Field>
           </div>
+          {exists &&
+            value.date !== event.date &&
+            (value.milestones?.some(unfinished) ||
+              value.workItems?.some((item) => item.status !== "completed")) && (
+              <div className="event-date-shift">
+                <label className="choice">
+                  <input
+                    type="checkbox"
+                    checked={shift}
+                    onChange={(e) => setShift(e.target.checked)}
+                  />
+                  未達成の節目・未完了の作業の予定も同じ日数ずらす
+                </label>
+                <p className="muted">
+                  {daysUntil(event.date, value.date)}
+                  日変更します。当初計画・実績・達成済み・見送りの項目はそのまま残ります。
+                </p>
+              </div>
+            )}
           <Field label="状態">
             <select
               value={event.status}
