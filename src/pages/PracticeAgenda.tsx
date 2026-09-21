@@ -1,3 +1,4 @@
+import { DatePicker } from "../components/DatePicker";
 import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
@@ -232,11 +233,11 @@ export function Practice({
               {view === "month" ? (
                 <label className="agenda-month">
                   表示する月
-                  <input
+                  <DatePicker
                     type="month"
                     value={month}
-                    onChange={(e) => {
-                      const value = e.target.value;
+                    onChange={(nextDateValue) => {
+                      const value = nextDateValue;
                       if (value && value !== month) {
                         setSelectedDate(
                           value === today.slice(0, 7) ? today : `${value}-01`,
@@ -261,13 +262,13 @@ export function Practice({
                     >
                       <ChevronLeft size={20} />
                     </button>
-                    <input
+                    <DatePicker
                       id="agenda-day"
                       type="date"
                       value={selectedDate}
-                      onChange={(e) => {
-                        if (e.target.value) {
-                          setSelectedDate(e.target.value);
+                      onChange={(nextDateValue) => {
+                        if (nextDateValue) {
+                          setSelectedDate(nextDateValue);
                           setNotice("");
                         }
                       }}

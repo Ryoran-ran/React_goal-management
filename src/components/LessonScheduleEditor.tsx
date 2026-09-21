@@ -1,3 +1,4 @@
+import { DatePicker } from "./DatePicker";
 import { useState } from "react";
 import {
   createLessonSchedule,
@@ -57,22 +58,23 @@ export function LessonScheduleEditor({
         </Field>
         <div className="form-grid">
           <Field label="開始日">
-            <input
+            <DatePicker
               required
               type="date"
               value={schedule.startDate}
-              onChange={(e) =>
-                patch({ startDate: e.target.value, excludedDates: [] })
+              onChange={(nextDateValue) =>
+                patch({ startDate: nextDateValue, excludedDates: [] })
               }
             />
           </Field>
           <Field label="終了日（任意・空欄なら終了日なし）">
-            <input
+            <DatePicker
+              allowClear
               type="date"
               min={schedule.startDate}
               value={schedule.endDate ?? ""}
-              onChange={(e) =>
-                patch({ endDate: e.target.value, excludedDates: [] })
+              onChange={(nextDateValue) =>
+                patch({ endDate: nextDateValue, excludedDates: [] })
               }
             />
           </Field>

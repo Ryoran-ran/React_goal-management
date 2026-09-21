@@ -4,6 +4,8 @@ export function handleFormKeyDown(
   event: KeyboardEvent<HTMLFormElement>,
   busy: boolean,
 ) {
+  // Calendar portals belong to the React form tree, but must not save that form.
+  if ((event.target as HTMLElement).closest?.("[data-calendar-dialog]")) return;
   if (
     event.key !== "Enter" ||
     event.nativeEvent.isComposing ||

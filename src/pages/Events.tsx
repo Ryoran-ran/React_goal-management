@@ -1,3 +1,4 @@
+import { DatePicker } from "../components/DatePicker";
 import { useState } from "react";
 import { CalendarDays, ArrowUpRight } from "lucide-react";
 import type { DanceEvent } from "../types";
@@ -163,11 +164,11 @@ function EventEditor({
               </select>
             </Field>
             <Field label="開催日">
-              <input
+              <DatePicker
                 required
                 type="date"
                 value={event.date}
-                onChange={(e) => patch({ date: e.target.value })}
+                onChange={(nextDateValue) => patch({ date: nextDateValue })}
               />
             </Field>
           </div>

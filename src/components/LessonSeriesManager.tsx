@@ -1,3 +1,4 @@
+import { DatePicker } from "./DatePicker";
 import { useState } from "react";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import {
@@ -247,12 +248,12 @@ function SeriesEditor({
         </Field>
         <div className="form-grid">
           <Field label="変更を反映する日">
-            <input
+            <DatePicker
               required
               type="date"
               min={today}
               value={change.from}
-              onChange={(e) => patch({ from: e.target.value })}
+              onChange={(nextDateValue) => patch({ from: nextDateValue })}
             />
           </Field>
           <Field label="繰り返し">
@@ -309,11 +310,14 @@ function SeriesEditor({
                 />
               </Field>
               <Field label="終了日（任意・空欄なら終了日なし）">
-                <input
+                <DatePicker
+                  allowClear
                   type="date"
                   min={change.from}
                   value={change.endDate ?? ""}
-                  onChange={(e) => patch({ endDate: e.target.value })}
+                  onChange={(nextDateValue) =>
+                    patch({ endDate: nextDateValue })
+                  }
                 />
               </Field>
             </div>

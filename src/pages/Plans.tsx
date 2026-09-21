@@ -1,3 +1,4 @@
+import { DatePicker } from "../components/DatePicker";
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import type { MonthlyPlan, WeeklyPlan } from "../types";
@@ -31,12 +32,14 @@ export function Plans() {
                 >
                   ←
                 </button>
-                <input
+                <DatePicker
                   id="plan-period"
                   aria-label="計画する週の日付"
                   type="date"
                   value={date}
-                  onChange={(e) => e.target.value && setDate(e.target.value)}
+                  onChange={(nextDateValue) =>
+                    nextDateValue && setDate(nextDateValue)
+                  }
                 />
                 <button
                   className="icon-button"
@@ -47,12 +50,14 @@ export function Plans() {
                 </button>
               </div>
             ) : (
-              <input
+              <DatePicker
                 id="plan-period"
                 aria-label="計画する月"
                 type="month"
                 value={month}
-                onChange={(e) => e.target.value && setMonth(e.target.value)}
+                onChange={(nextDateValue) =>
+                  nextDateValue && setMonth(nextDateValue)
+                }
               />
             )}
           </div>
