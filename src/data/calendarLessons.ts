@@ -3,17 +3,27 @@ import { addDays } from "../lib/dates";
 import { weekday } from "../lib/recurrence";
 import { seriesPrefix, type OngoingLessonSeries } from "./lessonSchedule";
 
+export type CalendarLessonCounts = Record<
+  string,
+  { active: number; cancelled: number }
+>;
+
 // Preview only the visible days. Browsing a distant month must not create years
 // of lesson records, or write from inside Dexie's liveQuery context.
 export async function calendarLessons(
   start: string,
   end: string,
-): Promise<Record<string, number>> {
+): Promise<CalendarLessonCounts> {
   const lessons = await db.lessons
     .where("date")
     .between(start, end, true, true)
     .toArray();
-  const counts: Record<string, number> = {};
+  const counts: CalendarLessonCounts = {};
+  const countLesson = (date: string, cancelled = false) => {
+    const day = (counts[date] ??= { active: 0, cancelled: 0 });
+    if (cancelled) day.cancelled += 1;
+    else day.active += 1;
+  };
   const key = (title: string, date: string) =>
     JSON.stringify([title.trim(), date]);
   const knownDates = new Set(
@@ -25,7 +35,7 @@ export async function calendarLessons(
       .map((lesson) => key(lesson.title ?? "", lesson.originalDate!)),
   );
   for (const lesson of lessons) {
-    if (!lesson.cancelled) counts[lesson.date] = (counts[lesson.date] ?? 0) + 1;
+    countLesson(lesson.date, lesson.cancelled);
   }
   const settings = await db.settings
     .where("id")
@@ -84,7 +94,7 @@ export async function calendarLessons(
         knownOriginals.has(key(title, original))
       )
         continue;
-      counts[date] = (counts[date] ?? 0) + 1;
+      countLesson(date);
       // Match the recurrence generator's same-title/date deduplication across series.
       knownDates.add(key(title, date));
       knownOriginals.add(key(title, original));

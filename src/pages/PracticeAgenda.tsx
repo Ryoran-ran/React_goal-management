@@ -322,7 +322,7 @@ export function Practice({
                 >
                   <button
                     key={`${item.kind}-${record.id}`}
-                    className="card agenda-row"
+                    className={`card agenda-row ${status === "cancelled" ? "is-cancelled" : ""}`}
                     onClick={() => {
                       setNotice("");
                       const next = openAgendaItem(item, today);
@@ -342,6 +342,11 @@ export function Practice({
                         {item.kind === "practice" ? "自主練習" : "レッスン"}
                       </span>
                       <h2>{title}</h2>
+                      {item.kind === "lesson" &&
+                        status === "cancelled" &&
+                        item.record.cancellationReason && (
+                          <p>中止理由：{item.record.cancellationReason}</p>
+                        )}
                       {item.kind === "lesson" &&
                         !!item.record.sections?.length && (
                           <p>

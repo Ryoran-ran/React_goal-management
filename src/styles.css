@@ -512,6 +512,14 @@
   background: #f9eded;
   color: #8f4444;
 }
+.card.is-cancelled {
+  background: #fff8f8;
+  border-color: #d9bcbc;
+}
+.card.is-cancelled h2 {
+  text-decoration: line-through;
+  text-decoration-color: #8f4444;
+}
 .floating-add {
   position: fixed;
   left: 264px;
@@ -2359,6 +2367,10 @@ button p {
 .calendar-day.is-outside {
   opacity: 0.5;
 }
+.calendar-day.has-cancellations {
+  padding-bottom: 18px;
+  background: #f9eded;
+}
 .calendar-day.has-lessons {
   background: #e3f1eb;
 }
@@ -2384,6 +2396,25 @@ button p {
 }
 .calendar-day.is-selected .calendar-lesson-dot {
   background: white;
+}
+.calendar-cancelled-label {
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  width: 100%;
+  color: #8f4444;
+  font-size: 0.6rem;
+  line-height: 14px;
+}
+.calendar-day.has-cancellations .calendar-lesson-dot {
+  bottom: 7px;
+  left: 4px;
+}
+.calendar-day.is-selected .calendar-cancelled-label {
+  color: white;
+}
+.calendar-cancelled-legend {
+  color: #8f4444;
 }
 .app-calendar button:disabled {
   cursor: not-allowed;

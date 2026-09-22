@@ -120,7 +120,7 @@ export function Lessons() {
             )}
             {result.data?.map((lesson) => (
               <button
-                className="card lesson-card"
+                className={`card lesson-card ${lesson.cancelled ? "is-cancelled" : ""}`}
                 key={lesson.id}
                 onClick={() => {
                   setEditing(lesson);
