@@ -51,6 +51,76 @@ export const workProgress = (workItems: EventWorkItem[]) => ({
   completed: workItems.filter((work) => work.status === "completed").length,
   total: workItems.length,
 });
+export type TodayEventWorkTiming =
+  "today" | "starts_today" | "due_today" | "in_period" | "overdue";
+export interface TodayEventWork {
+  event: DanceEvent;
+  work: EventWorkItem;
+  timing: TodayEventWorkTiming;
+}
+export function visibleGanttSchedule(event: DanceEvent, showFinished: boolean) {
+  if (showFinished)
+    return {
+      milestones: event.milestones ?? [],
+      workItems: event.workItems ?? [],
+    };
+  const workItems = (event.workItems ?? []).filter(
+    (work) => work.status !== "completed",
+  );
+  const milestonesWithOpenWork = new Set(
+    workItems
+      .map((work) => work.milestoneId)
+      .filter((id): id is string => !!id),
+  );
+  const milestones = (event.milestones ?? []).filter(
+    (milestone) =>
+      (milestone.status !== "achieved" && milestone.status !== "skipped") ||
+      milestonesWithOpenWork.has(milestone.id),
+  );
+  return { milestones, workItems };
+}
+export function eventWorkForToday(
+  events: DanceEvent[],
+  today: string,
+): TodayEventWork[] {
+  const timingRank: Record<TodayEventWorkTiming, number> = {
+    today: 0,
+    due_today: 1,
+    starts_today: 2,
+    in_period: 3,
+    overdue: 4,
+  };
+  return events
+    .flatMap((event) =>
+      (event.workItems ?? []).flatMap((work): TodayEventWork[] => {
+        if (work.status === "completed") return [];
+        const start = work.startDate ?? work.dueDate;
+        const end = work.dueDate ?? work.startDate;
+        if (!start || !end || start > today || end < today) {
+          if (end && end < today) return [{ event, work, timing: "overdue" }];
+          return [];
+        }
+        const timing: TodayEventWorkTiming =
+          start === today && end === today
+            ? "today"
+            : end === today
+              ? "due_today"
+              : start === today
+                ? "starts_today"
+                : "in_period";
+        return [{ event, work, timing }];
+      }),
+    )
+    .sort(
+      (a, b) =>
+        timingRank[a.timing] - timingRank[b.timing] ||
+        (a.work.dueDate ?? a.work.startDate ?? "").localeCompare(
+          b.work.dueDate ?? b.work.startDate ?? "",
+        ) ||
+        a.event.date.localeCompare(b.event.date) ||
+        a.work.title.localeCompare(b.work.title, "ja"),
+    );
+}
 export function shiftEventWork(items: EventWorkItem[], days: number) {
   return items.map((item) => {
     if (item.status === "completed") return item;

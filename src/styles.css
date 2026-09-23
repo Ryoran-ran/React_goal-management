@@ -873,6 +873,71 @@
 .today-schedule-row button {
   flex-shrink: 0;
 }
+.today-event-work {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #cbdad6;
+}
+.today-event-work > h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+.today-event-work > h3 .tag {
+  margin-left: auto;
+}
+.today-event-work-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 0;
+  border-top: 1px solid #d6e2dd;
+  text-align: left;
+}
+.today-event-work-row > span {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+.today-event-work-row small {
+  flex-basis: 100%;
+  color: var(--muted);
+}
+.today-event-work-row strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.today-event-work-row svg {
+  flex-shrink: 0;
+}
+.tag.today-work-due {
+  background: #fff0d6;
+  color: #81530f;
+}
+.today-overdue-work {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #cbdad6;
+}
+.today-overdue-work > summary {
+  color: #9b3745;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.today-overdue-work[open] > summary {
+  margin-bottom: 8px;
+}
+.tag.today-work-overdue {
+  background: #f9e6e9;
+  color: #923444;
+}
 .learning-columns {
   display: grid;
   grid-template-columns: minmax(0, 1.65fr) minmax(260px, 1fr);
@@ -2723,12 +2788,72 @@ button p {
 .event-preparation-heading > div {
   min-width: 0;
 }
-.event-preparation-actions {
+.event-actions-menu {
+  position: relative;
+  margin-left: auto;
+}
+.event-actions-menu > summary {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 12px;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 9px 14px;
+  border: 1px solid #bdd1cb;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--teal);
+  cursor: pointer;
+  font-weight: 600;
+  list-style: none;
+}
+.event-actions-menu > summary::-webkit-details-marker {
+  display: none;
+}
+.event-actions-menu > summary svg {
+  transition: transform 160ms ease;
+}
+.event-actions-menu[open] > summary svg {
+  transform: rotate(180deg);
+}
+.event-actions-panel {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(320px, calc(100vw - 32px));
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgb(26 58 55 / 16%);
+}
+.event-actions-group {
+  padding: 8px;
+}
+.event-actions-group + .event-actions-group {
+  border-top: 1px solid var(--line);
+}
+.event-actions-group > span {
+  display: block;
+  margin: 0 8px 4px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.event-actions-group > button {
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 44px;
+  padding: 9px 8px;
+  border-radius: 8px;
+  text-align: left;
+}
+.event-actions-group > button:hover {
+  background: #eff5f3;
+}
+.event-export-notice {
+  margin: -8px 0 20px;
 }
 .preparation-card {
   min-width: 0;
@@ -3480,6 +3605,19 @@ button p {
 }
 .gantt-options-panel label {
   min-height: 44px;
+}
+.gantt-options-panel .choice {
+  justify-content: flex-start;
+}
+.gantt-finished-empty {
+  margin-top: 12px;
+  padding: 28px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f5f8f7;
+}
+.gantt-finished-empty p {
+  margin-top: 0;
 }
 .gantt-legend {
   display: flex;

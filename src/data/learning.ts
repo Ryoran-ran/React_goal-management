@@ -3,6 +3,7 @@ import { base, save } from "./repository";
 import { agendaBetween, type AgendaItem } from "./practiceAgenda";
 import { lessonHomework } from "../lib/lessonContent";
 import type { LearningNote, LearningTheme } from "../types";
+import { eventWorkForToday } from "../lib/eventWork";
 
 export const allThemes = () =>
   db.themes
@@ -123,7 +124,13 @@ export async function learningOverview(today: string) {
       .toArray(),
     agendaBetween(today, today),
   ]);
-  return { themes, notes, events, agenda };
+  return {
+    themes,
+    notes,
+    events,
+    agenda,
+    eventWork: eventWorkForToday(events, today),
+  };
 }
 export async function sourceNotes(source: {
   kind: "lesson" | "practice";

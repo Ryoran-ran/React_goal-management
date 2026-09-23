@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   BookOpen,
   CalendarDays,
+  ListChecks,
   Pencil,
 } from "lucide-react";
 import type { LearningNote, LearningTheme } from "../types";
@@ -21,6 +22,7 @@ import { ensureLessonSchedules } from "../data/lessonSchedule";
 import { useQuery } from "../lib/hooks";
 import { addDays, dateLabel, daysUntil } from "../lib/dates";
 import { nextMilestone, milestoneTiming } from "../lib/milestones";
+import type { TodayEventWorkTiming } from "../lib/eventWork";
 import { FloatingAddButton } from "../components/FloatingAddButton";
 import { ThemeEditor } from "../components/ThemeEditor";
 import { LearningJournal } from "../components/LearningJournal";
@@ -78,7 +80,18 @@ export function Learning({
       </p>
     );
   if (!overview.data) return <p role="status">学びのノートを開いています…</p>;
-  const { themes, notes, events, agenda } = overview.data;
+  const { themes, notes, events, agenda, eventWork } = overview.data;
+  const todayEventWork = eventWork.filter((item) => item.timing !== "overdue");
+  const overdueEventWork = eventWork.filter(
+    (item) => item.timing === "overdue",
+  );
+  const workTimingLabels: Record<TodayEventWorkTiming, string> = {
+    today: "今日の予定",
+    starts_today: "今日開始",
+    due_today: "今日が期限",
+    in_period: "予定期間中",
+    overdue: "期限超過",
+  };
   const active = themes.filter((theme) => theme.status === "active");
   const record = (themeId?: string, kind: LearningNote["kind"] = "lesson") =>
     setView({
@@ -192,7 +205,7 @@ export function Learning({
               <span className="muted">{dateLabel(today)}</span>
             </div>
             <div
-              className={`today-schedule-content ${agenda.length ? "" : "is-empty"}`}
+              className={`today-schedule-content ${agenda.length || eventWork.length ? "" : "is-empty"}`}
             >
               {agenda.length ? (
                 agenda.map((item) => (
@@ -227,6 +240,61 @@ export function Learning({
                 ))
               ) : (
                 <p className="muted">今日の予定はありません。</p>
+              )}
+              {!!todayEventWork.length && (
+                <section
+                  className="today-event-work"
+                  aria-labelledby="today-event-work-heading"
+                >
+                  <h3 id="today-event-work-heading">
+                    <ListChecks size={18} />
+                    今日のイベント準備
+                    <span className="tag">{todayEventWork.length}件</span>
+                  </h3>
+                  {todayEventWork.map(({ event, work, timing }) => (
+                    <button
+                      type="button"
+                      className="today-event-work-row"
+                      key={work.id}
+                      onClick={() => onEvents(event.id)}
+                    >
+                      <span>
+                        <small>{event.title}</small>
+                        <strong>{work.title}</strong>
+                        <span
+                          className={`tag ${timing === "due_today" ? "today-work-due" : ""}`}
+                        >
+                          {workTimingLabels[timing]}
+                        </span>
+                      </span>
+                      <ArrowUpRight size={17} />
+                    </button>
+                  ))}
+                </section>
+              )}
+              {!!overdueEventWork.length && (
+                <details className="today-overdue-work">
+                  <summary>
+                    期限を過ぎた準備作業 {overdueEventWork.length}件
+                  </summary>
+                  {overdueEventWork.map(({ event, work, timing }) => (
+                    <button
+                      type="button"
+                      className="today-event-work-row"
+                      key={work.id}
+                      onClick={() => onEvents(event.id)}
+                    >
+                      <span>
+                        <small>{event.title}</small>
+                        <strong>{work.title}</strong>
+                        <span className="tag today-work-overdue">
+                          {workTimingLabels[timing]}
+                        </span>
+                      </span>
+                      <ArrowUpRight size={17} />
+                    </button>
+                  ))}
+                </details>
               )}
               <button
                 type="button"
