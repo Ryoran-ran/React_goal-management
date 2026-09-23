@@ -7,6 +7,7 @@ import { useQuery } from "../lib/hooks";
 import { dateLabel } from "../lib/dates";
 import { categoryNameKey } from "../lib/lessonCategories";
 import { noteKinds } from "./LearningNoteEditor";
+import { LessonOutline } from "./LessonOutline";
 
 export function LearningJournal({
   themes,
@@ -118,7 +119,11 @@ export function LearningJournal({
               .map((field) => (
                 <div key={field.label} className="journal-field">
                   <small className="muted">{field.label}</small>
-                  <p className="pre-wrap clamp">{field.text}</p>
+                  {entry.kind === "lesson" ? (
+                    <LessonOutline text={field.text} />
+                  ) : (
+                    <p className="pre-wrap clamp">{field.text}</p>
+                  )}
                 </div>
               ))}
             <small className="muted">

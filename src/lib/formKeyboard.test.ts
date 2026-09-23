@@ -20,14 +20,23 @@ function key(overrides: Record<string, unknown> = {}) {
 }
 
 describe("form save keyboard controls", () => {
-  it("does not save the enclosing form from a calendar portal", () => {
-    const event = key({
-      ctrlKey: true,
-      target: { tagName: "BUTTON", type: "button", closest: () => ({}) },
-    });
-    handleFormKeyDown(event, false);
-    expect(event.currentTarget.requestSubmit).not.toHaveBeenCalled();
-    expect(event.preventDefault).not.toHaveBeenCalled();
+  it("does not save the enclosing form from a calendar or expanded editor portal", () => {
+    for (const selector of [
+      "[data-calendar-dialog]",
+      "[data-outline-dialog]",
+    ]) {
+      const event = key({
+        ctrlKey: true,
+        target: {
+          tagName: "BUTTON",
+          type: "button",
+          closest: (query: string) => (query.includes(selector) ? {} : null),
+        },
+      });
+      handleFormKeyDown(event, false);
+      expect(event.currentTarget.requestSubmit).not.toHaveBeenCalled();
+      expect(event.preventDefault).not.toHaveBeenCalled();
+    }
   });
   it("prevents Enter submission while preserving textarea newlines and other buttons", () => {
     for (const target of [

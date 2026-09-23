@@ -39,6 +39,7 @@ import { LessonScheduleEditor } from "../components/LessonScheduleEditor";
 import { LessonEditor } from "./Lessons";
 import { PracticeEditor } from "../components/PracticeEditor";
 import { scrollPageToTop } from "../lib/pageScroll";
+import { confirmDiscardChanges } from "../lib/unsavedChanges";
 
 const statuses = { planned: "予定", recorded: "記録済み", cancelled: "中止" };
 export function Practice({
@@ -183,6 +184,7 @@ export function Practice({
         <button
           className="text-button agenda-back"
           onClick={() => {
+            if (!confirmDiscardChanges()) return;
             close();
             setScheduling(false);
           }}

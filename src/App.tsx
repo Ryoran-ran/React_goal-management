@@ -23,6 +23,7 @@ import { openAgendaItem, type PracticeEntry } from "./lib/practiceNavigation";
 import { errorText } from "./lib/hooks";
 import { registerTrainingTools } from "./lib/webmcp";
 import { scrollPageToTop } from "./lib/pageScroll";
+import { confirmDiscardChanges } from "./lib/unsavedChanges";
 const navigation = [
   { id: "home", label: "今日", icon: CalendarDays },
   { id: "notes", label: "学びの記録", icon: NotebookPen },
@@ -50,17 +51,20 @@ export default function App() {
     if (ready) return registerTrainingTools();
   }, [ready]);
   const navigate = (value: Page) => {
+    if (!confirmDiscardChanges()) return;
     setEventId(undefined);
     setPracticeEntry(undefined);
     setPage(value);
     scrollPageToTop();
   };
   const openPractice = (entry: PracticeEntry) => {
+    if (!confirmDiscardChanges()) return;
     setPracticeEntry(entry);
     setPage("practice");
     scrollPageToTop();
   };
   const openEvent = (id?: string) => {
+    if (!confirmDiscardChanges()) return;
     setEventId(id);
     setPage("events");
     scrollPageToTop();
