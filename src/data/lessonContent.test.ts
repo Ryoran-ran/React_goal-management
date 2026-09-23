@@ -16,6 +16,7 @@ import {
   saveSeriesChange,
 } from "./lessonSeries";
 import { lessonHomework, youtubeLink } from "../lib/lessonContent";
+import { parseLessonOutline } from "../lib/lessonOutline";
 import type { Lesson, LessonSection } from "../types";
 import { customLessonCategories } from "./lessonCategories";
 import {
@@ -65,6 +66,39 @@ beforeEach(async () => {
 afterAll(() => db.delete());
 
 describe("category lesson records and media", () => {
+  it("preserves outline source and indentation through saving, reopening and editing", async () => {
+    const input = lesson();
+    const text =
+      "・体重を乗せ切る\r\n  前の足へ\r\n　後退時に注意\r\n・上体を保つ\r\n\t肩を上げない";
+    input.sections![0] = {
+      ...input.sections![0],
+      content: text,
+      feedback: text,
+      homework: text,
+    };
+    await saveLessonOccurrence(input, [], [], "one", input);
+    db.close();
+    await db.open();
+    const stored = (await db.lessons.get(input.id))!;
+    for (const field of ["content", "feedback", "homework"] as const) {
+      expect(stored.sections![0][field]).toBe(text);
+      expect(parseLessonOutline(stored.sections![0][field])).toEqual([
+        {
+          kind: "item",
+          text: "体重を乗せ切る",
+          details: ["前の足へ", "後退時に注意"],
+        },
+        { kind: "item", text: "上体を保つ", details: ["肩を上げない"] },
+      ]);
+    }
+    stored.sections![0].feedback += "\n・目線を下げない";
+    await save("lessons", stored);
+    expect(
+      parseLessonOutline(
+        (await db.lessons.get(input.id))!.sections![0].feedback,
+      ),
+    ).toHaveLength(3);
+  });
   it("keeps content and media in a new draft until its category is chosen", async () => {
     const draft = newLessonSection();
     const nextDraft = newLessonSection();

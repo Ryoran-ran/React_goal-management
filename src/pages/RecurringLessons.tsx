@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { LessonSeriesManager } from "../components/LessonSeriesManager";
 import { LessonScheduleEditor } from "../components/LessonScheduleEditor";
 import { scrollPageToTop } from "../lib/pageScroll";
+import { confirmDiscardChanges } from "../lib/unsavedChanges";
 
 export function RecurringLessons({
   today,
@@ -22,7 +23,13 @@ export function RecurringLessons({
       <button
         type="button"
         className="text-button agenda-back"
-        onClick={adding ? showList : onBack}
+        onClick={
+          adding
+            ? () => {
+                if (confirmDiscardChanges()) showList();
+              }
+            : onBack
+        }
       >
         <ArrowLeft size={18} />
         {adding ? "繰り返しレッスンに戻る" : "整理に戻る"}

@@ -4,6 +4,7 @@ import { lessonCategoryLabel, newLessonSection } from "../lib/lessonCategories";
 import { useQuery } from "../lib/hooks";
 import type { ImageDraft } from "./Attachments";
 import { attachmentsFor } from "../data/repository";
+import { parseLessonOutline } from "../lib/lessonOutline";
 
 export function LessonSectionsEditor({
   lessonId,
@@ -29,21 +30,68 @@ export function LessonSectionsEditor({
       className="lesson-sections lesson-form-section"
       aria-label="カテゴリ別のレッスン内容"
     >
-      <h3 className="lesson-section-title">カテゴリ別のレッスン内容</h3>
-      <p className="muted lesson-edit-note">
-        記録欄を追加し、開いた画面でカテゴリと内容・指摘・宿題を入力できます。
-      </p>
-      {sections.map((section) => (
-        <section className="subform lesson-section-summary" key={section.id}>
-          <header className="section-heading">
+      <header className="lesson-sections-heading">
+        <h3>カテゴリ別のレッスン内容</h3>
+        <button
+          type="button"
+          className="text-button"
+          aria-label="レッスン内容を追加"
+          onClick={() => {
+            const section = newLessonSection();
+            onChange([...sections, section]);
+            onOpenSection(section.id);
+          }}
+        >
+          <Plus size={18} aria-hidden="true" />
+          追加
+        </button>
+      </header>
+      {sections.map((section) => {
+        const label = lessonCategoryLabel(section) || "カテゴリ未選択";
+        const summary = [
+          { label: "内容", text: section.content },
+          { label: "指摘", text: section.feedback },
+          { label: "宿題", text: section.homework },
+        ].find((field) => field.text.trim());
+        const summaryText = summary
+          ? `${summary.label}：${parseLessonOutline(summary.text)
+              .map((item) => item.text)
+              .join(" ／ ")}`
+          : "";
+        const mediaCount =
+          savedMedia.filter(
+            (item) =>
+              item.sectionId === section.id && !media.removed.includes(item.id),
+          ).length +
+          media.files.filter(
+            (_, index) => media.fileSectionIds?.[index] === section.id,
+          ).length;
+        const youtubeCount = section.youtubeUrls.filter((url) =>
+          url.trim(),
+        ).length;
+        const mediaText = [
+          mediaCount ? `画像・動画 ${mediaCount}件` : "",
+          youtubeCount ? `YouTube ${youtubeCount}件` : "",
+        ]
+          .filter(Boolean)
+          .join(" · ");
+        return (
+          <div className="lesson-section-summary" key={section.id}>
             <button
               type="button"
-              className="text-button"
+              className="lesson-section-open"
+              aria-label={`${label}のレッスン内容を開く`}
               onClick={() => onOpenSection(section.id)}
             >
-              <strong>
-                {lessonCategoryLabel(section) || "カテゴリ未選択"}
-              </strong>
+              <span className="lesson-section-text">
+                <strong>{label}</strong>
+                {summaryText && (
+                  <span className="muted lesson-section-excerpt">
+                    {summaryText}
+                  </span>
+                )}
+                {mediaText && <small className="muted">{mediaText}</small>}
+              </span>
               <ArrowUpRight size={18} aria-hidden="true" />
             </button>
             <button
@@ -71,47 +119,9 @@ export function LessonSectionsEditor({
             >
               <Trash2 size={17} />
             </button>
-          </header>
-          <p className="muted">
-            内容：{section.content.trim() ? "記入済み" : "未記入"} · 指摘：
-            {section.feedback.trim() ? "記入済み" : "未記入"} · 宿題：
-            {section.homework.trim() ? "記入済み" : "未記入"}
-          </p>
-          <p className="clamp">
-            {section.content ||
-              section.feedback ||
-              section.homework ||
-              "カテゴリを開いて記録しましょう。"}
-          </p>
-          <p className="muted">
-            画像・動画{" "}
-            {savedMedia.filter(
-              (item) =>
-                item.sectionId === section.id &&
-                !media.removed.includes(item.id),
-            ).length +
-              media.files.filter(
-                (_, index) => media.fileSectionIds?.[index] === section.id,
-              ).length}
-            件 · YouTube{" "}
-            {section.youtubeUrls.filter((url) => url.trim()).length}件
-          </p>
-        </section>
-      ))}
-      <div className="focus-create-actions">
-        <button
-          type="button"
-          className="secondary"
-          onClick={() => {
-            const section = newLessonSection();
-            onChange([...sections, section]);
-            onOpenSection(section.id);
-          }}
-        >
-          <Plus size={18} aria-hidden="true" />
-          レッスン内容を追加
-        </button>
-      </div>
+          </div>
+        );
+      })}
     </section>
   );
 }

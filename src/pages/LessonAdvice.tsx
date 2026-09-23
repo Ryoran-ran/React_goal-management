@@ -1,4 +1,5 @@
 import { DatePicker } from "../components/DatePicker";
+import { LessonOutline } from "../components/LessonOutline";
 import { useState } from "react";
 import { ArrowLeft, Copy } from "lucide-react";
 import { learningJournal } from "../data/learningJournal";
@@ -173,7 +174,7 @@ export function LessonAdvice({
                                 .map((field) => (
                                   <div key={field.label}>
                                     <strong>{field.label}</strong>
-                                    <p className="pre-wrap">{field.text}</p>
+                                    <LessonOutline text={field.text} />
                                   </div>
                                 ))}
                               {!!(

@@ -1,5 +1,7 @@
 import { DatePicker } from "./DatePicker";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useUnsavedChanges } from "../lib/useUnsavedChanges";
+import { confirmDiscardChanges, draftHasChanges } from "../lib/unsavedChanges";
 import {
   createLessonSchedule,
   previewLessonSchedule,
@@ -26,6 +28,11 @@ export function LessonScheduleEditor({
   });
   const patch = (change: Partial<LessonSchedule>) =>
     setSchedule((old) => ({ ...old, ...change }));
+  const initialSchedule = useRef(schedule);
+  useUnsavedChanges(draftHasChanges(initialSchedule.current, schedule));
+  const requestClose = () => {
+    if (confirmDiscardChanges()) onClose();
+  };
   const preview = useQuery(
     () => previewLessonSchedule(schedule),
     [
@@ -39,9 +46,9 @@ export function LessonScheduleEditor({
   const count =
     preview.data?.filter((day) => !day.excluded && !day.duplicate).length ?? 0;
   return (
-    <Editor title="毎週のレッスンをまとめて登録" onClose={onClose}>
+    <Editor title="毎週のレッスンをまとめて登録" onClose={requestClose}>
       <SaveForm
-        onCancel={onClose}
+        onCancel={requestClose}
         saveLabel="まとめて登録する"
         onSave={async () => {
           const result = await createLessonSchedule(schedule);

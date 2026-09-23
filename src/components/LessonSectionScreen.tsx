@@ -15,6 +15,7 @@ import { handleFormKeyDown } from "../lib/formKeyboard";
 import { Attachments, type ImageDraft } from "./Attachments";
 import { GoalCategoryOptions } from "./GoalCategoryOptions";
 import { Field } from "./ui";
+import { LessonOutlineField } from "./LessonOutline";
 
 export function LessonSectionScreen({
   lessonId,
@@ -83,9 +84,6 @@ export function LessonSectionScreen({
             : "レッスン内容を追加"}
         </h2>
       </header>
-      <p className="muted">
-        カテゴリを選び、内容・指摘・宿題を記録します。「戻る」で入力を保持して戻り、レッスン画面で保存できます。
-      </p>
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -100,7 +98,6 @@ export function LessonSectionScreen({
         )}
         <Field label="カテゴリ">
           <select
-            autoFocus
             value={addingCategory ? "new" : lessonCategoryValue(section)}
             onChange={(e) => {
               const isNew = e.target.value === "new";
@@ -123,7 +120,6 @@ export function LessonSectionScreen({
               autoFocus
               maxLength={80}
               value={section.customCategory ?? ""}
-              placeholder="例：ストレッチ、サルサ、表現"
               onChange={(event) =>
                 update(section.id, {
                   category: "custom",
@@ -138,25 +134,24 @@ export function LessonSectionScreen({
             カテゴリを読み込めませんでした：{savedCategoryError}
           </p>
         )}
-        <Field label="取り組んだ内容">
-          <textarea
-            value={section.content}
-            onChange={(e) => update(section.id, { content: e.target.value })}
-            placeholder="練習したフィガー・動きなど"
-          />
-        </Field>
-        <Field label="先生からの指摘・アドバイス">
-          <textarea
-            value={section.feedback}
-            onChange={(e) => update(section.id, { feedback: e.target.value })}
-          />
-        </Field>
-        <Field label="次回までの宿題">
-          <textarea
-            value={section.homework}
-            onChange={(e) => update(section.id, { homework: e.target.value })}
-          />
-        </Field>
+        <LessonOutlineField
+          label="取り組んだ内容"
+          context={lessonCategoryLabel(section) || "カテゴリ未選択"}
+          value={section.content}
+          onChange={(content) => update(section.id, { content })}
+        />
+        <LessonOutlineField
+          label="先生からの指摘・アドバイス"
+          context={lessonCategoryLabel(section) || "カテゴリ未選択"}
+          value={section.feedback}
+          onChange={(feedback) => update(section.id, { feedback })}
+        />
+        <LessonOutlineField
+          label="次回までの宿題"
+          context={lessonCategoryLabel(section) || "カテゴリ未選択"}
+          value={section.homework}
+          onChange={(homework) => update(section.id, { homework })}
+        />
         <Attachments
           type="lesson"
           id={lessonId}
@@ -172,7 +167,6 @@ export function LessonSectionScreen({
                 <input
                   type="url"
                   value={url}
-                  placeholder="https://www.youtube.com/watch?v=…"
                   onChange={(e) =>
                     update(section.id, {
                       youtubeUrls: section.youtubeUrls.map((old, j) =>

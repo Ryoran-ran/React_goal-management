@@ -1,5 +1,7 @@
 import { DatePicker } from "./DatePicker";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useUnsavedChanges } from "../lib/useUnsavedChanges";
+import { confirmDiscardChanges, draftHasChanges } from "../lib/unsavedChanges";
 import type { PracticeLog } from "../types";
 import { Editor, Field, SaveForm } from "./ui";
 import { Attachments, type ImageDraft } from "./Attachments";
@@ -21,6 +23,11 @@ export function PracticeEditor({
 }) {
   const [log, setLog] = useState<PracticeLog>(value);
   const [images, setImages] = useState<ImageDraft>({ files: [], removed: [] });
+  const initialLog = useRef(value);
+  useUnsavedChanges(draftHasChanges(initialLog.current, log, images));
+  const requestClose = () => {
+    if (confirmDiscardChanges()) onClose();
+  };
   const patch = (change: Partial<PracticeLog>) =>
     setLog((old) => ({ ...old, ...change }));
   const status = log.status ?? "recorded";
@@ -33,11 +40,11 @@ export function PracticeEditor({
             ? "自主練習の予定・記録"
             : "自主練習を追加"
       }
-      onClose={onClose}
+      onClose={requestClose}
     >
       <SaveForm
         saveLabel="保存して一覧に戻る"
-        onCancel={onClose}
+        onCancel={requestClose}
         onDelete={exists ? onDelete : undefined}
         onSave={() =>
           onSave(

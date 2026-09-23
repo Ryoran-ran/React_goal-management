@@ -17,6 +17,8 @@ import {
 import { LessonScheduleEditor } from "../components/LessonScheduleEditor";
 import { LessonSectionsEditor } from "../components/LessonSectionsEditor";
 import { LessonSectionScreen } from "../components/LessonSectionScreen";
+import { LessonOutline, LessonOutlineField } from "../components/LessonOutline";
+import { lessonCategoryLabel } from "../lib/lessonCategories";
 import { lessonHomework } from "../lib/lessonContent";
 import { useQuery } from "../lib/hooks";
 import { dateLabel, localDate, monthRange } from "../lib/dates";
@@ -30,6 +32,8 @@ import {
 } from "../components/ui";
 import { Attachments, type ImageDraft } from "../components/Attachments";
 import { priorities } from "../lib/goalReview";
+import { useUnsavedChanges } from "../lib/useUnsavedChanges";
+import { confirmDiscardChanges, draftHasChanges } from "../lib/unsavedChanges";
 import { FloatingAddButton } from "../components/FloatingAddButton";
 import {
   pageScrollTop,
@@ -222,6 +226,11 @@ export function LessonEditor({
     [value.id, value.date, lesson.date],
   );
   const [images, setImages] = useState<ImageDraft>({ files: [], removed: [] });
+  const initialLesson = useRef(value);
+  useUnsavedChanges(draftHasChanges(initialLesson.current, lesson, images));
+  const requestClose = () => {
+    if (confirmDiscardChanges()) onClose();
+  };
   const [sectionId, setSectionId] = useState<string | undefined>(
     initialSectionId,
   );
@@ -280,11 +289,11 @@ export function LessonEditor({
                 ? "レッスンを編集"
                 : "新しいレッスン"
           }
-          onClose={onClose}
+          onClose={requestClose}
         >
           <SaveForm
             saveLabel="保存して一覧に戻る"
-            onCancel={onClose}
+            onCancel={requestClose}
             onSave={async () => {
               await saveLessonOccurrence(
                 lesson,
@@ -448,7 +457,17 @@ export function LessonEditor({
             {previous.data && lessonHomework(previous.data) && (
               <div className="subform">
                 <h3>前回の宿題 · {dateLabel(previous.data.date)}</h3>
-                <p className="pre-wrap">{lessonHomework(previous.data)}</p>
+                {previous.data.homework && (
+                  <LessonOutline text={previous.data.homework} />
+                )}
+                {previous.data.sections
+                  ?.filter((section) => section.homework.trim())
+                  .map((section) => (
+                    <div key={section.id}>
+                      <h4>{lessonCategoryLabel(section)}</h4>
+                      <LessonOutline text={section.homework} />
+                    </div>
+                  ))}
               </div>
             )}
             <section
@@ -487,24 +506,21 @@ export function LessonEditor({
                 topics={lesson.actualTopics}
                 onChange={(actualTopics) => patch({ actualTopics })}
               />
-              <Field label="先生からの指摘・改善点">
-                <textarea
-                  value={lesson.teacherFeedback ?? ""}
-                  onChange={(e) => patch({ teacherFeedback: e.target.value })}
-                />
-              </Field>
-              <Field label="新しく見つかった課題">
-                <textarea
-                  value={lesson.newIssues ?? ""}
-                  onChange={(e) => patch({ newIssues: e.target.value })}
-                />
-              </Field>
-              <Field label="次回までの宿題">
-                <textarea
-                  value={lesson.homework ?? ""}
-                  onChange={(e) => patch({ homework: e.target.value })}
-                />
-              </Field>
+              <LessonOutlineField
+                label="先生からの指摘・改善点"
+                value={lesson.teacherFeedback ?? ""}
+                onChange={(teacherFeedback) => patch({ teacherFeedback })}
+              />
+              <LessonOutlineField
+                label="新しく見つかった課題"
+                value={lesson.newIssues ?? ""}
+                onChange={(newIssues) => patch({ newIssues })}
+              />
+              <LessonOutlineField
+                label="次回までの宿題"
+                value={lesson.homework ?? ""}
+                onChange={(homework) => patch({ homework })}
+              />
               <Attachments
                 type="lesson"
                 id={lesson.id}
