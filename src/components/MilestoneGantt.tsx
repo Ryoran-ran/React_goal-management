@@ -9,7 +9,11 @@ import type {
   MilestonePlan,
 } from "../types";
 import { workOverview } from "../lib/verticalGantt";
-import { workProgress, workSchedule } from "../lib/eventWork";
+import {
+  visibleGanttSchedule,
+  workProgress,
+  workSchedule,
+} from "../lib/eventWork";
 import { addDays, daysUntil, localDate } from "../lib/dates";
 import { shiftCalendarMonth } from "../lib/calendar";
 import {
@@ -43,6 +47,7 @@ export function MilestoneGantt({
   onAnchor: (date: string) => void;
 }) {
   const [optionsOpen, setOptionsOpen] = useState(false);
+  const [showFinished, setShowFinished] = useState(false);
   const [collapsed, setCollapsed] = useState<string[]>([]);
   const optionsId = useId();
   const [mobile, setMobile] = useState(
@@ -51,6 +56,17 @@ export function MilestoneGantt({
   const [direction, setDirection] = useState<"vertical" | "horizontal">();
   const vertical =
     (direction ?? (mobile ? "vertical" : "horizontal")) === "vertical";
+  const visible = visibleGanttSchedule(
+    { ...event, milestones: items, workItems },
+    showFinished,
+  );
+  const visibleItems = visible.milestones;
+  const visibleWorkItems = visible.workItems;
+  const visibleEvent = {
+    ...event,
+    milestones: visibleItems,
+    workItems: visibleWorkItems,
+  };
   useEffect(() => {
     const media = window.matchMedia("(max-width: 760px)");
     const update = () => setMobile(media.matches);
@@ -74,8 +90,10 @@ export function MilestoneGantt({
     open: () => onEditWork(work),
   });
   const rows = [
-    ...items.flatMap((item) => {
-      const children = workItems.filter((work) => work.milestoneId === item.id);
+    ...visibleItems.flatMap((item) => {
+      const children = visibleWorkItems.filter(
+        (work) => work.milestoneId === item.id,
+      );
       const isCollapsed = collapsed.includes(item.id);
       return [
         {
@@ -96,14 +114,14 @@ export function MilestoneGantt({
             )),
       ];
     }),
-    ...workItems
+    ...visibleWorkItems
       .filter((work) => !work.milestoneId)
       .map((work, index, array) =>
         workRow(work, index === array.length - 1, "未分類"),
       ),
   ];
   const scroller = useRef<HTMLDivElement>(null);
-  const range = plannedGanttRange(event, scale, anchor);
+  const range = plannedGanttRange(visibleEvent, scale, anchor);
   const count = daysUntil(range.end, range.start) + 1;
   const width = Math.max(
     420,
@@ -248,6 +266,16 @@ export function MilestoneGantt({
                 <option value="horizontal">横</option>
               </select>
             </label>
+            <label className="choice">
+              <input
+                type="checkbox"
+                checked={showFinished}
+                onChange={(changeEvent) =>
+                  setShowFinished(changeEvent.target.checked)
+                }
+              />
+              達成・完了・見送り済みを表示
+            </label>
           </div>
           <h3>グラフの見方</h3>
           <div className="gantt-legend">
@@ -271,11 +299,22 @@ export function MilestoneGantt({
           </p>
         </div>
       </div>
-      {vertical ? (
+      {!visibleItems.length && !visibleWorkItems.length ? (
+        <div className="empty gantt-finished-empty">
+          <p>表示する未完了の準備項目はありません。</p>
+          <button
+            type="button"
+            className="text-button"
+            onClick={() => setShowFinished(true)}
+          >
+            達成・完了・見送り済みを表示
+          </button>
+        </div>
+      ) : vertical ? (
         <VerticalMilestoneGantt
-          event={event}
-          items={items}
-          workItems={workItems}
+          event={visibleEvent}
+          items={visibleItems}
+          workItems={visibleWorkItems}
           range={range}
           scale={scale}
           onEdit={onEdit}

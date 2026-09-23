@@ -10,8 +10,10 @@ import {
 } from "./eventMilestones";
 import { createBackup, readBackup, restoreBackup } from "./backup";
 import {
+  eventWorkForToday,
   normalizeEventWork,
   validateEventWork,
+  visibleGanttSchedule,
   workSchedule,
   withWorkStatus,
 } from "../lib/eventWork";
@@ -330,6 +332,85 @@ describe("independent event work", () => {
     expect(ganttRange(source, "event", "2026-09-21")).toEqual({
       start: "2026-08-01",
       end: "2026-11-10",
+    });
+  });
+  it("finds unfinished work scheduled for today and separates overdue work", () => {
+    const source = event();
+    source.workItems = [
+      {
+        ...work(),
+        id: "today",
+        startDate: "2026-09-23",
+        dueDate: "2026-09-23",
+      },
+      {
+        ...work(),
+        id: "starts",
+        startDate: "2026-09-23",
+        dueDate: "2026-09-30",
+      },
+      { ...work(), id: "due", startDate: "2026-09-20", dueDate: "2026-09-23" },
+      {
+        ...work(),
+        id: "active",
+        startDate: "2026-09-20",
+        dueDate: "2026-09-25",
+      },
+      {
+        ...work(),
+        id: "overdue",
+        startDate: "2026-09-01",
+        dueDate: "2026-09-22",
+      },
+      {
+        ...work(),
+        id: "future",
+        startDate: "2026-09-24",
+        dueDate: "2026-09-25",
+      },
+      {
+        ...work(),
+        id: "done",
+        status: "completed",
+        completedDate: "2026-09-22",
+      },
+    ];
+    expect(
+      eventWorkForToday([source], "2026-09-23").map(({ work, timing }) => [
+        work.id,
+        timing,
+      ]),
+    ).toEqual([
+      ["today", "today"],
+      ["due", "due_today"],
+      ["starts", "starts_today"],
+      ["active", "in_period"],
+      ["overdue", "overdue"],
+    ]);
+  });
+  it("hides finished Gantt items while keeping a finished parent with open work", () => {
+    const source = event();
+    source.milestones![0].status = "achieved";
+    source.milestones![0].completedDate = "2026-09-20";
+    source.milestones![1].status = "achieved";
+    source.milestones![1].completedDate = "2026-09-20";
+    source.workItems = [
+      {
+        ...work(source.milestones![0].id),
+        id: "completed",
+        status: "completed",
+        completedDate: "2026-09-20",
+      },
+      { ...work(source.milestones![1].id), id: "open" },
+    ];
+    const hidden = visibleGanttSchedule(source, false);
+    expect(hidden.workItems.map((item) => item.id)).toEqual(["open"]);
+    expect(hidden.milestones.map((item) => item.id)).toEqual([
+      source.milestones![1].id,
+    ]);
+    expect(visibleGanttSchedule(source, true)).toEqual({
+      milestones: source.milestones,
+      workItems: source.workItems,
     });
   });
 });

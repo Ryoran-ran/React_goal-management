@@ -1,5 +1,13 @@
 import { useState } from "react";
-import { ArrowLeft, CalendarPlus, Plus, Pencil, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarPlus,
+  ChevronDown,
+  Download,
+  Plus,
+  Pencil,
+  Sparkles,
+} from "lucide-react";
 import type { DanceEvent, EventMilestone, EventWorkItem } from "../types";
 import { base } from "../data/repository";
 import { dateLabel, localDate } from "../lib/dates";
@@ -10,6 +18,7 @@ import { EventMilestoneTimeline } from "./EventMilestoneTimeline";
 import { EventWorkEditor } from "./EventWorkEditor";
 import { sortedEventWork } from "../lib/eventWork";
 import { scrollPageToTop } from "../lib/pageScroll";
+import { downloadNotionSchedule } from "../lib/notionCsv";
 
 export function EventPreparation({
   event,
@@ -29,6 +38,7 @@ export function EventPreparation({
   const [anchor, setAnchor] = useState(localDate);
   const [editing, setEditing] = useState<EventMilestone>();
   const [editingWork, setEditingWork] = useState<EventWorkItem>();
+  const [exportNotice, setExportNotice] = useState("");
   const all = sortedMilestones(event.milestones ?? []);
   const allWork = sortedEventWork(event.workItems ?? []);
   const openWork = (item: EventWorkItem) => {
@@ -88,25 +98,75 @@ export function EventPreparation({
           <h1>{event.title}</h1>
           <p>{dateLabel(event.date)}</p>
         </div>
-        <div className="event-preparation-actions">
-          <button type="button" className="text-button" onClick={onAiSchedule}>
-            <Sparkles size={16} />
-            AIでスケジュール作成
-          </button>
-          <button
-            type="button"
-            className="text-button"
-            onClick={onGoogleCalendar}
-          >
-            <CalendarPlus size={16} />
-            Googleカレンダーへ登録
-          </button>
-          <button type="button" className="text-button" onClick={onEditEvent}>
-            <Pencil size={16} />
-            イベントを編集
-          </button>
-        </div>
+        <details className="event-actions-menu">
+          <summary>
+            イベント操作
+            <ChevronDown size={16} aria-hidden="true" />
+          </summary>
+          <div className="event-actions-panel">
+            <div className="event-actions-group">
+              <span>スケジュール作成</span>
+              <button
+                type="button"
+                className="text-button"
+                onClick={onAiSchedule}
+              >
+                <Sparkles size={17} />
+                AIでスケジュールを作成
+              </button>
+            </div>
+            <div className="event-actions-group">
+              <span>外部サービスで使う</span>
+              <button
+                type="button"
+                className="text-button"
+                onClick={onGoogleCalendar}
+              >
+                <CalendarPlus size={17} />
+                Googleカレンダーへ登録
+              </button>
+              <button
+                type="button"
+                className="text-button"
+                disabled={!allWork.length}
+                title={
+                  allWork.length
+                    ? undefined
+                    : "作業を追加するとNotion用CSVを出力できます"
+                }
+                onClick={(clickEvent) => {
+                  downloadNotionSchedule(event);
+                  setExportNotice(
+                    "Notion用CSVを保存しました。タイムラインの表示基準で「開始日」と「終了日」を指定すると、作業期間を1本のバーで表示できます。",
+                  );
+                  clickEvent.currentTarget
+                    .closest("details")
+                    ?.removeAttribute("open");
+                }}
+              >
+                <Download size={17} />
+                Notion用CSVを出力
+              </button>
+            </div>
+            <div className="event-actions-group">
+              <span>イベント管理</span>
+              <button
+                type="button"
+                className="text-button"
+                onClick={onEditEvent}
+              >
+                <Pencil size={17} />
+                イベントを編集
+              </button>
+            </div>
+          </div>
+        </details>
       </div>
+      {exportNotice && (
+        <p className="success event-export-notice" role="status">
+          {exportNotice}
+        </p>
+      )}
       <section className="card preparation-card">
         <div className="section-heading">
           <div>
