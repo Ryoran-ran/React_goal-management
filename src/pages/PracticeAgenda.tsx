@@ -17,7 +17,11 @@ import {
   type PracticeEntry,
   type PracticeAction,
 } from "../lib/practiceNavigation";
-import { agendaStatus, practiceAgenda } from "../data/practiceAgenda";
+import {
+  agendaStatus,
+  practiceAgenda,
+  practiceAgendaRange,
+} from "../data/practiceAgenda";
 import { ensureLessonSchedules } from "../data/lessonSchedule";
 import { milestoneDeadlines } from "../data/eventMilestones";
 import { useQuery } from "../lib/hooks";
@@ -34,6 +38,7 @@ import { FloatingAddButton } from "../components/FloatingAddButton";
 import { LessonScheduleEditor } from "../components/LessonScheduleEditor";
 import { LessonEditor } from "./Lessons";
 import { PracticeEditor } from "../components/PracticeEditor";
+import { scrollPageToTop } from "../lib/pageScroll";
 
 const statuses = { planned: "予定", recorded: "記録済み", cancelled: "中止" };
 export function Practice({
@@ -50,12 +55,26 @@ export function Practice({
   );
   const [view, setView] = useState<AgendaView>(readAgendaView);
   const changeView = (nextView: AgendaView) => {
+    if (nextView === "week") setSelectedDate(today);
     setView(nextView);
     saveAgendaView(nextView);
     setNotice("");
   };
   const month = selectedDate.slice(0, 7);
-  const period = view === "day" ? selectedDate : month;
+  const weekEnd = addDays(selectedDate, 6);
+  const period =
+    view === "month"
+      ? month
+      : view === "week"
+        ? `${selectedDate}:${weekEnd}`
+        : selectedDate;
+  const periodStart = view === "month" ? monthRange(month).start : selectedDate;
+  const periodEnd =
+    view === "month"
+      ? monthRange(month).end
+      : view === "week"
+        ? weekEnd
+        : selectedDate;
   const [filter, setFilter] = useState<"all" | ReturnType<typeof agendaStatus>>(
     "all",
   );
@@ -66,25 +85,21 @@ export function Practice({
   const [showFilters, setShowFilters] = useState(false);
   const [notice, setNotice] = useState("");
   useEffect(() => {
-    window.scrollTo({ top: 0 });
+    scrollPageToTop();
   }, [editing?.item.record.id, scheduling]);
   const result = useQuery(
-    () => practiceAgenda(period),
-    [period, !!editing, scheduling],
     () =>
-      ensureLessonSchedules(
-        view === "day" ? selectedDate : monthRange(month).end,
-      ),
+      view === "week"
+        ? practiceAgendaRange(selectedDate, weekEnd)
+        : practiceAgenda(view === "month" ? month : selectedDate),
+    [period, !!editing, scheduling],
+    () => ensureLessonSchedules(periodEnd),
   );
   const items = result.data?.filter(
     (item) => filter === "all" || agendaStatus(item) === filter,
   );
   const deadlines = useQuery(
-    () =>
-      milestoneDeadlines(
-        view === "day" ? selectedDate : monthRange(month).start,
-        view === "day" ? selectedDate : monthRange(month).end,
-      ),
+    () => milestoneDeadlines(periodStart, periodEnd),
     [period],
   );
   const shownDeadlines =
@@ -100,7 +115,7 @@ export function Practice({
     setNotice("");
     const next = newPracticeEntry(
       action,
-      view === "day" ? selectedDate : today,
+      view === "month" ? today : selectedDate,
     );
     if (next.type === "schedule") setScheduling(true);
     else setEditing(next);
@@ -126,6 +141,15 @@ export function Practice({
                 onClick={() => changeView("month")}
               >
                 月
+              </button>
+              <button
+                type="button"
+                className={view === "week" ? "active" : ""}
+                aria-pressed={view === "week"}
+                aria-label="週ごとに表示"
+                onClick={() => changeView("week")}
+              >
+                週
               </button>
               <button
                 type="button"
@@ -215,12 +239,20 @@ export function Practice({
             <button
               type="button"
               className="icon-button"
-              aria-label={view === "day" ? "前日の予定" : "前月の予定"}
+              aria-label={
+                view === "day"
+                  ? "前日の予定"
+                  : view === "week"
+                    ? "前の7日間の予定"
+                    : "前月の予定"
+              }
               onClick={() => {
                 setSelectedDate(
                   view === "day"
                     ? addDays(selectedDate, -1)
-                    : `${shiftCalendarMonth(month, -1)}-01`,
+                    : view === "week"
+                      ? addDays(selectedDate, -7)
+                      : `${shiftCalendarMonth(month, -1)}-01`,
                 );
                 setNotice("");
               }}
@@ -228,17 +260,23 @@ export function Practice({
               <ChevronLeft size={20} />
             </button>
             <DatePicker
-              aria-label={view === "day" ? "表示する日" : "表示する月"}
-              type={view === "day" ? "date" : "month"}
-              value={period}
+              aria-label={
+                view === "month"
+                  ? "表示する月"
+                  : view === "week"
+                    ? "表示を始める日"
+                    : "表示する日"
+              }
+              type={view === "month" ? "month" : "date"}
+              value={view === "month" ? month : selectedDate}
               onChange={(value) => {
                 if (!value) return;
                 setSelectedDate(
-                  view === "day"
-                    ? value
-                    : value === today.slice(0, 7)
+                  view === "month"
+                    ? value === today.slice(0, 7)
                       ? today
-                      : `${value}-01`,
+                      : `${value}-01`
+                    : value,
                 );
                 setNotice("");
               }}
@@ -246,12 +284,20 @@ export function Practice({
             <button
               type="button"
               className="icon-button"
-              aria-label={view === "day" ? "翌日の予定" : "翌月の予定"}
+              aria-label={
+                view === "day"
+                  ? "翌日の予定"
+                  : view === "week"
+                    ? "次の7日間の予定"
+                    : "翌月の予定"
+              }
               onClick={() => {
                 setSelectedDate(
                   view === "day"
                     ? addDays(selectedDate, 1)
-                    : `${shiftCalendarMonth(month, 1)}-01`,
+                    : view === "week"
+                      ? addDays(selectedDate, 7)
+                      : `${shiftCalendarMonth(month, 1)}-01`,
                 );
                 setNotice("");
               }}
@@ -259,6 +305,11 @@ export function Practice({
               <ChevronRight size={20} />
             </button>
           </div>
+          {view === "week" && (
+            <p className="agenda-week-range" aria-live="polite">
+              {dateLabel(selectedDate)}〜{dateLabel(weekEnd)}の7日間
+            </p>
+          )}
           {showFilters && (
             <div id="agenda-filters" className="agenda-filter-panel">
               <label className="agenda-filter">
@@ -322,7 +373,7 @@ export function Practice({
                 >
                   <button
                     key={`${item.kind}-${record.id}`}
-                    className="card agenda-row"
+                    className={`card agenda-row ${status === "cancelled" ? "is-cancelled" : status === "recorded" ? "is-completed" : ""}`}
                     onClick={() => {
                       setNotice("");
                       const next = openAgendaItem(item, today);
@@ -342,6 +393,11 @@ export function Practice({
                         {item.kind === "practice" ? "自主練習" : "レッスン"}
                       </span>
                       <h2>{title}</h2>
+                      {item.kind === "lesson" &&
+                        status === "cancelled" &&
+                        item.record.cancellationReason && (
+                          <p>中止理由：{item.record.cancellationReason}</p>
+                        )}
                       {item.kind === "lesson" &&
                         !!item.record.sections?.length && (
                           <p>
@@ -363,9 +419,16 @@ export function Practice({
                     </div>
                     <div className="agenda-status">
                       <span
-                        className={`tag ${status === "recorded" ? "green" : status === "cancelled" ? "cancelled" : ""}`}
+                        className={`tag ${status === "recorded" ? "completed" : status === "cancelled" ? "cancelled" : ""}`}
                       >
-                        {statuses[status]}
+                        {status === "recorded" ? (
+                          <>
+                            <span aria-hidden="true">✓</span>
+                            {item.kind === "lesson" ? "実施済み" : "記録済み"}
+                          </>
+                        ) : (
+                          statuses[status]
+                        )}
                       </span>
                       <span className="text-button">
                         {status === "planned"
@@ -389,7 +452,7 @@ export function Practice({
                 <section className="card">
                   <Empty>
                     {filter === "all"
-                      ? `この${view === "day" ? "日" : "月"}の予定はまだありません。左下の「追加」から登録できます。`
+                      ? `この${view === "day" ? "日" : view === "week" ? "7日間" : "月"}の予定はまだありません。左下の「追加」から登録できます。`
                       : "この条件に当てはまる予定・記録はありません。"}
                   </Empty>
                 </section>

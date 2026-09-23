@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Plus, Pencil } from "lucide-react";
+import { ArrowLeft, CalendarPlus, Plus, Pencil, Sparkles } from "lucide-react";
 import type { DanceEvent, EventMilestone, EventWorkItem } from "../types";
 import { base } from "../data/repository";
 import { dateLabel, localDate } from "../lib/dates";
@@ -9,15 +9,20 @@ import { MilestoneGantt } from "./MilestoneGantt";
 import { EventMilestoneTimeline } from "./EventMilestoneTimeline";
 import { EventWorkEditor } from "./EventWorkEditor";
 import { sortedEventWork } from "../lib/eventWork";
+import { scrollPageToTop } from "../lib/pageScroll";
 
 export function EventPreparation({
   event,
   onBack,
   onEditEvent,
+  onGoogleCalendar,
+  onAiSchedule,
 }: {
   event: DanceEvent;
   onBack: () => void;
   onEditEvent: () => void;
+  onGoogleCalendar: () => void;
+  onAiSchedule: () => void;
 }) {
   const [view, setView] = useState("list");
   const [scale, setScale] = useState<GanttScale>("event");
@@ -28,7 +33,7 @@ export function EventPreparation({
   const allWork = sortedEventWork(event.workItems ?? []);
   const openWork = (item: EventWorkItem) => {
     setEditingWork(item);
-    window.scrollTo({ top: 0 });
+    scrollPageToTop();
   };
   const addWork = (milestoneId: string) =>
     openWork({
@@ -48,14 +53,14 @@ export function EventPreparation({
         value={editingWork}
         onClose={() => {
           setEditingWork(undefined);
-          window.scrollTo({ top: 0 });
+          scrollPageToTop();
         }}
         onNext={addWork}
       />
     );
   const open = (item: EventMilestone) => {
     setEditing(item);
-    window.scrollTo({ top: 0 });
+    scrollPageToTop();
   };
   if (editing)
     return (
@@ -64,7 +69,7 @@ export function EventPreparation({
         value={editing}
         onClose={() => {
           setEditing(undefined);
-          window.scrollTo({ top: 0 });
+          scrollPageToTop();
         }}
       />
     );
@@ -83,10 +88,24 @@ export function EventPreparation({
           <h1>{event.title}</h1>
           <p>{dateLabel(event.date)}</p>
         </div>
-        <button type="button" className="text-button" onClick={onEditEvent}>
-          <Pencil size={16} />
-          イベントを編集
-        </button>
+        <div className="event-preparation-actions">
+          <button type="button" className="text-button" onClick={onAiSchedule}>
+            <Sparkles size={16} />
+            AIでスケジュール作成
+          </button>
+          <button
+            type="button"
+            className="text-button"
+            onClick={onGoogleCalendar}
+          >
+            <CalendarPlus size={16} />
+            Googleカレンダーへ登録
+          </button>
+          <button type="button" className="text-button" onClick={onEditEvent}>
+            <Pencil size={16} />
+            イベントを編集
+          </button>
+        </div>
       </div>
       <section className="card preparation-card">
         <div className="section-heading">

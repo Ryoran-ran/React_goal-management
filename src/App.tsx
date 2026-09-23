@@ -22,11 +22,12 @@ import { RecurringLessons } from "./pages/RecurringLessons";
 import { openAgendaItem, type PracticeEntry } from "./lib/practiceNavigation";
 import { errorText } from "./lib/hooks";
 import { registerTrainingTools } from "./lib/webmcp";
+import { scrollPageToTop } from "./lib/pageScroll";
 const navigation = [
   { id: "home", label: "今日", icon: CalendarDays },
   { id: "notes", label: "学びの記録", icon: NotebookPen },
   { id: "practice", label: "予定", icon: CalendarDays },
-  { id: "events", label: "大会など", icon: CalendarDays },
+  { id: "events", label: "イベント", icon: CalendarDays },
   { id: "tools", label: "整理", icon: Settings2 },
 ] as const;
 type Page =
@@ -52,17 +53,17 @@ export default function App() {
     setEventId(undefined);
     setPracticeEntry(undefined);
     setPage(value);
-    window.scrollTo({ top: 0 });
+    scrollPageToTop();
   };
   const openPractice = (entry: PracticeEntry) => {
     setPracticeEntry(entry);
     setPage("practice");
-    window.scrollTo({ top: 0 });
+    scrollPageToTop();
   };
   const openEvent = (id?: string) => {
     setEventId(id);
     setPage("events");
-    window.scrollTo({ top: 0 });
+    scrollPageToTop();
   };
   return (
     <div className="app">

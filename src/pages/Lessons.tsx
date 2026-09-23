@@ -31,6 +31,11 @@ import {
 import { Attachments, type ImageDraft } from "../components/Attachments";
 import { priorities } from "../lib/goalReview";
 import { FloatingAddButton } from "../components/FloatingAddButton";
+import {
+  pageScrollTop,
+  scrollPageTo,
+  scrollPageToTop,
+} from "../lib/pageScroll";
 export function Lessons() {
   const [month, setMonth] = useState(localDate().slice(0, 7));
   const [editing, setEditing] = useState<Lesson>();
@@ -120,7 +125,7 @@ export function Lessons() {
             )}
             {result.data?.map((lesson) => (
               <button
-                className="card lesson-card"
+                className={`card lesson-card ${lesson.cancelled ? "is-cancelled" : lesson.completed ? "is-completed" : ""}`}
                 key={lesson.id}
                 onClick={() => {
                   setEditing(lesson);
@@ -130,12 +135,12 @@ export function Lessons() {
                 <header>
                   <span className="lesson-date">{dateLabel(lesson.date)}</span>
                   <span
-                    className={`tag ${lesson.cancelled ? "cancelled" : lesson.completed ? "green" : ""}`}
+                    className={`tag ${lesson.cancelled ? "cancelled" : lesson.completed ? "completed" : ""}`}
                   >
                     {lesson.cancelled
                       ? "中止"
                       : lesson.completed
-                        ? "実施済み"
+                        ? "✓ 実施済み"
                         : "予定"}
                   </span>
                 </header>
@@ -202,9 +207,7 @@ export function LessonEditor({
   onClose: () => void;
   onSaved: (date: string) => void;
 }) {
-  const [lesson, setLesson] = useState<Lesson>(
-    recording ? { ...value, completed: true, cancelled: false } : value,
-  );
+  const [lesson, setLesson] = useState<Lesson>(value);
   const [scope, setScope] = useState<"one" | "following">("one");
   const canChangeFollowing =
     !!value.seriesId &&
@@ -229,15 +232,15 @@ export function LessonEditor({
   );
   const openSection = (id: string) => {
     sectionReturnFocus.current = document.activeElement as HTMLElement | null;
-    sectionScroll.current = window.scrollY;
+    sectionScroll.current = pageScrollTop();
     setSectionId(id);
-    window.scrollTo({ top: 0 });
+    scrollPageToTop();
   };
   const closeSection = () => {
     setSectionId(undefined);
     requestAnimationFrame(() => {
       sectionReturnFocus.current?.focus({ preventScroll: true });
-      window.scrollTo({ top: sectionScroll.current });
+      scrollPageTo(sectionScroll.current);
     });
   };
   const { data: events = [] } = useQuery(allEvents);
@@ -359,6 +362,11 @@ export function LessonEditor({
                   <option value="cancelled">中止</option>
                 </select>
               </Field>
+              {recording && !lesson.completed && !lesson.cancelled && (
+                <p className="muted lesson-edit-note">
+                  レッスンを実施した場合は、状態を「実施済み」に変更して保存してください。
+                </p>
+              )}
               {lesson.cancelled && (
                 <Field label="中止理由（任意）">
                   <input

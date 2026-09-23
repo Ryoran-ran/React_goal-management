@@ -19,9 +19,7 @@ export function PracticeEditor({
   onSave: (log: PracticeLog, images: ImageDraft) => Promise<void>;
   onDelete: () => Promise<void>;
 }) {
-  const [log, setLog] = useState<PracticeLog>(
-    recording ? { ...value, status: "recorded", practiced: true } : value,
-  );
+  const [log, setLog] = useState<PracticeLog>(value);
   const [images, setImages] = useState<ImageDraft>({ files: [], removed: [] });
   const patch = (change: Partial<PracticeLog>) =>
     setLog((old) => ({ ...old, ...change }));
@@ -102,7 +100,7 @@ export function PracticeEditor({
         </div>
         <p className="muted lesson-edit-note">
           {recording
-            ? "練習内容を記入して保存すると、記録済みになります。予定の変更・中止は「状態」で選べます。"
+            ? "練習した場合は「状態」を「記録済み・練習した」に変更して保存してください。予定の変更・中止も「状態」で選べます。"
             : "自主練習は1日1件で管理します。練習後は一覧の「記録する」から、同じ予定に追記できます。"}
         </p>
         {(status === "planned" || (status === "recorded" && log.practiced)) && (

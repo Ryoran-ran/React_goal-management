@@ -18,7 +18,10 @@ import {
   readWeekStart,
   shiftCalendarMonth,
 } from "../lib/calendar";
-import { calendarLessons } from "../data/calendarLessons";
+import {
+  calendarLessons,
+  type CalendarLessonCounts,
+} from "../data/calendarLessons";
 import { useQuery } from "../lib/hooks";
 
 type Props = Omit<
@@ -161,7 +164,7 @@ function CalendarDialog({
     () =>
       view === "day"
         ? calendarLessons(start, end)
-        : Promise.resolve({} as Record<string, number>),
+        : Promise.resolve({} as CalendarLessonCounts),
     [start, end, view],
   );
   const year = Number(month.slice(0, 4));
@@ -351,7 +354,8 @@ function CalendarDialog({
             >
               {days.map((date) => {
                 const weekday = new Date(`${date}T12:00:00`).getDay();
-                const count = lessons.data?.[date] ?? 0;
+                const count = lessons.data?.[date]?.active ?? 0;
+                const cancelled = lessons.data?.[date]?.cancelled ?? 0;
                 return (
                   <button
                     type="button"
@@ -361,8 +365,8 @@ function CalendarDialog({
                     disabled={!dateAllowed(date, min, max)}
                     aria-pressed={date === value}
                     aria-current={date === today ? "date" : undefined}
-                    aria-label={`${calendarValueLabel(date, "date")}${count ? `、レッスン${count}件` : ""}${date === today ? "、今日" : ""}`}
-                    className={`calendar-day ${weekday === 0 ? "calendar-sunday" : weekday === 6 ? "calendar-saturday" : ""} ${date.slice(0, 7) !== month ? "is-outside" : ""} ${count ? "has-lessons" : ""} ${date === value ? "is-selected" : ""} ${date === today ? "is-today" : ""}`}
+                    aria-label={`${calendarValueLabel(date, "date")}${count ? `、レッスン${count}件` : ""}${cancelled ? `、中止のレッスン${cancelled}件` : ""}${date === today ? "、今日" : ""}`}
+                    className={`calendar-day ${weekday === 0 ? "calendar-sunday" : weekday === 6 ? "calendar-saturday" : ""} ${date.slice(0, 7) !== month ? "is-outside" : ""} ${count ? "has-lessons" : ""} ${cancelled ? "has-cancellations" : ""} ${date === value ? "is-selected" : ""} ${date === today ? "is-today" : ""}`}
                     onKeyDown={(event) => dayKeyboard(event, date)}
                     onFocus={() => setFocusedDate(date)}
                     onClick={() => choose(date)}
@@ -374,6 +378,14 @@ function CalendarDialog({
                         aria-hidden="true"
                       />
                     )}
+                    {cancelled > 0 && (
+                      <span
+                        className="calendar-cancelled-label"
+                        aria-hidden="true"
+                      >
+                        中止
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -382,6 +394,9 @@ function CalendarDialog({
               <span>
                 <i />
                 レッスンあり
+              </span>
+              <span className="calendar-cancelled-legend">
+                中止：レッスン中止
               </span>
               <span className="calendar-saturday">土曜</span>
               <span className="calendar-sunday">日曜</span>

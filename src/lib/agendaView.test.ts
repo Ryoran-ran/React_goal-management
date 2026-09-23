@@ -13,6 +13,8 @@ describe("saved agenda display mode", () => {
     expect(readAgendaView()).toBe("month");
     saveAgendaView("day");
     expect(readAgendaView()).toBe("day");
+    saveAgendaView("week");
+    expect(readAgendaView()).toBe("week");
     saveAgendaView("month");
     expect(readAgendaView()).toBe("month");
   });

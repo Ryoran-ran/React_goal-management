@@ -15,6 +15,20 @@ export function agendaStatus(
       ? "recorded"
       : "planned";
 }
+function combineAgendaItems(
+  practices: PracticeLog[],
+  lessons: Lesson[],
+): AgendaItem[] {
+  return [
+    ...practices.map((record) => ({ kind: "practice" as const, record })),
+    ...lessons.map((record) => ({ kind: "lesson" as const, record })),
+  ].sort(
+    (a, b) =>
+      a.record.date.localeCompare(b.record.date) ||
+      a.kind.localeCompare(b.kind) ||
+      a.record.id.localeCompare(b.record.id),
+  );
+}
 // Accept a month (YYYY-MM) or a single day (YYYY-MM-DD), including cancellations.
 export async function practiceAgenda(period: string): Promise<AgendaItem[]> {
   const daily = period.length === 10;
@@ -26,16 +40,17 @@ export async function practiceAgenda(period: string): Promise<AgendaItem[]> {
       ? db.lessons.where("date").equals(period).toArray()
       : list("lessons", period),
   ]);
-  const items: AgendaItem[] = [
-    ...practices.map((record) => ({ kind: "practice" as const, record })),
-    ...lessons.map((record) => ({ kind: "lesson" as const, record })),
-  ];
-  return items.sort(
-    (a, b) =>
-      a.record.date.localeCompare(b.record.date) ||
-      a.kind.localeCompare(b.kind) ||
-      a.record.id.localeCompare(b.record.id),
-  );
+  return combineAgendaItems(practices, lessons);
+}
+export async function practiceAgendaRange(
+  start: string,
+  end: string,
+): Promise<AgendaItem[]> {
+  const [practices, lessons] = await Promise.all([
+    db.practiceLogs.where("date").between(start, end, true, true).toArray(),
+    db.lessons.where("date").between(start, end, true, true).toArray(),
+  ]);
+  return combineAgendaItems(practices, lessons);
 }
 export async function agendaBetween(
   start: string,
@@ -45,16 +60,7 @@ export async function agendaBetween(
     db.practiceLogs.where("date").between(start, end, true, true).toArray(),
     db.lessons.where("date").between(start, end, true, true).toArray(),
   ]);
-  const items: AgendaItem[] = [
-    ...practices.map((record) => ({ kind: "practice" as const, record })),
-    ...lessons.map((record) => ({ kind: "lesson" as const, record })),
-  ];
-  return items
-    .filter((item) => agendaStatus(item) !== "cancelled")
-    .sort(
-      (a, b) =>
-        a.record.date.localeCompare(b.record.date) ||
-        a.kind.localeCompare(b.kind) ||
-        a.record.id.localeCompare(b.record.id),
-    );
+  return combineAgendaItems(practices, lessons).filter(
+    (item) => agendaStatus(item) !== "cancelled",
+  );
 }

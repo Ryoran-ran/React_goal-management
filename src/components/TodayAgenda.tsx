@@ -37,7 +37,7 @@ export function TodayAgenda({
         : "予定を確認";
     return (
       <button
-        className="today-agenda-row"
+        className={`today-agenda-row ${recorded ? "is-completed" : ""}`}
         key={`${item.kind}-${item.record.id}`}
         onClick={() => onOpen(item)}
       >
@@ -53,7 +53,12 @@ export function TodayAgenda({
             {item.record.title ||
               (item.kind === "lesson" ? "レッスン" : "自主練習")}
           </strong>
-          {recorded && <span className="tag green">記録済み</span>}
+          {recorded && (
+            <span className="tag completed">
+              <span aria-hidden="true">✓</span>
+              {item.kind === "lesson" ? "実施済み" : "記録済み"}
+            </span>
+          )}
         </span>
         <span className="today-agenda-action">
           {action}

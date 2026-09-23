@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from "react";
+import { useRef, useState, type CSSProperties, type UIEvent } from "react";
 import { ChevronDown } from "lucide-react";
 import type {
   DanceEvent,
@@ -35,6 +35,8 @@ export function VerticalMilestoneGantt({
   onEditWork: (item: EventWorkItem) => void;
 }) {
   const [expanded, setExpanded] = useState<string[]>([]);
+  const headerScroller = useRef<HTMLDivElement>(null);
+  const bodyScroller = useRef<HTMLDivElement>(null);
   const today = localDate();
   const count = daysUntil(range.end, range.start) + 1;
   const height = Math.max(
@@ -96,7 +98,7 @@ export function VerticalMilestoneGantt({
       <span
         className={`vertical-date-line ${kind}`}
         style={{
-          top: `${kind === "today" ? ganttPosition(date, range) : ganttDayStart(date, range)}%`,
+          top: `${ganttPosition(date, range)}%`,
         }}
         aria-hidden="true"
       />
@@ -132,6 +134,18 @@ export function VerticalMilestoneGantt({
       />
     );
   };
+  const gridStyle = {
+    "--column-count": columns.length,
+    "--vertical-height": `${height}px`,
+    "--vertical-day-height": `${100 / count}%`,
+  } as CSSProperties;
+  const syncScroll = (
+    scrollEvent: UIEvent<HTMLDivElement>,
+    target: HTMLDivElement | null,
+  ) => {
+    if (target && target.scrollLeft !== scrollEvent.currentTarget.scrollLeft)
+      target.scrollLeft = scrollEvent.currentTarget.scrollLeft;
+  };
   return (
     <div className="vertical-gantt">
       {visibleExpanded.length > 0 && (
@@ -146,21 +160,13 @@ export function VerticalMilestoneGantt({
         </div>
       )}
       <div
-        className="vertical-gantt-scroll"
-        role="region"
-        aria-label="日付を縦に並べた準備スケジュール"
-        tabIndex={0}
+        className="vertical-gantt-header-scroll"
+        ref={headerScroller}
+        onScroll={(scrollEvent) =>
+          syncScroll(scrollEvent, bodyScroller.current)
+        }
       >
-        <div
-          className="vertical-gantt-grid"
-          style={
-            {
-              "--column-count": columns.length,
-              "--vertical-height": `${height}px`,
-              "--vertical-day-height": `${100 / count}%`,
-            } as CSSProperties
-          }
-        >
+        <div className="vertical-gantt-grid" style={gridStyle}>
           <div className="vertical-gantt-header">
             <div className="vertical-gantt-corner">日付</div>
             {columns.map((column) => (
@@ -234,6 +240,19 @@ export function VerticalMilestoneGantt({
               </div>
             ))}
           </div>
+        </div>
+      </div>
+      <div
+        className="vertical-gantt-scroll"
+        ref={bodyScroller}
+        role="region"
+        aria-label="日付を縦に並べた準備スケジュール"
+        tabIndex={0}
+        onScroll={(scrollEvent) =>
+          syncScroll(scrollEvent, headerScroller.current)
+        }
+      >
+        <div className="vertical-gantt-grid" style={gridStyle}>
           <div className="vertical-gantt-body">
             <div className="vertical-date-axis">
               {dates.map((date) => (

@@ -1,9 +1,10 @@
-export type AgendaView = "month" | "day";
+export type AgendaView = "month" | "week" | "day";
 const storageKey = "dance-note:agenda-view";
 
 export function readAgendaView(): AgendaView {
   try {
-    return localStorage.getItem(storageKey) === "day" ? "day" : "month";
+    const saved = localStorage.getItem(storageKey);
+    return saved === "day" || saved === "week" ? saved : "month";
   } catch {
     return "month";
   }

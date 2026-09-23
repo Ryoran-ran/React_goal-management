@@ -16,6 +16,7 @@ import { dateLabel } from "../lib/dates";
 import { weekdayOptions } from "../lib/recurrence";
 import { Editor, Empty, Field, SaveForm } from "./ui";
 import { FloatingAddButton } from "./FloatingAddButton";
+import { scrollPageToTop } from "../lib/pageScroll";
 
 export function LessonSeriesManager({
   today,
@@ -90,7 +91,7 @@ export function LessonSeriesManager({
             onClick={() => {
               setNotice("");
               setEditing(series);
-              window.scrollTo({ top: 0 });
+              scrollPageToTop();
             }}
           >
             <header>
