@@ -2,7 +2,12 @@ import "fake-indexeddb/auto";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { db } from "./db";
 import { base, home, save } from "./repository";
-import { agendaBetween, agendaStatus, practiceAgenda } from "./practiceAgenda";
+import {
+  agendaBetween,
+  agendaStatus,
+  practiceAgenda,
+  practiceAgendaRange,
+} from "./practiceAgenda";
 import { openAgendaItem } from "../lib/practiceNavigation";
 import type { Lesson, PracticeLog } from "../types";
 
@@ -77,6 +82,28 @@ describe("combined practice and lesson agenda", () => {
       ).toEqual([date]);
     }
     expect(await practiceAgenda("2028-02")).toHaveLength(2);
+  });
+
+  it("shows an exact seven-day range across a month boundary, including every status", async () => {
+    await save("lessons", lesson("2026-09-22"));
+    await save("lessons", lesson("2026-09-23"));
+    await save("practiceLogs", practice("2026-09-26"));
+    await save("lessons", { ...lesson("2026-09-28"), completed: true });
+    await save("lessons", { ...lesson("2026-09-29"), cancelled: true });
+    await save("lessons", lesson("2026-09-30"));
+    const weekly = await practiceAgendaRange("2026-09-23", "2026-09-29");
+    expect(weekly.map((item) => item.record.date)).toEqual([
+      "2026-09-23",
+      "2026-09-26",
+      "2026-09-28",
+      "2026-09-29",
+    ]);
+    expect(weekly.map(agendaStatus)).toEqual([
+      "planned",
+      "planned",
+      "recorded",
+      "cancelled",
+    ]);
   });
 
   it("shows today's and upcoming items across month boundaries, excluding cancellations", async () => {

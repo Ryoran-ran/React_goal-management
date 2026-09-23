@@ -13,6 +13,7 @@ import {
 } from "../lib/eventView";
 import { Editor, Empty, Field, PageHeading, SaveForm } from "../components/ui";
 import { Attachments, type ImageDraft } from "../components/Attachments";
+import { scrollPageToTop } from "../lib/pageScroll";
 const EventPreparation = lazy(() =>
   import("../components/EventPreparation").then((module) => ({
     default: module.EventPreparation,
@@ -123,7 +124,7 @@ export function Events({ initialEventId }: { initialEventId?: string }) {
               key={event.id}
               onClick={() => {
                 setSelectedId(event.id);
-                window.scrollTo({ top: 0 });
+                scrollPageToTop();
               }}
             >
               <div className="date-tile">

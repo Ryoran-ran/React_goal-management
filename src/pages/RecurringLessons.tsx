@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { LessonSeriesManager } from "../components/LessonSeriesManager";
 import { LessonScheduleEditor } from "../components/LessonScheduleEditor";
+import { scrollPageToTop } from "../lib/pageScroll";
 
 export function RecurringLessons({
   today,
@@ -14,7 +15,7 @@ export function RecurringLessons({
   const [notice, setNotice] = useState("");
   const showList = () => {
     setAdding(false);
-    window.scrollTo({ top: 0 });
+    scrollPageToTop();
   };
   return (
     <section className="learning-page">
@@ -48,7 +49,7 @@ export function RecurringLessons({
           onAdd={() => {
             setNotice("");
             setAdding(true);
-            window.scrollTo({ top: 0 });
+            scrollPageToTop();
           }}
         />
       )}

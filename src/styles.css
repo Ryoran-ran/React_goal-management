@@ -121,6 +121,12 @@
 .today-agenda-row:hover {
   background: #f5f9f7;
 }
+.today-agenda-row.is-completed {
+  padding-right: 12px;
+  padding-left: 12px;
+  background: #f4fbf7;
+  box-shadow: inset 4px 0 0 #3f8a68;
+}
 .today-agenda-body {
   display: flex;
   flex: 1;
@@ -512,6 +518,18 @@
   background: #f9eded;
   color: #8f4444;
 }
+.tag.completed {
+  gap: 5px;
+  background: #dcefe5;
+  border: 1px solid #b5d9c5;
+  color: #1f6145;
+  font-weight: 700;
+}
+.card.is-completed {
+  background: #f4fbf7;
+  border-color: #9fcdb9;
+  box-shadow: inset 4px 0 0 #3f8a68;
+}
 .card.is-cancelled {
   background: #fff8f8;
   border-color: #d9bcbc;
@@ -613,6 +631,12 @@
   width: 44px;
   min-width: 44px;
   min-height: 44px;
+}
+.agenda-week-range {
+  margin: -8px 0 20px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  text-align: center;
 }
 .agenda-filter-panel {
   max-width: 360px;
@@ -2079,6 +2103,28 @@ button p {
   }
 }
 @media (max-width: 760px) {
+  html,
+  body,
+  #root {
+    height: 100%;
+    overflow: hidden;
+  }
+  body {
+    overscroll-behavior: none;
+  }
+  .app {
+    position: relative;
+    height: 100vh;
+    height: 100svh;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .workspace {
+    height: 100%;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
   .agenda-row {
     flex-wrap: wrap;
     gap: 16px;
@@ -2094,6 +2140,7 @@ button p {
     bottom: calc(88px + env(safe-area-inset-bottom));
   }
   .sidebar {
+    position: absolute;
     inset: auto 0 0;
     width: auto;
     height: auto;

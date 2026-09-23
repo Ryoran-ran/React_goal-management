@@ -9,6 +9,7 @@ import { MilestoneGantt } from "./MilestoneGantt";
 import { EventMilestoneTimeline } from "./EventMilestoneTimeline";
 import { EventWorkEditor } from "./EventWorkEditor";
 import { sortedEventWork } from "../lib/eventWork";
+import { scrollPageToTop } from "../lib/pageScroll";
 
 export function EventPreparation({
   event,
@@ -28,7 +29,7 @@ export function EventPreparation({
   const allWork = sortedEventWork(event.workItems ?? []);
   const openWork = (item: EventWorkItem) => {
     setEditingWork(item);
-    window.scrollTo({ top: 0 });
+    scrollPageToTop();
   };
   const addWork = (milestoneId: string) =>
     openWork({
@@ -48,14 +49,14 @@ export function EventPreparation({
         value={editingWork}
         onClose={() => {
           setEditingWork(undefined);
-          window.scrollTo({ top: 0 });
+          scrollPageToTop();
         }}
         onNext={addWork}
       />
     );
   const open = (item: EventMilestone) => {
     setEditing(item);
-    window.scrollTo({ top: 0 });
+    scrollPageToTop();
   };
   if (editing)
     return (
@@ -64,7 +65,7 @@ export function EventPreparation({
         value={editing}
         onClose={() => {
           setEditing(undefined);
-          window.scrollTo({ top: 0 });
+          scrollPageToTop();
         }}
       />
     );

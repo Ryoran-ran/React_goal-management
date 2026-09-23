@@ -28,6 +28,7 @@ import {
   LearningNoteEditor,
   noteKinds,
 } from "../components/LearningNoteEditor";
+import { scrollPageToTop } from "../lib/pageScroll";
 
 export type LearningEntry = { note: LearningNote; exists: boolean };
 type View =
@@ -68,7 +69,7 @@ export function Learning({
     setNotice("");
   }, [entry, mode]);
   useEffect(() => {
-    window.scrollTo({ top: 0 });
+    scrollPageToTop();
   }, [view.type, view.type === "theme" ? view.id : ""]);
   if (overview.error)
     return (
