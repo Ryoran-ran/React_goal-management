@@ -494,6 +494,149 @@
 .advice-prompt-preview textarea {
   min-height: 320px;
 }
+.calendar-prompt-option {
+  margin: 0 0 20px;
+}
+.calendar-name-field {
+  margin-bottom: 6px;
+}
+.calendar-name-help {
+  margin: 0 0 20px;
+}
+.calendar-prompt-schedule > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+.calendar-prompt-schedule > summary::-webkit-details-marker {
+  display: none;
+}
+.calendar-prompt-schedule > summary > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+.calendar-prompt-schedule > summary strong {
+  font-size: 1rem;
+}
+.calendar-prompt-schedule > summary small {
+  color: var(--muted);
+}
+.calendar-prompt-schedule > summary::after {
+  flex-shrink: 0;
+  content: "一覧を開く ▾";
+  color: var(--teal);
+  font-size: 0.8rem;
+}
+.calendar-prompt-schedule[open] > summary::after {
+  content: "一覧を閉じる ▴";
+}
+.calendar-prompt-schedule-body {
+  padding-top: 18px;
+}
+.calendar-prompt-schedule-body > p:first-child {
+  margin-top: 0;
+}
+.calendar-prompt-items {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  margin: 18px 0;
+  list-style: none;
+}
+.calendar-prompt-items li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+}
+.calendar-prompt-items li > span:last-child {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+  overflow-wrap: anywhere;
+}
+.ai-schedule-import {
+  display: grid;
+  gap: 20px;
+}
+.ai-schedule-import > .text-button {
+  justify-self: start;
+}
+.ai-schedule-import .learning-heading {
+  margin-bottom: 0;
+}
+.ai-schedule-tabs {
+  width: min(100%, 520px);
+}
+.ai-schedule-tabs button {
+  flex: 1;
+}
+.ai-schedule-tab-panel {
+  display: grid;
+  gap: 20px;
+}
+.ai-schedule-step {
+  margin: 0;
+}
+.ai-schedule-step-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.ai-schedule-step-heading > span {
+  flex: 0 0 30px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--teal);
+  color: white;
+  font-weight: 700;
+}
+.ai-schedule-step-heading h2,
+.ai-schedule-step-heading p {
+  margin: 0;
+}
+.ai-schedule-step-heading p {
+  margin-top: 4px;
+  color: var(--muted);
+}
+.ai-schedule-answer {
+  min-height: 240px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+.ai-schedule-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.ai-schedule-summary strong {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #edf4f1;
+}
+.ai-schedule-preview {
+  max-height: 28rem;
+  overflow-y: auto;
+}
+@media (max-width: 600px) {
+  .ai-schedule-step {
+    padding: 16px;
+  }
+}
 .image-detail video {
   display: block;
   max-width: 100%;
@@ -2496,6 +2639,23 @@ button p {
 .calendar-week-start select {
   width: auto;
 }
+.google-calendar-settings {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.google-calendar-settings .field {
+  margin-bottom: 8px;
+}
+.google-calendar-settings > p {
+  margin: 0 0 14px;
+}
+.google-calendar-settings > button {
+  display: inline-flex;
+}
+.google-calendar-settings > [role="status"] {
+  margin: 12px 0 0;
+}
 .app-update-settings > p {
   margin-bottom: 18px;
   color: var(--muted);
@@ -2562,6 +2722,13 @@ button p {
 }
 .event-preparation-heading > div {
   min-width: 0;
+}
+.event-preparation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 .preparation-card {
   min-width: 0;
@@ -3342,7 +3509,6 @@ button p {
 }
 .gantt-scroll {
   max-width: 100%;
-  max-height: 65dvh;
   overflow: auto;
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -3564,11 +3730,28 @@ button p {
 }
 .vertical-gantt-scroll {
   overflow: auto;
-  max-height: 70dvh;
   max-width: 100%;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-top: 0;
+  border-radius: 0 0 10px 10px;
   overscroll-behavior-x: contain;
+}
+.vertical-gantt-header-scroll {
+  position: sticky;
+  top: 0;
+  z-index: 7;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px 10px 0 0;
+  background: #edf4f1;
+  box-shadow: 0 4px 10px #183d3d14;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.vertical-gantt-header-scroll::-webkit-scrollbar {
+  display: none;
 }
 .vertical-gantt-scroll:focus-visible {
   outline: 3px solid #b18b34;
@@ -3588,9 +3771,6 @@ button p {
     );
 }
 .vertical-gantt-header {
-  position: sticky;
-  top: 0;
-  z-index: 6;
   background: #edf4f1;
   border-bottom: 1px solid #cbdcd5;
 }
@@ -3707,12 +3887,12 @@ button p {
   left: 0;
   right: 0;
   border-top: 2px dashed;
+  transform: translateY(-50%);
   z-index: 3;
   pointer-events: none;
 }
 .vertical-date-line.today {
   border-color: #c44151;
-  transform: translateY(-50%);
 }
 .vertical-date-line.event {
   border-color: #8760b0;
@@ -3762,10 +3942,6 @@ button p {
   left: 50%;
   transform: translate(-50%, -50%);
   color: var(--teal);
-}
-.vertical-milestone-marker span {
-  font-size: 0.65rem;
-  padding-left: 3px;
 }
 .vertical-completed-marker {
   right: 8%;

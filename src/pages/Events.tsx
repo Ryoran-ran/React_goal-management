@@ -14,6 +14,8 @@ import {
 import { Editor, Empty, Field, PageHeading, SaveForm } from "../components/ui";
 import { Attachments, type ImageDraft } from "../components/Attachments";
 import { scrollPageToTop } from "../lib/pageScroll";
+import { GoogleCalendarPrompt } from "./GoogleCalendarPrompt";
+import { AiScheduleImport } from "./AiScheduleImport";
 const EventPreparation = lazy(() =>
   import("../components/EventPreparation").then((module) => ({
     default: module.EventPreparation,
@@ -36,6 +38,8 @@ export function Events({ initialEventId }: { initialEventId?: string }) {
   const { data: events, error } = useQuery(allEvents);
   const [editing, setEditing] = useState<DanceEvent>();
   const [selectedId, setSelectedId] = useState(initialEventId);
+  const [creatingCalendarPrompt, setCreatingCalendarPrompt] = useState(false);
+  const [creatingAiSchedule, setCreatingAiSchedule] = useState(false);
   const selected = events?.find((event) => event.id === selectedId);
   const [showFinished, setShowFinished] = useState(readShowFinishedEvents);
   const visibleEvents = events?.filter(
@@ -70,6 +74,8 @@ export function Events({ initialEventId }: { initialEventId?: string }) {
           onDeleted={() => {
             setEditing(undefined);
             setSelectedId(undefined);
+            setCreatingCalendarPrompt(false);
+            setCreatingAiSchedule(false);
           }}
           onSaved={() => {
             setSelectedId(editing.id);
@@ -77,12 +83,40 @@ export function Events({ initialEventId }: { initialEventId?: string }) {
           }}
           exists={events?.some((e) => e.id === editing.id) ?? false}
         />
+      ) : selected && creatingAiSchedule ? (
+        <AiScheduleImport
+          event={selected}
+          onBack={() => {
+            setCreatingAiSchedule(false);
+            scrollPageToTop();
+          }}
+        />
+      ) : selected && creatingCalendarPrompt ? (
+        <GoogleCalendarPrompt
+          event={selected}
+          onBack={() => {
+            setCreatingCalendarPrompt(false);
+            scrollPageToTop();
+          }}
+        />
       ) : selected ? (
         <Suspense fallback={<p role="status">準備スケジュールを読み込み中…</p>}>
           <EventPreparation
             event={selected}
-            onBack={() => setSelectedId(undefined)}
+            onBack={() => {
+              setSelectedId(undefined);
+              setCreatingCalendarPrompt(false);
+              setCreatingAiSchedule(false);
+            }}
             onEditEvent={() => setEditing(selected)}
+            onGoogleCalendar={() => {
+              setCreatingCalendarPrompt(true);
+              scrollPageToTop();
+            }}
+            onAiSchedule={() => {
+              setCreatingAiSchedule(true);
+              scrollPageToTop();
+            }}
           />
         </Suspense>
       ) : selectedId ? (

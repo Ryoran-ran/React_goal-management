@@ -27,7 +27,7 @@ const navigation = [
   { id: "home", label: "今日", icon: CalendarDays },
   { id: "notes", label: "学びの記録", icon: NotebookPen },
   { id: "practice", label: "予定", icon: CalendarDays },
-  { id: "events", label: "大会など", icon: CalendarDays },
+  { id: "events", label: "イベント", icon: CalendarDays },
   { id: "tools", label: "整理", icon: Settings2 },
 ] as const;
 type Page =
