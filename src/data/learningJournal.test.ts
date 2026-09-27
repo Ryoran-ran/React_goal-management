@@ -38,10 +38,20 @@ afterAll(() => db.delete());
 
 describe("combined learning journal", () => {
   it("shows saved lesson categories individually and opens their original sections", async () => {
+    await db.events.put({
+      ...base(),
+      id: "section-event",
+      title: "メダルテスト",
+      type: "medal_test",
+      date: "2026-10-25",
+      status: "planned",
+      goalIds: [],
+    });
     const rumba = section({
       content: "下半身の使い方",
       feedback: "太もものアンディオール",
       homework: "ゆっくり復習",
+      relatedEventIds: ["section-event"],
     });
     const custom = section({
       category: "custom",
@@ -62,6 +72,7 @@ describe("combined learning journal", () => {
     ]);
     expect(entry.title).toBe(source.title);
     expect(entry.date).toBe(source.date);
+    expect(entry.relatedEventIds).toEqual(["section-event"]);
     if (entry.target.type !== "schedule")
       throw new Error("Expected original schedule");
     expect(
@@ -97,6 +108,9 @@ describe("combined learning journal", () => {
     expect(
       entries.find((entry) => entry.category === "パソドブレ")?.youtubeCount,
     ).toBe(1);
+    expect(
+      entries.find((entry) => entry.category === "パソドブレ")?.youtubeUrls,
+    ).toEqual(["https://youtu.be/dQw4w9WgXcQ"]);
     expect(await db.attachmentFiles.count()).toBe(1);
   });
 

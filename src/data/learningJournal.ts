@@ -14,6 +14,8 @@ export interface JournalEntry {
   fields: { label: string; text: string }[];
   attachmentCount: number;
   youtubeCount: number;
+  youtubeUrls: string[];
+  relatedEventIds: string[];
   target:
     | { type: "note"; note: LearningNote }
     | { type: "schedule"; item: AgendaItem; sectionId?: string };
@@ -43,23 +45,28 @@ export async function learningJournal(): Promise<JournalEntry[]> {
         file.relatedId === id &&
         file.sectionId === sectionId,
     ).length;
-  const entries: JournalEntry[] = notes.map((note) => ({
-    id: `note:${note.id}`,
-    date: note.date,
-    createdAt: note.createdAt,
-    title:
-      themes.find((theme) => theme.id === note.themeId)?.title ?? "学びのメモ",
-    category: themes.find((theme) => theme.id === note.themeId)?.category ?? "",
-    themeIds: note.themeId ? [note.themeId] : [],
-    kind: note.kind,
-    fields: [
-      { label: "メモ", text: note.memo },
-      { label: "次に試すこと", text: note.nextStep },
-    ],
-    attachmentCount: note.attachmentIds.length,
-    youtubeCount: note.youtubeUrls.filter((url) => url.trim()).length,
-    target: { type: "note", note },
-  }));
+  const entries: JournalEntry[] = notes.map((note) => {
+    const theme = themes.find((item) => item.id === note.themeId);
+    const youtubeUrls = note.youtubeUrls.filter((url) => url.trim());
+    return {
+      id: `note:${note.id}`,
+      date: note.date,
+      createdAt: note.createdAt,
+      title: theme?.title ?? "学びのメモ",
+      category: theme?.category ?? "",
+      themeIds: note.themeId ? [note.themeId] : [],
+      kind: note.kind,
+      fields: [
+        { label: "メモ", text: note.memo },
+        { label: "次に試すこと", text: note.nextStep },
+      ],
+      attachmentCount: note.attachmentIds.length,
+      youtubeCount: youtubeUrls.length,
+      youtubeUrls,
+      relatedEventIds: theme?.eventIds ?? [],
+      target: { type: "note", note },
+    };
+  });
   for (const lesson of lessons) {
     if (lesson.cancelled) continue;
     const item: AgendaItem = { kind: "lesson", record: lesson };
@@ -103,6 +110,9 @@ export async function learningJournal(): Promise<JournalEntry[]> {
         fields,
         attachmentCount,
         youtubeCount,
+        youtubeUrls: section.youtubeUrls.filter((url) => url.trim()),
+        relatedEventIds:
+          section.relatedEventIds ?? lesson.relatedEventIds ?? [],
         target: { type: "schedule", item, sectionId: section.id },
       });
     }
@@ -127,6 +137,8 @@ export async function learningJournal(): Promise<JournalEntry[]> {
         fields,
         attachmentCount,
         youtubeCount: 0,
+        youtubeUrls: [],
+        relatedEventIds: lesson.relatedEventIds ?? [],
         target: { type: "schedule", item },
       });
   }
@@ -156,6 +168,8 @@ export async function learningJournal(): Promise<JournalEntry[]> {
       fields,
       attachmentCount,
       youtubeCount: 0,
+      youtubeUrls: [],
+      relatedEventIds: [],
       target: {
         type: "schedule",
         item: { kind: "practice", record: practice },
