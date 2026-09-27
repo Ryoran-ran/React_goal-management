@@ -1,12 +1,14 @@
 import { useState } from "react";
 import {
   ArrowLeft,
+  CalendarDays,
   CalendarPlus,
   ChevronDown,
   Download,
   Plus,
   Pencil,
   MapPin,
+  MessageCircleQuestion,
   Sparkles,
 } from "lucide-react";
 import type { DanceEvent, EventMilestone, EventWorkItem } from "../types";
@@ -28,14 +30,17 @@ export function EventPreparation({
   onEditEvent,
   onGoogleCalendar,
   onAiSchedule,
+  onScheduleAdvice,
 }: {
   event: DanceEvent;
   onBack: () => void;
   onEditEvent: () => void;
   onGoogleCalendar: () => void;
   onAiSchedule: () => void;
+  onScheduleAdvice: () => void;
 }) {
   const [view, setView] = useState("list");
+  const [showMobileRoadmap, setShowMobileRoadmap] = useState(false);
   const [scale, setScale] = useState<GanttScale>("event");
   const [anchor, setAnchor] = useState(localDate);
   const [editing, setEditing] = useState<EventMilestone>();
@@ -124,6 +129,14 @@ export function EventPreparation({
                 <Sparkles size={17} />
                 AIでスケジュールを作成
               </button>
+              <button
+                type="button"
+                className="text-button"
+                onClick={onScheduleAdvice}
+              >
+                <MessageCircleQuestion size={17} />
+                準備状況をAIに相談
+              </button>
             </div>
             <div className="event-actions-group">
               <span>外部サービスで使う</span>
@@ -169,6 +182,22 @@ export function EventPreparation({
                 イベントを編集
               </button>
             </div>
+            <div className="event-actions-group mobile-preparation-display-action">
+              <span>表示</span>
+              <button
+                type="button"
+                className="text-button"
+                onClick={(clickEvent) => {
+                  setView(view === "gantt" ? "list" : "gantt");
+                  clickEvent.currentTarget
+                    .closest("details")
+                    ?.removeAttribute("open");
+                }}
+              >
+                <CalendarDays size={17} />
+                {view === "gantt" ? "今やることに戻る" : "ガントを表示"}
+              </button>
+            </div>
           </div>
         </details>
       </div>
@@ -177,7 +206,11 @@ export function EventPreparation({
           {exportNotice}
         </p>
       )}
-      <section className="card preparation-card">
+      <section
+        className={`card preparation-card ${
+          showMobileRoadmap || view === "gantt" ? "is-roadmap-open" : ""
+        }`}
+      >
         <div className="section-heading">
           <div>
             <h2>準備スケジュール</h2>
@@ -187,7 +220,7 @@ export function EventPreparation({
             </p>
           </div>
           <div
-            className="segmented"
+            className="segmented preparation-view-switch"
             role="group"
             aria-label="準備スケジュールの表示"
           >
@@ -212,17 +245,29 @@ export function EventPreparation({
         {!all.length && !allWork.length ? (
           <p className="empty">大会までに準備したい到達点を追加しましょう。</p>
         ) : view === "gantt" ? (
-          <MilestoneGantt
-            event={event}
-            items={all}
-            onEdit={open}
-            workItems={allWork}
-            onEditWork={openWork}
-            scale={scale}
-            onScale={setScale}
-            anchor={anchor}
-            onAnchor={setAnchor}
-          />
+          <>
+            <div className="mobile-gantt-return">
+              <span>ガント表示</span>
+              <button
+                type="button"
+                className="text-button"
+                onClick={() => setView("list")}
+              >
+                今やることに戻る
+              </button>
+            </div>
+            <MilestoneGantt
+              event={event}
+              items={all}
+              onEdit={open}
+              workItems={allWork}
+              onEditWork={openWork}
+              scale={scale}
+              onScale={setScale}
+              anchor={anchor}
+              onAnchor={setAnchor}
+            />
+          </>
         ) : (
           <>
             <MobilePreparationOverview
@@ -230,16 +275,26 @@ export function EventPreparation({
               milestones={all}
               workItems={allWork}
               onEditWork={openWork}
+              roadmapOpen={showMobileRoadmap}
+              onToggleRoadmap={() =>
+                setShowMobileRoadmap((current) => !current)
+              }
             />
-            <EventMilestoneTimeline
-              event={event}
-              items={all}
-              workItems={allWork}
-              onEdit={open}
-              onEditWork={openWork}
-              onAddWork={addWork}
-              onEditEvent={onEditEvent}
-            />
+            <div
+              className={`preparation-roadmap ${
+                showMobileRoadmap ? "is-open" : ""
+              }`}
+            >
+              <EventMilestoneTimeline
+                event={event}
+                items={all}
+                workItems={allWork}
+                onEdit={open}
+                onEditWork={openWork}
+                onAddWork={addWork}
+                onEditEvent={onEditEvent}
+              />
+            </div>
           </>
         )}
         <div className="preparation-add-actions">
