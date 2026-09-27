@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { ArrowLeft, ExternalLink, Plus } from "lucide-react";
-import type { LessonSection } from "../types";
+import { ArrowLeft, ExternalLink, Plus, Search } from "lucide-react";
+import type { DanceEvent, LessonSection } from "../types";
 import {
   categoryNameKey,
   lessonCategoryFromValue,
@@ -16,11 +16,13 @@ import { Attachments, type ImageDraft } from "./Attachments";
 import { GoalCategoryOptions } from "./GoalCategoryOptions";
 import { Field } from "./ui";
 import { LessonOutlineField } from "./LessonOutline";
+import { EventSelectionScreen } from "./EventSelectionScreen";
 
 export function LessonSectionScreen({
   lessonId,
   section,
   sections,
+  events,
   onChange,
   media,
   onMediaChange,
@@ -29,6 +31,7 @@ export function LessonSectionScreen({
   lessonId: string;
   section: LessonSection;
   sections: LessonSection[];
+  events: DanceEvent[];
   onChange: (section: LessonSection) => void;
   media: ImageDraft;
   onMediaChange: (draft: ImageDraft) => void;
@@ -38,6 +41,7 @@ export function LessonSectionScreen({
     customLessonCategories,
   );
   const [addingCategory, setAddingCategory] = useState(false);
+  const [selectingEvents, setSelectingEvents] = useState(false);
   const customNames = [
     ...new Map(
       [
@@ -71,6 +75,22 @@ export function LessonSectionScreen({
   const update = (_id: string, change: Partial<LessonSection>) => {
     onChange({ ...section, ...change });
   };
+  const selectedEvents = (section.relatedEventIds ?? [])
+    .map((id) => events.find((event) => event.id === id))
+    .filter((event): event is DanceEvent => !!event);
+
+  if (selectingEvents) {
+    return (
+      <EventSelectionScreen
+        events={events}
+        value={section.relatedEventIds ?? []}
+        context={lessonCategoryLabel(section) || "カテゴリ未選択"}
+        onChange={(relatedEventIds) => update(section.id, { relatedEventIds })}
+        onBack={() => setSelectingEvents(false)}
+      />
+    );
+  }
+
   return (
     <section className="editor card">
       <header className="goal-selection-header">
@@ -134,6 +154,27 @@ export function LessonSectionScreen({
             カテゴリを読み込めませんでした：{savedCategoryError}
           </p>
         )}
+        <section className="lesson-section-event-link">
+          <div className="lesson-section-event-copy">
+            <strong>関連イベント</strong>
+            {selectedEvents.length > 0 ? (
+              <span>
+                {selectedEvents.length}件：
+                {selectedEvents.map((event) => event.title).join("・")}
+              </span>
+            ) : (
+              <span className="muted">イベントは選択されていません。</span>
+            )}
+          </div>
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => setSelectingEvents(true)}
+          >
+            <Search size={17} aria-hidden="true" />
+            検索して選ぶ
+          </button>
+        </section>
         <LessonOutlineField
           label="取り組んだ内容"
           context={lessonCategoryLabel(section) || "カテゴリ未選択"}

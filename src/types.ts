@@ -140,6 +140,7 @@ export interface Lesson extends Base {
   title?: string;
   durationMinutes?: number;
   relatedEventIds: string[];
+  sectionEventLinks?: boolean;
   relatedGoalIds: string[];
   plannedTopics: LessonTopic[];
   actualTopics: LessonTopic[];
@@ -163,6 +164,7 @@ export interface LessonSection {
   feedback: string;
   homework: string;
   youtubeUrls: string[];
+  relatedEventIds?: string[];
 }
 export interface Attachment {
   id: string;

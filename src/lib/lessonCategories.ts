@@ -2,7 +2,9 @@ import type { GoalCategory, LessonSection } from "../types";
 import { goalCategories } from "./goalCategories";
 
 type Category = Pick<LessonSection, "category" | "customCategory">;
-export function newLessonSection(): LessonSection {
+export function newLessonSection(
+  relatedEventIds: string[] = [],
+): LessonSection {
   return {
     id: crypto.randomUUID(),
     category: "custom",
@@ -11,6 +13,7 @@ export function newLessonSection(): LessonSection {
     feedback: "",
     homework: "",
     youtubeUrls: [],
+    relatedEventIds: [...relatedEventIds],
   };
 }
 export const cleanCategoryName = (name: string) =>

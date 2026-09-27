@@ -7,6 +7,7 @@ import { removeUnusedDefaultGoals } from "./migrations";
 import { retireTechnicalGoals } from "./retireGoals";
 import { goalCategories, goalCategory } from "../lib/goalCategories";
 import { youtubeLink } from "../lib/lessonContent";
+import { indexLessonSectionEvents } from "../lib/lessonEvents";
 import {
   categoryNameKey,
   lessonCategoryKey,
@@ -270,6 +271,14 @@ function validate<K extends Kind>(kind: K, record: Records[K]) {
         throw new Error("カテゴリ名は1〜80文字で入力してください。");
       if (section.youtubeUrls.some((url) => url.trim() && !youtubeLink(url)))
         throw new Error("YouTubeの動画URLを確認してください。");
+      if (
+        section.relatedEventIds !== undefined &&
+        (!Array.isArray(section.relatedEventIds) ||
+          section.relatedEventIds.some((id) => typeof id !== "string") ||
+          new Set(section.relatedEventIds).size !==
+            section.relatedEventIds.length)
+      )
+        throw new Error("関連イベントを選び直してください。");
     }
   }
   if (
@@ -373,8 +382,13 @@ export async function save<K extends Kind>(
   removeAttachments: string[] = [],
   fileSectionIds: (string | undefined)[] = [],
 ) {
-  validate(kind, input);
-  const record = { ...input, updatedAt: new Date().toISOString() };
+  const normalizedInput =
+    kind === "lessons" ? indexLessonSectionEvents(input as Lesson) : input;
+  validate(kind, normalizedInput as Records[K]);
+  const record = {
+    ...normalizedInput,
+    updatedAt: new Date().toISOString(),
+  } as Records[K];
   if (kind === "lessons") {
     const lesson = record as Lesson;
     lesson.sections = lesson.sections?.map((section) =>
@@ -609,6 +623,11 @@ export async function remove(kind: Kind, id: string) {
       });
       await db.lessons.toCollection().modify((l) => {
         l.relatedEventIds = l.relatedEventIds.filter((x) => x !== id);
+        l.sections?.forEach((section) => {
+          section.relatedEventIds = section.relatedEventIds?.filter(
+            (eventId) => eventId !== id,
+          );
+        });
       });
     }
     if (kind === "goals") {

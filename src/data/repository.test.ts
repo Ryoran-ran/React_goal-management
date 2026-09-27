@@ -189,6 +189,16 @@ describe("local repository", () => {
       ...lesson(),
       relatedGoalIds: [g.id],
       relatedEventIds: [e.id],
+      sections: [
+        {
+          id: "rumba",
+          category: "rumba" as const,
+          content: "ウォーク",
+          feedback: "",
+          homework: "",
+          youtubeUrls: [],
+        },
+      ],
       plannedTopics: [
         { id: "topic", title: "test", priority: "high" as const, goalId: g.id },
       ],
@@ -231,6 +241,9 @@ describe("local repository", () => {
     expect((await db.weeklyPlans.get(w.id))?.tasks[0].goalIds).toEqual([]);
     await remove("events", e.id);
     expect((await db.lessons.get(l.id))?.relatedEventIds).toEqual([]);
+    expect((await db.lessons.get(l.id))?.sections?.[0].relatedEventIds).toEqual(
+      [],
+    );
   });
   it("lists all upcoming events including overlaps in date order", async () => {
     const dates = [
