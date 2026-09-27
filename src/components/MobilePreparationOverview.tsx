@@ -12,11 +12,15 @@ export function MobilePreparationOverview({
   milestones,
   workItems,
   onEditWork,
+  roadmapOpen,
+  onToggleRoadmap,
 }: {
   event: DanceEvent;
   milestones: EventMilestone[];
   workItems: EventWorkItem[];
   onEditWork: (item: EventWorkItem) => void;
+  roadmapOpen: boolean;
+  onToggleRoadmap: () => void;
 }) {
   const today = localDate();
   const groups = preparationWorkGroups(workItems, today);
@@ -35,7 +39,22 @@ export function MobilePreparationOverview({
       .filter((group) => group.id === "overdue" || group.id === "now")
       .map((group) => group.id),
   );
+  const [showAllPriority, setShowAllPriority] = useState(false);
   const eventDays = daysUntil(event.date, today);
+  const priorityGroupIds = new Set(["overdue", "now"]);
+  const priorityCount = groups
+    .filter((group) => priorityGroupIds.has(group.id))
+    .reduce((total, group) => total + group.items.length, 0);
+  let remainingPrioritySlots = showAllPriority ? Infinity : 5;
+  const visibleItemsByGroup = new Map(
+    groups.map((group) => {
+      if (!priorityGroupIds.has(group.id)) return [group.id, group.items];
+      const visibleItems = group.items.slice(0, remainingPrioritySlots);
+      remainingPrioritySlots -= visibleItems.length;
+      return [group.id, visibleItems];
+    }),
+  );
+  const hiddenPriorityCount = Math.max(priorityCount - 5, 0);
 
   return (
     <div className="mobile-preparation-overview">
@@ -84,6 +103,7 @@ export function MobilePreparationOverview({
           <div className="mobile-action-groups">
             {groups.map((group) => {
               const isExpanded = expanded.includes(group.id);
+              const visibleItems = visibleItemsByGroup.get(group.id) ?? [];
               return (
                 <section
                   className={`mobile-action-group is-${group.id}`}
@@ -115,9 +135,9 @@ export function MobilePreparationOverview({
                       className={isExpanded ? "is-open" : ""}
                     />
                   </button>
-                  {isExpanded && (
+                  {isExpanded && visibleItems.length > 0 && (
                     <ul className="mobile-action-list">
-                      {group.items.map((item) => (
+                      {visibleItems.map((item) => (
                         <li key={item.id}>
                           <button
                             type="button"
@@ -155,16 +175,43 @@ export function MobilePreparationOverview({
                 </section>
               );
             })}
+            {hiddenPriorityCount > 0 && (
+              <button
+                type="button"
+                className="mobile-priority-more"
+                onClick={() => setShowAllPriority((current) => !current)}
+              >
+                {showAllPriority
+                  ? "重要な作業を5件に戻す"
+                  : `残り${hiddenPriorityCount}件を見る`}
+                <ChevronDown
+                  size={17}
+                  className={showAllPriority ? "is-open" : ""}
+                />
+              </button>
+            )}
           </div>
         ) : (
           <p className="mobile-action-empty">未完了の作業はありません。</p>
         )}
       </section>
 
-      <div className="mobile-roadmap-heading">
-        <span>全体の流れを確認</span>
-        <h3>全体ロードマップ</h3>
-      </div>
+      <button
+        type="button"
+        className="mobile-roadmap-toggle"
+        aria-expanded={roadmapOpen}
+        onClick={onToggleRoadmap}
+      >
+        <span>
+          <small>全体の流れを確認</small>
+          <strong>
+            {roadmapOpen
+              ? "全体ロードマップを閉じる"
+              : "全体ロードマップを見る"}
+          </strong>
+        </span>
+        <ChevronDown size={19} className={roadmapOpen ? "is-open" : ""} />
+      </button>
     </div>
   );
 }

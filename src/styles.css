@@ -3663,6 +3663,10 @@ button p {
 .mobile-preparation-overview {
   display: none;
 }
+.mobile-preparation-display-action,
+.mobile-gantt-return {
+  display: none;
+}
 .preparation-timeline {
   list-style: none;
   padding: 0 0 0 36px;
@@ -5004,7 +5008,7 @@ button p {
     background: white;
   }
   .mobile-section-heading,
-  .mobile-roadmap-heading {
+  .mobile-roadmap-toggle {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -5015,11 +5019,11 @@ button p {
     border-bottom: 1px solid var(--line);
   }
   .mobile-section-heading > div,
-  .mobile-roadmap-heading {
+  .mobile-roadmap-toggle > span {
     min-width: 0;
   }
   .mobile-section-heading span:first-child,
-  .mobile-roadmap-heading > span {
+  .mobile-roadmap-toggle small {
     display: block;
     margin-bottom: 3px;
     color: var(--muted);
@@ -5028,7 +5032,7 @@ button p {
     letter-spacing: 0.06em;
   }
   .mobile-section-heading h3,
-  .mobile-roadmap-heading h3 {
+  .mobile-roadmap-toggle strong {
     margin: 0;
     font-size: 1rem;
   }
@@ -5138,9 +5142,65 @@ button p {
     color: var(--muted);
     text-align: center;
   }
-  .mobile-roadmap-heading {
+  .mobile-priority-more {
+    display: flex;
+    width: 100%;
+    min-height: 46px;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 10px 14px;
+    border-top: 1px solid var(--line);
+    color: var(--teal);
+    background: #fff;
+    font-weight: 700;
+  }
+  .mobile-priority-more svg,
+  .mobile-roadmap-toggle > svg {
+    transition: transform 0.15s ease;
+  }
+  .mobile-priority-more svg.is-open,
+  .mobile-roadmap-toggle > svg.is-open {
+    transform: rotate(180deg);
+  }
+  .mobile-roadmap-toggle {
+    width: 100%;
+    min-height: 60px;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    color: var(--ink);
+    background: #f7faf8;
+    text-align: left;
+  }
+  .mobile-roadmap-toggle > svg {
+    flex-shrink: 0;
+    color: var(--teal);
+  }
+  .preparation-roadmap {
+    display: none;
+  }
+  .preparation-roadmap.is-open {
     display: block;
-    padding: 2px 2px 0;
+  }
+  .mobile-gantt-return {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #f1f6f4;
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+  .mobile-gantt-return button {
+    min-height: 38px;
+    padding: 6px 8px;
+  }
+  .mobile-preparation-display-action {
+    display: block;
   }
   .gantt-grid {
     --label-width: 112px;
@@ -5170,11 +5230,7 @@ button p {
     align-items: stretch;
     flex-direction: column;
   }
-  .preparation-card > .section-heading .segmented {
-    width: 100%;
-  }
-  .preparation-card .segmented button {
-    flex: 1;
-    padding: 8px 12px;
+  .preparation-card > .section-heading .preparation-view-switch {
+    display: none;
   }
 }
