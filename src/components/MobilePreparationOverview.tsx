@@ -133,6 +133,9 @@ export function MobilePreparationOverview({
                                   : "未分類"}
                               </small>
                             </span>
+                            <ChevronRight size={18} aria-hidden="true" />
+                          </button>
+                          <div className="mobile-action-row-footer">
                             <span
                               className={
                                 group.id === "overdue" ? "overdue" : ""
@@ -140,12 +143,11 @@ export function MobilePreparationOverview({
                             >
                               {scheduleTiming(workSchedule(item), today)}
                             </span>
-                            <ChevronRight size={18} aria-hidden="true" />
-                          </button>
-                          <ScheduleStatus
-                            eventId={event.id}
-                            target={{ kind: "work", item }}
-                          />
+                            <ScheduleStatus
+                              eventId={event.id}
+                              target={{ kind: "work", item }}
+                            />
+                          </div>
                         </li>
                       ))}
                     </ul>

@@ -5074,20 +5074,18 @@ button p {
   }
   .mobile-action-list > li {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 8px;
-    padding: 0 12px 0 0;
+    min-width: 0;
     border-top: 1px solid #e5ece9;
   }
   .mobile-action-main {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    align-items: center;
-    gap: 8px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
     min-width: 0;
-    min-height: 62px;
-    padding: 10px 4px 10px 14px;
+    min-height: 58px;
+    padding: 12px 14px 8px;
     text-align: left;
   }
   .mobile-action-main > span:first-child {
@@ -5098,21 +5096,39 @@ button p {
   .mobile-action-main strong {
     overflow-wrap: anywhere;
   }
-  .mobile-action-main small,
-  .mobile-action-main > span:nth-child(2) {
+  .mobile-action-main small {
     color: var(--muted);
     font-size: 0.72rem;
   }
-  .mobile-action-main > span:nth-child(2) {
+  .mobile-action-main > svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--teal);
+  }
+  .mobile-action-row-footer {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 14px 12px;
+  }
+  .mobile-action-row-footer > span {
+    color: var(--muted);
+    font-size: 0.75rem;
     white-space: nowrap;
   }
-  .mobile-action-main > span.overdue {
-    color: var(--danger);
+  .mobile-action-row-footer > span.overdue {
+    color: #a33c32;
     font-weight: 700;
+  }
+  .mobile-action-row-footer .schedule-status {
+    flex-shrink: 0;
   }
   .mobile-action-list .schedule-status select {
     min-height: 38px;
-    max-width: 102px;
+    width: 112px;
+    max-width: 100%;
     padding: 6px 24px 6px 8px;
     border-radius: 18px;
     font-size: 0.72rem;
@@ -5150,7 +5166,15 @@ button p {
   .preparation-card .section-heading h2 {
     font-size: 1rem;
   }
+  .preparation-card > .section-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .preparation-card > .section-heading .segmented {
+    width: 100%;
+  }
   .preparation-card .segmented button {
+    flex: 1;
     padding: 8px 12px;
   }
 }
