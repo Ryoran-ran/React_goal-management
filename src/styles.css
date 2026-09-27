@@ -1177,9 +1177,8 @@
   border-radius: 12px;
 }
 .agenda-row {
-  display: flex;
-  align-items: center;
-  gap: 24px;
+  display: grid;
+  gap: 12px;
   width: 100%;
   text-align: left;
 }
@@ -1188,23 +1187,62 @@
 }
 .agenda-date {
   display: flex;
-  flex-wrap: wrap;
+  min-width: 0;
   align-items: center;
-  gap: 8px;
-  min-width: 155px;
+  justify-content: space-between;
+  gap: 12px;
   font-size: 0.9rem;
+}
+.agenda-date-value,
+.agenda-date-tags,
+.agenda-action {
+  display: inline-flex;
+  align-items: center;
+}
+.agenda-date-value {
+  flex-shrink: 0;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.agenda-date-tags {
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 .agenda-kind {
   display: flex;
   align-items: center;
   gap: 6px;
 }
+.agenda-row .row-content h2 {
+  margin: 6px 0 0;
+  font-size: 1rem;
+  line-height: 1.6;
+}
 .agenda-status {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.agenda-details {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+.agenda-action {
   flex-shrink: 0;
+  gap: 5px;
+  margin-left: auto;
+  color: var(--teal);
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
 }
 :root {
   font-family: "Yu Gothic UI", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
@@ -2243,15 +2281,56 @@ input[type="checkbox"] {
   gap: 16px;
 }
 .event-row {
+  display: grid;
+  gap: 14px;
+  width: 100%;
+}
+.event-row-open {
   display: flex;
+  width: 100%;
+  min-width: 0;
   align-items: center;
   gap: 24px;
   text-align: left;
-  width: 100%;
 }
 .event-row:hover,
 .goal-card:hover {
   border-color: #91b3a8;
+}
+.event-row-footer {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.event-row-date {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.event-row-date svg {
+  flex-shrink: 0;
+}
+.event-list-status {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.event-list-status select {
+  width: auto;
+  min-width: 92px;
+  min-height: 40px;
+  padding: 6px 30px 6px 10px;
+  font-size: 0.85rem;
 }
 .date-tile {
   display: flex;
@@ -2850,12 +2929,15 @@ button p {
   }
   .event-row {
     gap: 13px;
+  }
+  .event-row-open {
+    gap: 13px;
     flex-wrap: wrap;
   }
   .event-row .countdown {
     margin-left: auto;
   }
-  .event-row > svg {
+  .event-row-open > svg {
     display: none;
   }
   .event-row .row-content {
@@ -3965,19 +4047,66 @@ button p {
   font-size: 0.8rem;
 }
 .agenda-milestone {
-  display: flex;
-  align-items: center;
+  display: grid;
   gap: 12px;
-  flex-wrap: wrap;
+  width: 100%;
   text-align: left;
 }
+.agenda-milestone-top,
+.agenda-milestone-bottom {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.agenda-milestone-date,
+.agenda-milestone-action {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 5px;
+}
+.agenda-milestone-date {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
 .agenda-milestone strong {
-  flex: 1;
+  font-size: 1rem;
+  line-height: 1.6;
   overflow-wrap: anywhere;
 }
-.agenda-milestone > span:not(.tag) {
+.agenda-milestone-bottom {
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.agenda-milestone-event {
+  min-width: 0;
   color: var(--muted);
   font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+.agenda-milestone-action {
+  color: var(--teal);
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+@media (max-width: 420px) {
+  .agenda-milestone-top,
+  .agenda-milestone-bottom,
+  .agenda-status {
+    align-items: flex-start;
+  }
+  .agenda-milestone-bottom,
+  .agenda-status {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .agenda-milestone-action,
+  .agenda-action {
+    align-self: flex-end;
+  }
 }
 .event-next-milestone {
   color: var(--teal);
