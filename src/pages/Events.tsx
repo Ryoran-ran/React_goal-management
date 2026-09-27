@@ -17,6 +17,7 @@ import { Attachments, type ImageDraft } from "../components/Attachments";
 import { scrollPageToTop } from "../lib/pageScroll";
 import { GoogleCalendarPrompt } from "./GoogleCalendarPrompt";
 import { AiScheduleImport } from "./AiScheduleImport";
+import { EventScheduleAdvice } from "./EventScheduleAdvice";
 const EventPreparation = lazy(() =>
   import("../components/EventPreparation").then((module) => ({
     default: module.EventPreparation,
@@ -41,6 +42,7 @@ export function Events({ initialEventId }: { initialEventId?: string }) {
   const [selectedId, setSelectedId] = useState(initialEventId);
   const [creatingCalendarPrompt, setCreatingCalendarPrompt] = useState(false);
   const [creatingAiSchedule, setCreatingAiSchedule] = useState(false);
+  const [creatingScheduleAdvice, setCreatingScheduleAdvice] = useState(false);
   const [savingStatusId, setSavingStatusId] = useState<string>();
   const [statusError, setStatusError] = useState("");
   const selected = events?.find((event) => event.id === selectedId);
@@ -79,6 +81,7 @@ export function Events({ initialEventId }: { initialEventId?: string }) {
             setSelectedId(undefined);
             setCreatingCalendarPrompt(false);
             setCreatingAiSchedule(false);
+            setCreatingScheduleAdvice(false);
           }}
           onSaved={() => {
             setSelectedId(editing.id);
@@ -91,6 +94,14 @@ export function Events({ initialEventId }: { initialEventId?: string }) {
           event={selected}
           onBack={() => {
             setCreatingAiSchedule(false);
+            scrollPageToTop();
+          }}
+        />
+      ) : selected && creatingScheduleAdvice ? (
+        <EventScheduleAdvice
+          event={selected}
+          onBack={() => {
+            setCreatingScheduleAdvice(false);
             scrollPageToTop();
           }}
         />
@@ -110,6 +121,7 @@ export function Events({ initialEventId }: { initialEventId?: string }) {
               setSelectedId(undefined);
               setCreatingCalendarPrompt(false);
               setCreatingAiSchedule(false);
+              setCreatingScheduleAdvice(false);
             }}
             onEditEvent={() => setEditing(selected)}
             onGoogleCalendar={() => {
@@ -118,6 +130,10 @@ export function Events({ initialEventId }: { initialEventId?: string }) {
             }}
             onAiSchedule={() => {
               setCreatingAiSchedule(true);
+              scrollPageToTop();
+            }}
+            onScheduleAdvice={() => {
+              setCreatingScheduleAdvice(true);
               scrollPageToTop();
             }}
           />

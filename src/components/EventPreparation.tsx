@@ -8,6 +8,7 @@ import {
   Plus,
   Pencil,
   MapPin,
+  MessageCircleQuestion,
   Sparkles,
 } from "lucide-react";
 import type { DanceEvent, EventMilestone, EventWorkItem } from "../types";
@@ -29,12 +30,14 @@ export function EventPreparation({
   onEditEvent,
   onGoogleCalendar,
   onAiSchedule,
+  onScheduleAdvice,
 }: {
   event: DanceEvent;
   onBack: () => void;
   onEditEvent: () => void;
   onGoogleCalendar: () => void;
   onAiSchedule: () => void;
+  onScheduleAdvice: () => void;
 }) {
   const [view, setView] = useState("list");
   const [showMobileRoadmap, setShowMobileRoadmap] = useState(false);
@@ -125,6 +128,14 @@ export function EventPreparation({
               >
                 <Sparkles size={17} />
                 AIでスケジュールを作成
+              </button>
+              <button
+                type="button"
+                className="text-button"
+                onClick={onScheduleAdvice}
+              >
+                <MessageCircleQuestion size={17} />
+                準備状況をAIに相談
               </button>
             </div>
             <div className="event-actions-group">
