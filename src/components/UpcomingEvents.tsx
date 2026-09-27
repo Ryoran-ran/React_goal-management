@@ -1,4 +1,4 @@
-import { ArrowUpRight, Flag } from "lucide-react";
+import { ArrowUpRight, Flag, MapPin } from "lucide-react";
 import type { DanceEvent } from "../types";
 import { dateLabel } from "../lib/dates";
 import { eventTypes } from "../pages/Events";
@@ -36,6 +36,12 @@ export function UpcomingEvents({
                   <time dateTime={event.date}>
                     {event.date.slice(0, 4)}年{dateLabel(event.date)}
                   </time>
+                  {event.location && (
+                    <span className="stage-event-location">
+                      <MapPin size={14} aria-hidden="true" />
+                      {event.location}
+                    </span>
+                  )}
                   {sameDayCount > 1 && (
                     <span className="stage-same-day">
                       同じ日に{sameDayCount}件

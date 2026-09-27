@@ -437,6 +437,7 @@ export function Learning({
                         <strong>{event.title}</strong>
                         <span>
                           {dateLabel(event.date)} ·{" "}
+                          {event.location && `${event.location} · `}
                           {countdownLabel(event.date, today)}
                         </span>
                         {nextMilestone(event) && (
@@ -645,6 +646,7 @@ function ThemeDetail({
           .map((event) => (
             <p className="muted" key={event.id}>
               {event.title} · {dateLabel(event.date)} ·{" "}
+              {event.location && `${event.location} · `}
               {daysUntil(event.date) >= 0 ? countdownLabel(event.date) : "終了"}
             </p>
           ))}

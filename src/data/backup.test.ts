@@ -88,6 +88,7 @@ describe("full backup and restore", () => {
       ...base(),
       title: "大会",
       date: "2026-10-20",
+      location: "中央市民ホール",
       type: "competition" as const,
       status: "planned" as const,
       goalIds: [goal.id],

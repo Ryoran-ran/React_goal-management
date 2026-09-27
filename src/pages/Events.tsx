@@ -1,7 +1,7 @@
 import { DatePicker } from "../components/DatePicker";
 import { EventCountdown } from "../components/EventCountdown";
 import { lazy, Suspense, useState } from "react";
-import { CalendarDays, ArrowUpRight } from "lucide-react";
+import { CalendarDays, ArrowUpRight, MapPin } from "lucide-react";
 import type { DanceEvent } from "../types";
 import { allEvents, base, remove } from "../data/repository";
 import { saveEventDetails } from "../data/eventMilestones";
@@ -175,6 +175,12 @@ export function Events({ initialEventId }: { initialEventId?: string }) {
                 <p>
                   {dateLabel(event.date)} · {statuses[event.status]}
                 </p>
+                {event.location && (
+                  <p className="event-location">
+                    <MapPin size={15} aria-hidden="true" />
+                    <span>{event.location}</span>
+                  </p>
+                )}
                 {event.description && (
                   <p className="clamp">{event.description}</p>
                 )}
@@ -245,7 +251,15 @@ function EventEditor({
         <SaveForm
           onCancel={onClose}
           onSave={async () => {
-            await saveEventDetails(event, images.files, images.removed, shift);
+            await saveEventDetails(
+              {
+                ...event,
+                location: event.location?.trim() || undefined,
+              },
+              images.files,
+              images.removed,
+              shift,
+            );
             onSaved();
           }}
           onDelete={
@@ -290,6 +304,14 @@ function EventEditor({
               />
             </Field>
           </div>
+          <Field label="場所">
+            <input
+              maxLength={300}
+              value={event.location ?? ""}
+              onChange={(e) => patch({ location: e.target.value })}
+              placeholder="例：〇〇市民ホール"
+            />
+          </Field>
           {exists &&
             value.date !== event.date &&
             (value.milestones?.some(unfinished) ||

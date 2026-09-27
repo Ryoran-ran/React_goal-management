@@ -80,6 +80,7 @@ const checks: Record<BackupTable, Check> = {
     title: text,
     type: oneOf("competition", "medal_test", "performance", "demo", "other"),
     date,
+    location: optional(text),
     description: optional(text),
     status: oneOf("planned", "active", "completed", "cancelled"),
     goalIds: ids,

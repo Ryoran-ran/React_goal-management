@@ -7,6 +7,7 @@ export interface CalendarPromptItem {
   startDate: string;
   endDate: string;
   description: string;
+  location?: string;
 }
 
 const eventTypeLabels: Record<DanceEvent["type"], string> = {
@@ -43,6 +44,7 @@ export function googleCalendarItems(
       title: `[${event.title}] 開催日`,
       startDate: event.date,
       endDate: event.date,
+      location: event.location?.trim() || undefined,
       description: [
         `Dance Note ID: event:${event.id}`,
         `種類: ${eventTypeLabels[event.type]}`,
@@ -144,6 +146,7 @@ export function googleCalendarPrompt(
     "- 同じ Dance Note ID、または同じタイトル・開始日・終了日の予定がすでにある場合は、新規作成せず重複候補として扱ってください。",
     "- 私が確認するまで、既存予定の変更・削除や新規予定の作成は行わないでください。",
     "- 確認後に登録する際は、description を予定の説明欄へそのまま入れてください。",
+    "- location がある予定は、場所欄へそのまま入れてください。",
     schedule.omittedUndatedCount
       ? `- 日付未設定の項目が${schedule.omittedUndatedCount}件あります。これらは登録対象データに含まれていません。`
       : "- 日付未設定で除外された項目はありません。",

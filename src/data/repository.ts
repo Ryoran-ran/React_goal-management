@@ -313,6 +313,14 @@ function validate<K extends Kind>(kind: K, record: Records[K]) {
       record.durationMinutes > 1440)
   )
     throw new Error("時間は0〜1440分で入力してください。");
+  if (kind === "events") {
+    const event = record as DanceEvent;
+    if (
+      event.location !== undefined &&
+      (typeof event.location !== "string" || event.location.length > 300)
+    )
+      throw new Error("場所は300文字以内で入力してください。");
+  }
   if (kind === "monthlyPlans") {
     const plan = record as MonthlyPlan;
     if (

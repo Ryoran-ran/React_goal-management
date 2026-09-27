@@ -10,6 +10,7 @@ export interface DanceEvent extends Base {
   title: string;
   type: EventType;
   date: string;
+  location?: string;
   description?: string;
   status: "planned" | "active" | "completed" | "cancelled";
   goalIds: string[];

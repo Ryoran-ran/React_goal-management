@@ -12,7 +12,8 @@ const event = (): DanceEvent => ({
   title: "秋の競技会",
   type: "competition",
   date: "2026-11-03",
-  description: "市民ホール",
+  location: "中央市民ホール",
+  description: "受付は9時から",
   status: "active",
   goalIds: [],
   milestones: [
@@ -90,6 +91,7 @@ describe("Googleカレンダー登録用プロンプト", () => {
       endDate: "2026-10-25",
     });
     expect(result.items[1].description).toContain("関連する到達点: 申込完了");
+    expect(result.items[2]).toMatchObject({ location: "中央市民ホール" });
     expect(result.omittedUndatedCount).toBe(1);
   });
 
@@ -114,6 +116,7 @@ describe("Googleカレンダー登録用プロンプト", () => {
     expect(prompt).toContain('"targetCalendarName": "社交ダンス"');
     expect(prompt).toContain("作成してよいか確認してください");
     expect(prompt).toContain('"title": "[秋の競技会] 開催日"');
+    expect(prompt).toContain('"location": "中央市民ホール"');
     expect(prompt).toContain('"title": "[秋の競技会] 申込完了"');
     expect(prompt).toContain('"title": "[秋の競技会] 本番用の通し練習"');
     expect(prompt).not.toContain("完了した作業");
