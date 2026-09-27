@@ -20,7 +20,7 @@ import type { AgendaItem } from "../data/practiceAgenda";
 import { agendaStatus } from "../data/practiceAgenda";
 import { ensureLessonSchedules } from "../data/lessonSchedule";
 import { useQuery } from "../lib/hooks";
-import { addDays, dateLabel, daysUntil } from "../lib/dates";
+import { addDays, countdownLabel, dateLabel, daysUntil } from "../lib/dates";
 import { nextMilestone, milestoneTiming } from "../lib/milestones";
 import type { TodayEventWorkTiming } from "../lib/eventWork";
 import { FloatingAddButton } from "../components/FloatingAddButton";
@@ -436,8 +436,8 @@ export function Learning({
                       <div className="learning-event" key={event.id}>
                         <strong>{event.title}</strong>
                         <span>
-                          {dateLabel(event.date)} · あと
-                          {daysUntil(event.date, today)}日
+                          {dateLabel(event.date)} ·{" "}
+                          {countdownLabel(event.date, today)}
                         </span>
                         {nextMilestone(event) && (
                           <button
@@ -645,9 +645,7 @@ function ThemeDetail({
           .map((event) => (
             <p className="muted" key={event.id}>
               {event.title} · {dateLabel(event.date)} ·{" "}
-              {daysUntil(event.date) >= 0
-                ? `あと${daysUntil(event.date)}日`
-                : "終了"}
+              {daysUntil(event.date) >= 0 ? countdownLabel(event.date) : "終了"}
             </p>
           ))}
       </section>

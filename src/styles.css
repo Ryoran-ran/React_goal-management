@@ -1856,6 +1856,15 @@ input[type="checkbox"] {
   font-weight: 500;
   color: white;
 }
+.stage-event-count small,
+.countdown small {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  font-weight: 400;
+  text-align: right;
+  color: inherit;
+}
 .stage-same-day {
   display: inline-block;
   margin-top: 7px;

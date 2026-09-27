@@ -1,4 +1,5 @@
 import { DatePicker } from "../components/DatePicker";
+import { EventCountdown } from "../components/EventCountdown";
 import { lazy, Suspense, useState } from "react";
 import { CalendarDays, ArrowUpRight } from "lucide-react";
 import type { DanceEvent } from "../types";
@@ -188,9 +189,7 @@ export function Events({ initialEventId }: { initialEventId?: string }) {
               <span className="countdown">
                 {daysUntil(event.date) >= 0 &&
                 ["planned", "active"].includes(event.status) ? (
-                  <>
-                    あと <strong>{daysUntil(event.date)}</strong> 日
-                  </>
+                  <EventCountdown date={event.date} />
                 ) : (
                   statuses[event.status]
                 )}
