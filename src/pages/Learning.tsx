@@ -16,16 +16,20 @@ import {
   nextStepFor,
   themeHistory,
 } from "../data/learning";
+import type { JournalEntry } from "../data/learningJournal";
 import type { AgendaItem } from "../data/practiceAgenda";
 import { agendaStatus } from "../data/practiceAgenda";
 import { ensureLessonSchedules } from "../data/lessonSchedule";
 import { useQuery } from "../lib/hooks";
-import { addDays, dateLabel, daysUntil } from "../lib/dates";
+import { addDays, countdownLabel, dateLabel, daysUntil } from "../lib/dates";
 import { nextMilestone, milestoneTiming } from "../lib/milestones";
 import type { TodayEventWorkTiming } from "../lib/eventWork";
 import { FloatingAddButton } from "../components/FloatingAddButton";
 import { ThemeEditor } from "../components/ThemeEditor";
-import { LearningJournal } from "../components/LearningJournal";
+import {
+  LearningJournal,
+  LearningJournalDetail,
+} from "../components/LearningJournal";
 import {
   LearningNoteEditor,
   noteKinds,
@@ -36,8 +40,14 @@ export type LearningEntry = { note: LearningNote; exists: boolean };
 type View =
   | { type: "list" }
   | { type: "theme"; id: string }
+  | { type: "journal"; id: string }
   | { type: "editTheme"; theme: LearningTheme }
-  | { type: "editNote"; entry: LearningEntry; returnTheme?: string };
+  | {
+      type: "editNote";
+      entry: LearningEntry;
+      returnTheme?: string;
+      returnJournalId?: string;
+    };
 
 export function Learning({
   today,
@@ -72,7 +82,10 @@ export function Learning({
   }, [entry, mode]);
   useEffect(() => {
     scrollPageToTop();
-  }, [view.type, view.type === "theme" ? view.id : ""]);
+  }, [
+    view.type,
+    view.type === "theme" || view.type === "journal" ? view.id : "",
+  ]);
   if (overview.error)
     return (
       <p className="error" role="alert">
@@ -111,18 +124,50 @@ export function Learning({
         exists={view.entry.exists}
         onClose={() =>
           setView(
-            view.returnTheme
-              ? { type: "theme", id: view.returnTheme }
-              : { type: "list" },
+            view.returnJournalId
+              ? { type: "journal", id: view.returnJournalId }
+              : view.returnTheme
+                ? { type: "theme", id: view.returnTheme }
+                : { type: "list" },
           )
         }
         onSaved={() => {
           setNotice("記録を保存しました。");
           setView(
+            view.returnJournalId
+              ? { type: "journal", id: view.returnJournalId }
+              : view.returnTheme
+                ? { type: "theme", id: view.returnTheme }
+                : { type: "list" },
+          );
+        }}
+        onDeleted={() => {
+          setNotice("記録を削除しました。");
+          setView(
             view.returnTheme
               ? { type: "theme", id: view.returnTheme }
               : { type: "list" },
           );
+        }}
+      />
+    );
+  if (view.type === "journal")
+    return (
+      <LearningJournalDetail
+        id={view.id}
+        events={allEventOptions}
+        onBack={() => setView({ type: "list" })}
+        onEvent={(id) => onEvents(id)}
+        onEdit={(journalEntry: JournalEntry) => {
+          if (journalEntry.target.type === "note") {
+            setView({
+              type: "editNote",
+              entry: { note: journalEntry.target.note, exists: true },
+              returnJournalId: journalEntry.id,
+            });
+          } else {
+            onLegacy(journalEntry.target.item, journalEntry.target.sectionId);
+          }
         }}
       />
     );
@@ -436,8 +481,9 @@ export function Learning({
                       <div className="learning-event" key={event.id}>
                         <strong>{event.title}</strong>
                         <span>
-                          {dateLabel(event.date)} · あと
-                          {daysUntil(event.date, today)}日
+                          {dateLabel(event.date)} ·{" "}
+                          {event.location && `${event.location} · `}
+                          {countdownLabel(event.date, today)}
                         </span>
                         {nextMilestone(event) && (
                           <button
@@ -507,10 +553,7 @@ export function Learning({
       ) : (
         <LearningJournal
           themes={themes}
-          onNote={(note) =>
-            setView({ type: "editNote", entry: { note, exists: true } })
-          }
-          onScheduleRecord={onLegacy}
+          onOpen={(id) => setView({ type: "journal", id })}
           onCreate={() => record()}
         />
       )}
@@ -645,9 +688,8 @@ function ThemeDetail({
           .map((event) => (
             <p className="muted" key={event.id}>
               {event.title} · {dateLabel(event.date)} ·{" "}
-              {daysUntil(event.date) >= 0
-                ? `あと${daysUntil(event.date)}日`
-                : "終了"}
+              {event.location && `${event.location} · `}
+              {daysUntil(event.date) >= 0 ? countdownLabel(event.date) : "終了"}
             </p>
           ))}
       </section>

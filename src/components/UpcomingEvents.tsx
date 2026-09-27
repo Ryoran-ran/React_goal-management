@@ -1,7 +1,8 @@
-import { ArrowUpRight, Flag } from "lucide-react";
+import { ArrowUpRight, Flag, MapPin } from "lucide-react";
 import type { DanceEvent } from "../types";
-import { dateLabel, daysUntil } from "../lib/dates";
+import { dateLabel } from "../lib/dates";
 import { eventTypes } from "../pages/Events";
+import { EventCountdown } from "./EventCountdown";
 
 export function UpcomingEvents({
   events,
@@ -27,7 +28,6 @@ export function UpcomingEvents({
             const sameDayCount = events.filter(
               (other) => other.date === event.date,
             ).length;
-            const remaining = daysUntil(event.date, today);
             return (
               <li className="stage-event-row" key={event.id}>
                 <div className="stage-event-info">
@@ -36,6 +36,12 @@ export function UpcomingEvents({
                   <time dateTime={event.date}>
                     {event.date.slice(0, 4)}年{dateLabel(event.date)}
                   </time>
+                  {event.location && (
+                    <span className="stage-event-location">
+                      <MapPin size={14} aria-hidden="true" />
+                      {event.location}
+                    </span>
+                  )}
                   {sameDayCount > 1 && (
                     <span className="stage-same-day">
                       同じ日に{sameDayCount}件
@@ -43,13 +49,7 @@ export function UpcomingEvents({
                   )}
                 </div>
                 <span className="stage-event-count">
-                  {remaining === 0 ? (
-                    <strong>今日</strong>
-                  ) : (
-                    <>
-                      あと <strong>{remaining}</strong> 日
-                    </>
-                  )}
+                  <EventCountdown date={event.date} today={today} />
                 </span>
               </li>
             );

@@ -29,8 +29,19 @@ export function EventMilestoneTimeline({
   onAddWork: (milestoneId: string) => void;
   onEditEvent: () => void;
 }) {
-  const [collapsed, setCollapsed] = useState<string[]>([]);
-  const [hiddenCompleted, setHiddenCompleted] = useState<string[]>([]);
+  const mobile = () =>
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 760px)").matches;
+  const [collapsed, setCollapsed] = useState<string[]>(() =>
+    mobile() ? items.map((item) => item.id) : [],
+  );
+  const [hiddenCompleted, setHiddenCompleted] = useState<string[]>(() =>
+    mobile()
+      ? items
+          .filter((item) => item.status === "achieved")
+          .map((item) => item.id)
+      : [],
+  );
   const timelineId = useId();
   const unassigned = workItems.filter((work) => !work.milestoneId);
   const all = sortedMilestones(event.milestones ?? []);

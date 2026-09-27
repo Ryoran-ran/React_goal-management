@@ -19,17 +19,11 @@ import { LessonSectionsEditor } from "../components/LessonSectionsEditor";
 import { LessonSectionScreen } from "../components/LessonSectionScreen";
 import { LessonOutline, LessonOutlineField } from "../components/LessonOutline";
 import { lessonCategoryLabel } from "../lib/lessonCategories";
+import { prepareLessonSectionEvents } from "../lib/lessonEvents";
 import { lessonHomework } from "../lib/lessonContent";
 import { useQuery } from "../lib/hooks";
 import { dateLabel, localDate, monthRange } from "../lib/dates";
-import {
-  Editor,
-  Empty,
-  Field,
-  MultiSelect,
-  PageHeading,
-  SaveForm,
-} from "../components/ui";
+import { Editor, Empty, Field, PageHeading, SaveForm } from "../components/ui";
 import { Attachments, type ImageDraft } from "../components/Attachments";
 import { priorities } from "../lib/goalReview";
 import { useUnsavedChanges } from "../lib/useUnsavedChanges";
@@ -211,7 +205,8 @@ export function LessonEditor({
   onClose: () => void;
   onSaved: (date: string) => void;
 }) {
-  const [lesson, setLesson] = useState<Lesson>(value);
+  const preparedValue = prepareLessonSectionEvents(value);
+  const [lesson, setLesson] = useState<Lesson>(preparedValue);
   const [scope, setScope] = useState<"one" | "following">("one");
   const canChangeFollowing =
     !!value.seriesId &&
@@ -226,7 +221,7 @@ export function LessonEditor({
     [value.id, value.date, lesson.date],
   );
   const [images, setImages] = useState<ImageDraft>({ files: [], removed: [] });
-  const initialLesson = useRef(value);
+  const initialLesson = useRef(preparedValue);
   useUnsavedChanges(draftHasChanges(initialLesson.current, lesson, images));
   const requestClose = () => {
     if (confirmDiscardChanges()) onClose();
@@ -267,6 +262,7 @@ export function LessonEditor({
           lessonId={lesson.id}
           section={editingSection}
           sections={lesson.sections ?? []}
+          events={events}
           onChange={(updated) =>
             setLesson((old) => ({
               ...old,
@@ -433,26 +429,6 @@ export function LessonEditor({
                   )}
                 </section>
               )}
-              {lesson.completed || lesson.relatedEventIds.length > 0 ? (
-                <>
-                  <MultiSelect
-                    label="今回のレッスンに関連するイベント（任意・複数選択可）"
-                    options={events.map((event) => ({
-                      id: event.id,
-                      title: `${event.title}（${dateLabel(event.date)}）`,
-                    }))}
-                    value={lesson.relatedEventIds}
-                    onChange={(relatedEventIds) => patch({ relatedEventIds })}
-                  />
-                  <p className="muted lesson-edit-note">
-                    イベントを選ばずに記録することもできます。選択はこの回だけに反映されます。
-                  </p>
-                </>
-              ) : (
-                <p className="muted lesson-edit-note">
-                  イベントは「記録する」で開いたときに選べます。
-                </p>
-              )}
             </section>
             {previous.data && lessonHomework(previous.data) && (
               <div className="subform">
@@ -483,10 +459,15 @@ export function LessonEditor({
             <LessonSectionsEditor
               lessonId={lesson.id}
               sections={lesson.sections ?? []}
-              onChange={(sections) => patch({ sections })}
+              onChange={(sections) =>
+                patch({ sections, sectionEventLinks: true })
+              }
               media={images}
               onMediaChange={setImages}
               onOpenSection={openSection}
+              defaultEventIds={
+                lesson.sectionEventLinks ? [] : lesson.relatedEventIds
+              }
             />
             <details
               className="lesson-general-notes lesson-form-section"

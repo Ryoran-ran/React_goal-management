@@ -345,12 +345,21 @@ export function Practice({
                 className="card agenda-milestone"
                 onClick={() => onEvent(eventId)}
               >
-                <span className="tag">準備の期限</span>
-                <strong>{milestone.title}</strong>
-                <span>
-                  {dateLabel(milestone.dueDate!)} · {eventTitle}
+                <span className="agenda-milestone-top">
+                  <span className="tag">準備の期限</span>
+                  <span className="agenda-milestone-date">
+                    <CalendarDays size={15} aria-hidden="true" />
+                    {dateLabel(milestone.dueDate!)}
+                  </span>
                 </span>
-                <ArrowUpRight size={16} />
+                <strong>{milestone.title}</strong>
+                <span className="agenda-milestone-bottom">
+                  <span className="agenda-milestone-event">{eventTitle}</span>
+                  <span className="agenda-milestone-action">
+                    イベントを見る
+                    <ArrowUpRight size={16} aria-hidden="true" />
+                  </span>
+                </span>
               </button>
             ))}
             {result.error && (
@@ -368,6 +377,15 @@ export function Practice({
                 record.title ||
                 (item.kind === "practice" ? "自主練習" : "レッスン");
               const Icon = item.kind === "practice" ? NotebookPen : UsersRound;
+              const metadata: string[] = [];
+              if (item.kind === "lesson" && item.record.sections?.length) {
+                metadata.push(
+                  item.record.sections.map(lessonCategoryLabel).join("・"),
+                );
+              }
+              if (record.durationMinutes !== undefined) {
+                metadata.push(`${record.durationMinutes}分`);
+              }
               return (
                 <div
                   className="schedule-learning-row"
@@ -383,11 +401,27 @@ export function Practice({
                     }}
                   >
                     <div className="agenda-date">
-                      <CalendarDays size={18} />
-                      <span>{dateLabel(record.date)}</span>
-                      {record.date === today && (
-                        <span className="tag green">今日</span>
-                      )}
+                      <span className="agenda-date-tags">
+                        <span
+                          className={`tag ${status === "recorded" ? "completed" : status === "cancelled" ? "cancelled" : ""}`}
+                        >
+                          {status === "recorded" ? (
+                            <>
+                              <span aria-hidden="true">✓</span>
+                              {item.kind === "lesson" ? "実施済み" : "記録済み"}
+                            </>
+                          ) : (
+                            statuses[status]
+                          )}
+                        </span>
+                        {record.date === today && (
+                          <span className="tag green">今日</span>
+                        )}
+                      </span>
+                      <span className="agenda-date-value">
+                        <CalendarDays size={15} aria-hidden="true" />
+                        {dateLabel(record.date)}
+                      </span>
                     </div>
                     <div className="row-content">
                       <span className="muted agenda-kind">
@@ -400,17 +434,6 @@ export function Practice({
                         item.record.cancellationReason && (
                           <p>中止理由：{item.record.cancellationReason}</p>
                         )}
-                      {item.kind === "lesson" &&
-                        !!item.record.sections?.length && (
-                          <p>
-                            {item.record.sections
-                              .map(lessonCategoryLabel)
-                              .join("・")}
-                          </p>
-                        )}
-                      {record.durationMinutes !== undefined && (
-                        <p>{record.durationMinutes}分</p>
-                      )}
                       {item.kind === "practice" && (
                         <p className="clamp">
                           {status === "planned"
@@ -420,19 +443,12 @@ export function Practice({
                       )}
                     </div>
                     <div className="agenda-status">
-                      <span
-                        className={`tag ${status === "recorded" ? "completed" : status === "cancelled" ? "cancelled" : ""}`}
-                      >
-                        {status === "recorded" ? (
-                          <>
-                            <span aria-hidden="true">✓</span>
-                            {item.kind === "lesson" ? "実施済み" : "記録済み"}
-                          </>
-                        ) : (
-                          statuses[status]
-                        )}
-                      </span>
-                      <span className="text-button">
+                      {metadata.length > 0 && (
+                        <span className="agenda-details">
+                          {metadata.join(" ・ ")}
+                        </span>
+                      )}
+                      <span className="agenda-action">
                         {status === "planned"
                           ? record.date <= today
                             ? "記録する"
@@ -440,7 +456,7 @@ export function Practice({
                           : status === "recorded"
                             ? "記録を見る"
                             : "中止内容を確認"}
-                        <ArrowUpRight size={16} />
+                        <ArrowUpRight size={16} aria-hidden="true" />
                       </span>
                     </div>
                   </button>

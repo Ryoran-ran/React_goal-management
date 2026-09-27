@@ -19,12 +19,14 @@ export function LearningNoteEditor({
   exists,
   onClose,
   onSaved,
+  onDeleted,
 }: {
   value: LearningNote;
   themes: LearningTheme[];
   exists: boolean;
   onClose: () => void;
   onSaved: () => void;
+  onDeleted?: () => void;
 }) {
   const [note, setNote] = useState(value);
   const [media, setMedia] = useState<ImageDraft>({ files: [], removed: [] });
@@ -56,7 +58,7 @@ export function LearningNoteEditor({
           exists
             ? async () => {
                 await remove("learningNotes", note.id);
-                onSaved();
+                (onDeleted ?? onSaved)();
               }
             : undefined
         }

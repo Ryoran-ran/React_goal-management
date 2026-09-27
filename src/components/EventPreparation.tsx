@@ -6,6 +6,7 @@ import {
   Download,
   Plus,
   Pencil,
+  MapPin,
   Sparkles,
 } from "lucide-react";
 import type { DanceEvent, EventMilestone, EventWorkItem } from "../types";
@@ -19,6 +20,7 @@ import { EventWorkEditor } from "./EventWorkEditor";
 import { sortedEventWork } from "../lib/eventWork";
 import { scrollPageToTop } from "../lib/pageScroll";
 import { downloadNotionSchedule } from "../lib/notionCsv";
+import { MobilePreparationOverview } from "./MobilePreparationOverview";
 
 export function EventPreparation({
   event,
@@ -96,7 +98,15 @@ export function EventPreparation({
       <div className="event-preparation-heading">
         <div>
           <h1>{event.title}</h1>
-          <p>{dateLabel(event.date)}</p>
+          <p className="event-preparation-meta">
+            <span>{dateLabel(event.date)}</span>
+            {event.location && (
+              <span>
+                <MapPin size={15} aria-hidden="true" />
+                {event.location}
+              </span>
+            )}
+          </p>
         </div>
         <details className="event-actions-menu">
           <summary>
@@ -187,7 +197,7 @@ export function EventPreparation({
               aria-pressed={view === "list"}
               onClick={() => setView("list")}
             >
-              一覧
+              ロードマップ
             </button>
             <button
               type="button"
@@ -214,15 +224,23 @@ export function EventPreparation({
             onAnchor={setAnchor}
           />
         ) : (
-          <EventMilestoneTimeline
-            event={event}
-            items={all}
-            workItems={allWork}
-            onEdit={open}
-            onEditWork={openWork}
-            onAddWork={addWork}
-            onEditEvent={onEditEvent}
-          />
+          <>
+            <MobilePreparationOverview
+              event={event}
+              milestones={all}
+              workItems={allWork}
+              onEditWork={openWork}
+            />
+            <EventMilestoneTimeline
+              event={event}
+              items={all}
+              workItems={allWork}
+              onEdit={open}
+              onEditWork={openWork}
+              onAddWork={addWork}
+              onEditEvent={onEditEvent}
+            />
+          </>
         )}
         <div className="preparation-add-actions">
           <button

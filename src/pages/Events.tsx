@@ -1,8 +1,9 @@
 import { DatePicker } from "../components/DatePicker";
+import { EventCountdown } from "../components/EventCountdown";
 import { lazy, Suspense, useState } from "react";
-import { CalendarDays, ArrowUpRight } from "lucide-react";
+import { CalendarDays, ArrowUpRight, MapPin } from "lucide-react";
 import type { DanceEvent } from "../types";
-import { allEvents, base, remove } from "../data/repository";
+import { allEvents, base, remove, save } from "../data/repository";
 import { saveEventDetails } from "../data/eventMilestones";
 import { nextMilestone, milestoneTiming, unfinished } from "../lib/milestones";
 import { useQuery } from "../lib/hooks";
@@ -40,6 +41,8 @@ export function Events({ initialEventId }: { initialEventId?: string }) {
   const [selectedId, setSelectedId] = useState(initialEventId);
   const [creatingCalendarPrompt, setCreatingCalendarPrompt] = useState(false);
   const [creatingAiSchedule, setCreatingAiSchedule] = useState(false);
+  const [savingStatusId, setSavingStatusId] = useState<string>();
+  const [statusError, setStatusError] = useState("");
   const selected = events?.find((event) => event.id === selectedId);
   const [showFinished, setShowFinished] = useState(readShowFinishedEvents);
   const visibleEvents = events?.filter(
@@ -152,51 +155,94 @@ export function Events({ initialEventId }: { initialEventId?: string }) {
               {error}
             </p>
           )}
+          {statusError && (
+            <p role="alert" className="error">
+              {statusError}
+            </p>
+          )}
           {visibleEvents?.map((event) => (
-            <button
-              className="event-row card"
-              key={event.id}
-              onClick={() => {
-                setSelectedId(event.id);
-                scrollPageToTop();
-              }}
-            >
-              <div className="date-tile">
-                <span>
-                  {new Date(`${event.date}T12:00:00`).getMonth() + 1}月
-                </span>
-                <strong>{Number(event.date.slice(8))}</strong>
-              </div>
+            <article className="event-row card" key={event.id}>
+              <button
+                type="button"
+                className="event-row-open"
+                onClick={() => {
+                  setSelectedId(event.id);
+                  scrollPageToTop();
+                }}
+              >
+                <div className="date-tile">
+                  <span>
+                    {new Date(`${event.date}T12:00:00`).getMonth() + 1}月
+                  </span>
+                  <strong>{Number(event.date.slice(8))}</strong>
+                </div>
 
-              <div className="row-content">
-                <span className="tag">{eventTypes[event.type]}</span>
-                <h2>{event.title}</h2>
-                <p>
-                  {dateLabel(event.date)} · {statuses[event.status]}
-                </p>
-                {event.description && (
-                  <p className="clamp">{event.description}</p>
-                )}
-                {nextMilestone(event) && (
-                  <p className="event-next-milestone">
-                    次の節目：{nextMilestone(event)!.title} ·{" "}
-                    {milestoneTiming(nextMilestone(event)!)}
-                  </p>
-                )}
-              </div>
+                <div className="row-content">
+                  <span className="tag">{eventTypes[event.type]}</span>
+                  <h2>{event.title}</h2>
+                  {event.location && (
+                    <p className="event-location">
+                      <MapPin size={15} aria-hidden="true" />
+                      <span>{event.location}</span>
+                    </p>
+                  )}
+                  {event.description && (
+                    <p className="clamp">{event.description}</p>
+                  )}
+                  {nextMilestone(event) && (
+                    <p className="event-next-milestone">
+                      次の節目：{nextMilestone(event)!.title} ·{" "}
+                      {milestoneTiming(nextMilestone(event)!)}
+                    </p>
+                  )}
+                </div>
 
-              <span className="countdown">
                 {daysUntil(event.date) >= 0 &&
-                ["planned", "active"].includes(event.status) ? (
-                  <>
-                    あと <strong>{daysUntil(event.date)}</strong> 日
-                  </>
-                ) : (
-                  statuses[event.status]
-                )}
-              </span>
-              <ArrowUpRight size={18} />
-            </button>
+                  ["planned", "active"].includes(event.status) && (
+                    <span className="countdown">
+                      <EventCountdown date={event.date} />
+                    </span>
+                  )}
+                <ArrowUpRight size={18} aria-hidden="true" />
+              </button>
+              <footer className="event-row-footer">
+                <span className="event-row-date">
+                  <CalendarDays size={15} aria-hidden="true" />
+                  {dateLabel(event.date)}
+                </span>
+                <label className="event-list-status">
+                  <span>状態</span>
+                  <select
+                    value={event.status}
+                    disabled={savingStatusId === event.id}
+                    aria-label={`${event.title}の状態`}
+                    onChange={async (changeEvent) => {
+                      const status = changeEvent.target
+                        .value as DanceEvent["status"];
+                      setStatusError("");
+                      setSavingStatusId(event.id);
+                      try {
+                        await save("events", { ...event, status });
+                      } catch (saveError) {
+                        setStatusError(
+                          saveError instanceof Error
+                            ? saveError.message
+                            : "状態を変更できませんでした。",
+                        );
+                      } finally {
+                        setSavingStatusId(undefined);
+                      }
+                    }}
+                  >
+                    {Object.entries(statuses).map(([key, label]) => (
+                      <option key={key} value={key}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </footer>
+            </article>
           ))}
           {visibleEvents?.length === 0 && (
             <div className="card">
@@ -246,7 +292,15 @@ function EventEditor({
         <SaveForm
           onCancel={onClose}
           onSave={async () => {
-            await saveEventDetails(event, images.files, images.removed, shift);
+            await saveEventDetails(
+              {
+                ...event,
+                location: event.location?.trim() || undefined,
+              },
+              images.files,
+              images.removed,
+              shift,
+            );
             onSaved();
           }}
           onDelete={
@@ -291,6 +345,14 @@ function EventEditor({
               />
             </Field>
           </div>
+          <Field label="場所">
+            <input
+              maxLength={300}
+              value={event.location ?? ""}
+              onChange={(e) => patch({ location: e.target.value })}
+              placeholder="例：〇〇市民ホール"
+            />
+          </Field>
           {exists &&
             value.date !== event.date &&
             (value.milestones?.some(unfinished) ||

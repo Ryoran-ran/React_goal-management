@@ -71,6 +71,7 @@ const section = shape({
   feedback: text,
   homework: text,
   youtubeUrls: strings,
+  relatedEventIds: optional(ids),
 });
 const details: Check = (value) =>
   object(value) && Object.values(value).every(text);
@@ -80,6 +81,7 @@ const checks: Record<BackupTable, Check> = {
     title: text,
     type: oneOf("competition", "medal_test", "performance", "demo", "other"),
     date,
+    location: optional(text),
     description: optional(text),
     status: oneOf("planned", "active", "completed", "cancelled"),
     goalIds: ids,
@@ -156,6 +158,7 @@ const checks: Record<BackupTable, Check> = {
     title: optional(text),
     durationMinutes: optional(number),
     relatedEventIds: ids,
+    sectionEventLinks: optional(boolean),
     relatedGoalIds: ids,
     plannedTopics: array(topic),
     actualTopics: array(topic),

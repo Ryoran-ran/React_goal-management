@@ -13,6 +13,7 @@ export function LessonSectionsEditor({
   media,
   onMediaChange,
   onOpenSection,
+  defaultEventIds = [],
 }: {
   lessonId: string;
   sections: LessonSection[];
@@ -20,6 +21,7 @@ export function LessonSectionsEditor({
   media: ImageDraft;
   onMediaChange: (draft: ImageDraft) => void;
   onOpenSection: (id: string) => void;
+  defaultEventIds?: string[];
 }) {
   const { data: savedMedia = [] } = useQuery(
     () => attachmentsFor("lesson", lessonId),
@@ -37,7 +39,7 @@ export function LessonSectionsEditor({
           className="text-button"
           aria-label="レッスン内容を追加"
           onClick={() => {
-            const section = newLessonSection();
+            const section = newLessonSection(defaultEventIds);
             onChange([...sections, section]);
             onOpenSection(section.id);
           }}
@@ -70,6 +72,9 @@ export function LessonSectionsEditor({
           url.trim(),
         ).length;
         const mediaText = [
+          section.relatedEventIds?.length
+            ? `関連イベント ${section.relatedEventIds.length}件`
+            : "",
           mediaCount ? `画像・動画 ${mediaCount}件` : "",
           youtubeCount ? `YouTube ${youtubeCount}件` : "",
         ]

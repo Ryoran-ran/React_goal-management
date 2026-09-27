@@ -29,30 +29,33 @@ describe("lesson outline", () => {
       ["肩", []],
       ["目線", []],
       ["呼吸", []],
-      ["姿勢", ["1.5拍待つ"]],
+      ["姿勢", []],
+      ["1.5拍待つ", []],
     ]);
   });
 
-  it("keeps ordinary multiline notes and orphan indentation as one paragraph", () => {
+  it("treats ordinary line breaks as separate list items", () => {
     expect(
       parseLessonOutline("  音声で入力した文章\n続きの文章\n　補足"),
     ).toEqual([
       {
-        kind: "paragraph",
-        text: "音声で入力した文章\n続きの文章\n補足",
+        kind: "item",
+        text: "音声で入力した文章",
         details: [],
       },
+      { kind: "item", text: "続きの文章", details: ["補足"] },
     ]);
   });
 
-  it("preserves an introduction and wrapped explanations while ignoring blank lines", () => {
+  it("uses indentation only for supplemental details and ignores blank lines", () => {
     expect(
       parseLessonOutline(
         "全体のメモ\n\n・ウォーク\n説明の続き\n\n  補足\n・ファン\n",
       ),
     ).toEqual([
-      { kind: "paragraph", text: "全体のメモ", details: [] },
-      { kind: "item", text: "ウォーク", details: ["説明の続き", "補足"] },
+      { kind: "item", text: "全体のメモ", details: [] },
+      { kind: "item", text: "ウォーク", details: [] },
+      { kind: "item", text: "説明の続き", details: ["補足"] },
       { kind: "item", text: "ファン", details: [] },
     ]);
   });

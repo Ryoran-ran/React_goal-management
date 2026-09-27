@@ -10,6 +10,7 @@ export interface DanceEvent extends Base {
   title: string;
   type: EventType;
   date: string;
+  location?: string;
   description?: string;
   status: "planned" | "active" | "completed" | "cancelled";
   goalIds: string[];
@@ -139,6 +140,7 @@ export interface Lesson extends Base {
   title?: string;
   durationMinutes?: number;
   relatedEventIds: string[];
+  sectionEventLinks?: boolean;
   relatedGoalIds: string[];
   plannedTopics: LessonTopic[];
   actualTopics: LessonTopic[];
@@ -162,6 +164,7 @@ export interface LessonSection {
   feedback: string;
   homework: string;
   youtubeUrls: string[];
+  relatedEventIds?: string[];
 }
 export interface Attachment {
   id: string;

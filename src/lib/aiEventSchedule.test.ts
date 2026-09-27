@@ -13,6 +13,7 @@ const event: DanceEvent = {
   title: "メダルテスト",
   type: "medal_test",
   date: "2026-10-25",
+  location: "中央市民ホール",
   description: "ラテン2種目",
   status: "planned",
   goalIds: [],
@@ -45,6 +46,7 @@ describe("AI event schedule", () => {
     const prompt = aiEventSchedulePrompt(event, "週末を中心にする");
     expect(prompt).toContain("メダルテスト");
     expect(prompt).toContain("2026-10-25");
+    expect(prompt).toContain("中央市民ホール");
     expect(prompt).toContain("週末を中心にする");
     expect(prompt).toContain('"milestones"');
     expect(prompt).toContain("```json と ``` で囲んでください");

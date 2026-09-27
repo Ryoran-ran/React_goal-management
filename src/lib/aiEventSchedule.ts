@@ -250,6 +250,7 @@ export function aiEventSchedulePrompt(
     "",
     "【条件】",
     `- 開催日: ${event.date}`,
+    `- 開催場所: ${event.location?.trim() || "未入力"}`,
     `- イベントの説明: ${event.description?.trim() || "未入力"}`,
     "- すべての日付は YYYY-MM-DD 形式にしてください。",
     "- 期限・終了日は開催日以前にしてください。",
