@@ -44,7 +44,6 @@ export function LessonOutlineField({
   context?: string;
 }) {
   const inputId = useId();
-  const [preview, setPreview] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const expandButton = useRef<HTMLButtonElement>(null);
   const returnScroll = useRef(0);
@@ -58,7 +57,7 @@ export function LessonOutlineField({
   return (
     <div className="lesson-outline-field">
       <div className="lesson-outline-heading">
-        <label className="field-title" htmlFor={preview ? undefined : inputId}>
+        <label className="field-title" htmlFor={inputId}>
           {label}
         </label>
         <button
@@ -76,15 +75,16 @@ export function LessonOutlineField({
           広く書く
         </button>
       </div>
-      <OutlineMode preview={preview} onChange={setPreview} label={label} />
-      <div hidden={preview}>
+      <div className="lesson-outline-input">
         <textarea
           id={inputId}
+          rows={4}
           value={value}
+          placeholder="1行に1つずつ入力"
           onChange={(event) => onChange(event.target.value)}
         />
+        <p>改行すると、別の箇条書きとして表示されます。</p>
       </div>
-      {preview && <OutlinePreview label={label} value={value} />}
       {expanded &&
         createPortal(
           <OutlineDialog
@@ -244,6 +244,11 @@ function OutlineDialog({
             );
         }}
       />
+      {!preview && (
+        <p className="lesson-outline-dialog-hint">
+          1行に1つずつ入力してください。改行すると別の箇条書きになります。
+        </p>
+      )}
       <div className="lesson-outline-dialog-content">
         <textarea
           ref={textarea}

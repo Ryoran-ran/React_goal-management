@@ -1,6 +1,10 @@
 .lesson-outline-field {
   margin-bottom: 24px;
 }
+.lesson-outline-field + .lesson-outline-field {
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
 .lesson-outline-heading,
 .lesson-outline-dialog-heading {
   display: flex;
@@ -19,6 +23,17 @@
 .lesson-outline-mode {
   width: fit-content;
   margin-bottom: 10px;
+}
+.lesson-outline-input > textarea {
+  min-height: 116px;
+  line-height: 1.7;
+  resize: vertical;
+}
+.lesson-outline-input > p,
+.lesson-outline-dialog-hint {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 0.76rem;
 }
 .lesson-outline-preview {
   min-height: 100px;
@@ -97,6 +112,10 @@
 }
 .lesson-outline-dialog > .lesson-outline-mode {
   flex-shrink: 0;
+}
+.lesson-outline-dialog-hint {
+  flex-shrink: 0;
+  margin: -3px 0 10px;
 }
 .lesson-outline-dialog-content {
   flex: 1;
