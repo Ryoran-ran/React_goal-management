@@ -120,14 +120,14 @@ export function EventPreparation({
           </summary>
           <div className="event-actions-panel">
             <div className="event-actions-group">
-              <span>スケジュール作成</span>
+              <span>スケジュール作成・変更</span>
               <button
                 type="button"
                 className="text-button"
                 onClick={onAiSchedule}
               >
                 <Sparkles size={17} />
-                AIでスケジュールを作成
+                AIでスケジュールを作成・見直す
               </button>
               <button
                 type="button"
@@ -135,7 +135,7 @@ export function EventPreparation({
                 onClick={onScheduleAdvice}
               >
                 <MessageCircleQuestion size={17} />
-                準備状況をAIに相談
+                スケジュールを変更・相談
               </button>
             </div>
             <div className="event-actions-group">

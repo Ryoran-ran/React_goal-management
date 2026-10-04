@@ -1,13 +1,19 @@
 import { useState } from "react";
 import {
   ArrowLeft,
+  CalendarClock,
   CheckCircle2,
   ChevronRight,
+  Compass,
   Copy,
   Flag,
   ListTodo,
+  MessageCircle,
+  MessagesSquare,
   RotateCcw,
   Search,
+  Sparkles,
+  Upload,
 } from "lucide-react";
 import type { DanceEvent, EventMilestone, EventWorkItem } from "../types";
 import { dateLabel } from "../lib/dates";
@@ -16,9 +22,18 @@ import { sortedEventWork, workStatuses } from "../lib/eventWork";
 import { scrollPageToTop } from "../lib/pageScroll";
 import {
   eventScheduleAdvicePrompt,
+  eventScheduleRevisionJsonPrompt,
   type EventAdvicePurpose,
   type EventAdviceTarget,
 } from "../lib/eventScheduleAdvice";
+import {
+  parseEventScheduleRevision,
+  previewEventScheduleRevision,
+  type EventScheduleRevisionDraft,
+  type ScheduleRevisionPreview,
+} from "../lib/eventScheduleRevision";
+import { applyEventScheduleRevision } from "../data/eventScheduleRevision";
+import { trainingChatAvailable } from "../lib/webmcp";
 
 const purposes: {
   id: EventAdvicePurpose;
@@ -28,9 +43,15 @@ const purposes: {
 }[] = [
   {
     id: "recovery",
-    title: "遅れを立て直す",
-    description: "延期・縮小も含め、現実的な順番を相談します。",
-    icon: RotateCcw,
+    title: "予定を組み直す",
+    description: "AIと変更案を相談し、決まった日付をまとめて反映します。",
+    icon: CalendarClock,
+  },
+  {
+    id: "direction",
+    title: "方針を整理する",
+    description: "優先すること・諦めることを相談し、方向を固めます。",
+    icon: Compass,
   },
   {
     id: "completion",
@@ -44,6 +65,12 @@ const purposes: {
     description: "今もっとも重要な一歩を絞り込みます。",
     icon: ListTodo,
   },
+  {
+    id: "free",
+    title: "自由に相談する",
+    description: "決まった型を使わず、気になっていることを相談します。",
+    icon: MessageCircle,
+  },
 ];
 
 export function EventScheduleAdvice({
@@ -53,6 +80,7 @@ export function EventScheduleAdvice({
   event: DanceEvent;
   onBack: () => void;
 }) {
+  const chatAvailable = trainingChatAvailable();
   const milestones = sortedMilestones(event.milestones ?? []);
   const workItems = sortedEventWork(event.workItems ?? []);
   const firstTarget =
@@ -70,6 +98,12 @@ export function EventScheduleAdvice({
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [choosingTarget, setChoosingTarget] = useState(false);
+  const [answer, setAnswer] = useState("");
+  const [revision, setRevision] = useState<EventScheduleRevisionDraft>();
+  const [revisionPreview, setRevisionPreview] =
+    useState<ScheduleRevisionPreview>();
+  const [saving, setSaving] = useState(false);
+  const [applied, setApplied] = useState(false);
 
   const [targetKind, targetId] = targetKey.split(":");
   const target: EventAdviceTarget | undefined =
@@ -90,6 +124,7 @@ export function EventScheduleAdvice({
     purpose === "completion" ? target : undefined,
     note,
   );
+  const revisionJsonPrompt = eventScheduleRevisionJsonPrompt(event);
 
   if (choosingTarget) {
     return (
@@ -117,12 +152,69 @@ export function EventScheduleAdvice({
     try {
       await navigator.clipboard.writeText(prompt);
       setNotice(
-        "コピーしました。ChatGPTなどの入力欄へ貼り付けて相談できます。",
+        purpose === "recovery"
+          ? "コピーしました。AIの質問に答えて変更案を調整し、合意できたら下のJSON作成用プロンプトを同じChatへ送ってください。"
+          : "コピーしました。ChatGPTなどの入力欄へ貼り付けて相談できます。",
       );
     } catch {
       setError(
         "コピーできませんでした。下のプロンプトを選択してコピーしてください。",
       );
+    }
+  };
+
+  const copyRevisionJsonPrompt = async () => {
+    setError("");
+    try {
+      await navigator.clipboard.writeText(revisionJsonPrompt);
+      setNotice(
+        "コピーしました。相談を続けていた同じChatへ貼り付け、返された確定JSONを下の欄へ貼り付けてください。",
+      );
+    } catch {
+      setError(
+        "コピーできませんでした。JSON作成用プロンプトを開いて手動でコピーしてください。",
+      );
+    }
+  };
+
+  const inspectRevision = () => {
+    setError("");
+    setNotice("");
+    setApplied(false);
+    try {
+      const parsed = parseEventScheduleRevision(answer, event);
+      setRevision(parsed);
+      setRevisionPreview(previewEventScheduleRevision(event, parsed));
+    } catch (cause) {
+      setRevision(undefined);
+      setRevisionPreview(undefined);
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "変更案を確認できませんでした。",
+      );
+    }
+  };
+
+  const applyRevision = async () => {
+    if (!revision || !revisionPreview?.changes.length) return;
+    setSaving(true);
+    setError("");
+    try {
+      const result = await applyEventScheduleRevision(
+        event.id,
+        event.updatedAt,
+        revision,
+      );
+      setApplied(true);
+      setRevisionPreview(result);
+      setNotice(`${result.changes.length}件の予定を変更しました。`);
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : "予定を変更できませんでした。",
+      );
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -133,17 +225,38 @@ export function EventScheduleAdvice({
         準備スケジュールに戻る
       </button>
       <header className="learning-heading">
-        <h1>準備スケジュールをAIに相談</h1>
+        <h1>スケジュールを変更・相談</h1>
         <p>
           {dateLabel(event.date)} · {event.title}
         </p>
       </header>
 
+      <section
+        className={`card event-chat-guide ${chatAvailable ? "is-available" : ""}`}
+      >
+        <MessagesSquare size={24} aria-hidden="true" />
+        <div>
+          <h2>
+            {chatAvailable
+              ? "このままChatで相談できます"
+              : "Chat連携対応の環境では、会話しながら変更できます"}
+          </h2>
+          <p>
+            {`Chatに「${event.title}の予定を組み直したい」と話しかけてください。AIが最新の予定を読み、精度に影響する点を質問します。回答後に候補を比較し、合意するまでは変更せず、決まった項目だけを確認して反映します。`}
+          </p>
+          {!chatAvailable && (
+            <p className="muted">
+              現在の環境では直接連携を検出できないため、下のプロンプトをコピーして同じように相談できます。
+            </p>
+          )}
+        </div>
+      </section>
+
       <section className="card event-advice-form">
         <div>
           <h2>何を相談しますか？</h2>
           <p className="muted">
-            現在のイベント情報、到達点、作業と進捗を含むプロンプトを作ります。
+            予定の組み直しから方向性の整理、ちょっとした相談まで、目的に合うプロンプトを作ります。
           </p>
         </div>
 
@@ -165,6 +278,7 @@ export function EventScheduleAdvice({
                   onChange={() => {
                     setPurpose(item.id);
                     setNotice("");
+                    setError("");
                   }}
                 />
                 <Icon size={20} aria-hidden="true" />
@@ -223,10 +337,14 @@ export function EventScheduleAdvice({
             }}
             placeholder={
               purpose === "recovery"
-                ? "例：平日は30分、週末は2時間使えます。衣装準備が予定より遅れています。"
+                ? "例：衣装の到着が2週間遅れました。平日は30分、週末は2時間使えます。"
                 : purpose === "completion"
                   ? "例：先生から内容に問題ないと言われ、必要な資料も受け取りました。"
-                  : "例：今週はレッスンが1回あり、それまでにできることを知りたいです。"
+                  : purpose === "direction"
+                    ? "例：完成度を上げることと新しい振り付けを覚えることの、どちらを優先するか迷っています。"
+                    : purpose === "free"
+                      ? "例：準備への不安を整理したいです。何から考えるとよいですか？"
+                      : "例：今週はレッスンが1回あり、それまでにできることを知りたいです。"
             }
           />
           <small>{note.length} / 2000文字</small>
@@ -234,7 +352,9 @@ export function EventScheduleAdvice({
 
         <button type="button" className="primary" onClick={() => void copy()}>
           <Copy size={18} />
-          相談用プロンプトをコピー
+          {purpose === "recovery"
+            ? "変更相談のプロンプトをコピー"
+            : "相談用プロンプトをコピー"}
         </button>
 
         <details className="advice-prompt-preview">
@@ -250,6 +370,109 @@ export function EventScheduleAdvice({
         </details>
       </section>
 
+      {purpose === "recovery" && (
+        <section className="card ai-schedule-step event-revision-import">
+          <div className="ai-schedule-step-heading">
+            <span>2</span>
+            <div>
+              <h2>決まった変更案を確認して反映</h2>
+              <p>
+                AIとの相談がまとまったら、JSON作成用プロンプトを同じChatへ送り、返された確定JSONを貼り付けます。確認するまでは予定は変わりません。
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => void copyRevisionJsonPrompt()}
+          >
+            <Copy size={18} />
+            JSON作成用プロンプトをコピー
+          </button>
+          <details className="advice-prompt-preview">
+            <summary>JSON作成用プロンプトを確認・手動でコピー</summary>
+            <label className="field">
+              <span>合意後に同じChatへ貼り付けるプロンプト</span>
+              <textarea
+                readOnly
+                value={revisionJsonPrompt}
+                onFocus={(focusEvent) => focusEvent.currentTarget.select()}
+              />
+            </label>
+          </details>
+          <label className="field">
+            <span>AIの最終回答</span>
+            <textarea
+              className="ai-schedule-answer"
+              value={answer}
+              onChange={(changeEvent) => {
+                setAnswer(changeEvent.target.value);
+                setRevision(undefined);
+                setRevisionPreview(undefined);
+                setApplied(false);
+                setError("");
+                setNotice("");
+              }}
+              placeholder={
+                '相談後の説明と ```json\n{"eventTitle":"…","changes":[]}\n``` を含む最終回答'
+              }
+            />
+          </label>
+          <button type="button" className="secondary" onClick={inspectRevision}>
+            <Sparkles size={18} />
+            変更内容を確認
+          </button>
+
+          {revisionPreview && (
+            <div className="event-revision-preview">
+              <div className="ai-schedule-summary">
+                <strong>変更 {revisionPreview.changes.length}件</strong>
+              </div>
+              {!!revisionPreview.skippedUnchanged && (
+                <p className="muted">
+                  日付が変わらない{revisionPreview.skippedUnchanged}
+                  件は反映対象から外しました。
+                </p>
+              )}
+              {!revisionPreview.changes.length ? (
+                <p>変更が必要な予定はありません。</p>
+              ) : (
+                <ul className="calendar-prompt-items event-revision-items">
+                  {revisionPreview.changes.map((change) => (
+                    <li key={`${change.kind}:${change.id}`}>
+                      <span className="tag">
+                        {change.kind === "work" ? "作業" : "到達点"}
+                      </span>
+                      <span>
+                        <strong>{change.title}</strong>
+                        <span className="muted">
+                          {scheduleLabel(change.from)} →{" "}
+                          {scheduleLabel(change.to)}
+                        </span>
+                        <small>{change.reason}</small>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {!applied && !!revisionPreview.changes.length && (
+                <button
+                  type="button"
+                  className="primary"
+                  disabled={saving}
+                  onClick={() => void applyRevision()}
+                >
+                  <Upload size={18} />
+                  {saving
+                    ? "変更中…"
+                    : `${revisionPreview.changes.length}件の変更を反映`}
+                </button>
+              )}
+            </div>
+          )}
+        </section>
+      )}
+
       {error && (
         <p role="alert" className="error">
           {error}
@@ -258,6 +481,14 @@ export function EventScheduleAdvice({
       {notice && <p role="status">{notice}</p>}
     </div>
   );
+}
+
+function scheduleLabel(plan: { startDate?: string; dueDate?: string }) {
+  if (plan.startDate && plan.dueDate)
+    return plan.startDate === plan.dueDate
+      ? plan.startDate
+      : `${plan.startDate}〜${plan.dueDate}`;
+  return plan.startDate ?? plan.dueDate ?? "日付未設定";
 }
 
 function EventAdviceTargetPicker({

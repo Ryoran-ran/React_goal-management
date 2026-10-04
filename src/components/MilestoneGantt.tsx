@@ -48,7 +48,11 @@ export function MilestoneGantt({
 }) {
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [showFinished, setShowFinished] = useState(false);
-  const [collapsed, setCollapsed] = useState<string[]>([]);
+  const [collapsed, setCollapsed] = useState<string[]>(() =>
+    items
+      .filter((item) => workItems.some((work) => work.milestoneId === item.id))
+      .map((item) => item.id),
+  );
   const optionsId = useId();
   const [mobile, setMobile] = useState(
     () => window.matchMedia("(max-width: 760px)").matches,
@@ -85,6 +89,7 @@ export function MilestoneGantt({
     groupEnd,
     parentTitle,
     childCount: 0,
+    progress: undefined,
     summary: {} as MilestonePlan,
     statusTarget: { kind: "work" as const, item: work },
     open: () => onEditWork(work),
@@ -103,6 +108,7 @@ export function MilestoneGantt({
           groupEnd: isCollapsed || children.length === 0,
           parentTitle: "",
           childCount: children.length,
+          progress: workProgress(children),
           summary: workOverview(children, today).planned,
           statusTarget: { kind: "milestone" as const, item },
           open: () => onEdit(item),
@@ -124,13 +130,17 @@ export function MilestoneGantt({
   const range = plannedGanttRange(visibleEvent, scale, anchor);
   const count = daysUntil(range.end, range.start) + 1;
   const width = Math.max(
-    420,
+    560,
     Math.min(
       1600,
-      count * (scale === "week" ? 56 : scale === "month" ? 40 : 32),
+      count * (scale === "week" ? 56 : scale === "month" ? 40 : 18),
     ),
   );
-  const stride = Math.max(1, Math.ceil(count / Math.floor(width / 32)));
+  const maxTickCount = Math.max(1, Math.floor(width / 72));
+  const stride =
+    scale === "event"
+      ? Math.max(7, Math.ceil(count / maxTickCount / 7) * 7)
+      : Math.max(1, Math.ceil(count / maxTickCount));
   useEffect(() => {
     if (!scroller.current) return;
     const offset =
@@ -333,7 +343,7 @@ export function MilestoneGantt({
             style={
               {
                 "--timeline-width": `${width}px`,
-                "--day-width": `${100 / count}%`,
+                "--grid-width": `${(100 / count) * (scale === "event" ? 7 : 1)}%`,
               } as CSSProperties
             }
           >
@@ -350,12 +360,15 @@ export function MilestoneGantt({
                     }}
                     title={date}
                   >
-                    {scale === "week" ||
-                    date === range.start ||
-                    date.endsWith("-01")
-                      ? `${Number(date.slice(5, 7))}/`
-                      : ""}
-                    {Number(date.slice(8))}
+                    {scale === "event"
+                      ? `${Number(date.slice(5, 7))}/${Number(date.slice(8))}`
+                      : `${
+                          scale === "week" ||
+                          date === range.start ||
+                          date.endsWith("-01")
+                            ? `${Number(date.slice(5, 7))}/`
+                            : ""
+                        }${Number(date.slice(8))}`}
                   </span>
                 ))}
                 {line(event.date, "event")}
@@ -372,6 +385,7 @@ export function MilestoneGantt({
                 groupEnd,
                 parentTitle,
                 childCount,
+                progress,
                 summary,
               }) => (
                 <div
@@ -379,85 +393,69 @@ export function MilestoneGantt({
                   key={key}
                 >
                   <div className="gantt-label">
-                    {!isWork && childCount > 0 && (
+                    <div className="gantt-label-heading">
+                      {!isWork && childCount > 0 && (
+                        <button
+                          type="button"
+                          className="text-button gantt-group-toggle"
+                          aria-expanded={!collapsed.includes(item.id)}
+                          aria-label={`${item.title}の作業を${collapsed.includes(item.id) ? "開く" : "たたむ"}`}
+                          title={`作業 ${childCount}件`}
+                          onClick={() =>
+                            setCollapsed((current) =>
+                              current.includes(item.id)
+                                ? current.filter((id) => id !== item.id)
+                                : [...current, item.id],
+                            )
+                          }
+                        >
+                          <ChevronDown
+                            size={14}
+                            className={
+                              collapsed.includes(item.id) ? "is-closed" : ""
+                            }
+                          />
+                          <span>{childCount}</span>
+                        </button>
+                      )}
                       <button
                         type="button"
-                        className="text-button gantt-group-toggle"
-                        aria-expanded={!collapsed.includes(item.id)}
-                        aria-label={`${item.title}の作業を${collapsed.includes(item.id) ? "開く" : "たたむ"}`}
-                        onClick={() =>
-                          setCollapsed((current) =>
-                            current.includes(item.id)
-                              ? current.filter((id) => id !== item.id)
-                              : [...current, item.id],
-                          )
-                        }
+                        className="gantt-item-edit"
+                        onClick={open}
+                        title={item.title}
                       >
-                        <ChevronDown
-                          size={14}
-                          className={
-                            collapsed.includes(item.id) ? "is-closed" : ""
-                          }
-                        />
-                        作業 {childCount}件
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      className="gantt-item-edit"
-                      onClick={open}
-                      title={item.title}
-                    >
-                      <strong>
-                        {isWork ? "↳ " : "◆ "}
-                        {item.title}
-                      </strong>
-                      {isWork && (
-                        <small className="gantt-parent-name">
-                          {parentTitle}の作業
-                        </small>
-                      )}
-                      {!isWork &&
-                        workProgress(
-                          (event.workItems ?? []).filter(
-                            (work) => work.milestoneId === item.id,
-                          ),
-                        ).total > 0 && (
-                          <small>
-                            作業{" "}
-                            {
-                              workProgress(
-                                (event.workItems ?? []).filter(
-                                  (work) => work.milestoneId === item.id,
-                                ),
-                              ).completed
-                            }{" "}
-                            /{" "}
-                            {
-                              workProgress(
-                                (event.workItems ?? []).filter(
-                                  (work) => work.milestoneId === item.id,
-                                ),
-                              ).total
-                            }{" "}
-                            完了
+                        <strong>
+                          {isWork ? "↳ " : "◆ "}
+                          {item.title}
+                        </strong>
+                        <span className="gantt-item-meta">
+                          {isWork && (
+                            <small className="gantt-parent-name">
+                              {parentTitle}の作業
+                            </small>
+                          )}
+                          {!isWork && progress && progress.total > 0 && (
+                            <small>
+                              {progress.completed}/{progress.total} 完了
+                            </small>
+                          )}
+                          <small
+                            className={
+                              item.dueDate &&
+                              item.dueDate < today &&
+                              item.status !== "achieved" &&
+                              item.status !== "skipped"
+                                ? "overdue"
+                                : ""
+                            }
+                          >
+                            {isWork && item.status === "achieved"
+                              ? "完了"
+                              : scheduleTiming(item, today)}
                           </small>
-                        )}
-                      <small
-                        className={
-                          item.dueDate &&
-                          item.dueDate < today &&
-                          item.status !== "achieved" &&
-                          item.status !== "skipped"
-                            ? "overdue"
-                            : ""
-                        }
-                      >
-                        {isWork && item.status === "achieved"
-                          ? "完了"
-                          : scheduleTiming(item, today)}
-                      </small>
-                    </button>
+                        </span>
+                      </button>
+                    </div>
                     <ScheduleStatus eventId={event.id} target={statusTarget} />
                   </div>
                   <div className="gantt-track">

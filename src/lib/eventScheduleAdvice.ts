@@ -1,7 +1,8 @@
 import type { DanceEvent, EventMilestone, EventWorkItem } from "../types";
 import { daysUntil, localDate } from "./dates";
 
-export type EventAdvicePurpose = "recovery" | "completion" | "next";
+export type EventAdvicePurpose =
+  "recovery" | "direction" | "next" | "completion" | "free";
 
 export type EventAdviceTarget =
   | { kind: "milestone"; item: EventMilestone }
@@ -35,9 +36,15 @@ const priorityLabels: Record<EventWorkItem["priority"], string> = {
 
 const purposeInstructions: Record<EventAdvicePurpose, string[]> = {
   recovery: [
-    "期限超過・進行中・未着手の順に状況を確認し、イベント日までに現実的に立て直せる案を作ってください。",
-    "やることを増やしすぎず、延期・縮小・省略できるものも示してください。",
-    "今日から着手する最初の一歩と、その後の優先作業を最大3件まで示してください。",
+    "予定が大きく動いた前提で、期限超過・進行中・未着手の状況を確認し、イベント日までに現実的に立て直せる組み直し案を一緒に決めてください。",
+    "最初の回答では変更案やJSONを確定せず、利用できる時間、動かせない期限、現在の進み具合、優先したい成果など、組み直しに大きく影響する未確認事項を2〜5問に絞って質問してください。登録情報や補足から分かることは聞き直さないでください。",
+    "回答を受けたら、延期・縮小・省略の選択肢と影響を比較し、変更前後の日付と理由が分かる案を示してください。この段階ではJSONを出さず、修正点がないか確認してください。",
+    "ユーザーが具体的な変更案を承認したら、そこで相談を終えてください。この相談用プロンプトへの回答ではJSONを出さず、別のJSON作成用プロンプトを待ってください。",
+  ],
+  direction: [
+    "日付変更を決める前に、イベントに向けて何を優先し、何を諦めるかという方針を一緒に整理してください。",
+    "選択肢がある場合は、それぞれの利点・負担・イベントへの影響を比較してください。",
+    "この相談では予定変更用のJSONを出力せず、最後に合意できた方針と保留事項を短くまとめてください。",
   ],
   completion: [
     "選んだ対象を完了としてよいか、登録済みの達成条件・作業内容・現在の状態だけを根拠に判定してください。",
@@ -48,12 +55,18 @@ const purposeInstructions: Record<EventAdvicePurpose, string[]> = {
     "全体の期限・進捗・優先度から、今もっとも重要な作業を一つ選んでください。",
     "その理由と、終わったと判断できる状態を示してください。必要なら次点を最大2件まで示してください。",
   ],
+  free: [
+    "補足に書かれた相談へ直接答えてください。相談内容が曖昧な場合は、意図を決めつけず確認してください。",
+    "必要に応じて登録済みの予定や進捗を根拠にしますが、求められていない計画変更は提案しすぎないでください。",
+    "この相談では予定変更用のJSONを出力しないでください。",
+  ],
 };
 
 const targetPayload = (target: EventAdviceTarget | undefined) => {
   if (!target) return null;
   if (target.kind === "milestone") {
     return {
+      id: target.item.id,
       kind: "マイルストーン",
       title: target.item.title,
       status: milestoneStatusLabels[target.item.status],
@@ -62,6 +75,7 @@ const targetPayload = (target: EventAdviceTarget | undefined) => {
     };
   }
   return {
+    id: target.item.id,
     kind: "作業",
     title: target.item.title,
     status: workStatusLabels[target.item.status],
@@ -140,6 +154,7 @@ export function eventScheduleAdvicePrompt(
     "【マイルストーン】",
     JSON.stringify(
       milestones.map((item) => ({
+        id: item.id,
         title: item.title,
         status: milestoneStatusLabels[item.status],
         startDate: item.startDate ?? null,
@@ -162,6 +177,7 @@ export function eventScheduleAdvicePrompt(
     "【作業】",
     JSON.stringify(
       workItems.map((item) => ({
+        id: item.id,
         milestone: item.milestoneId
           ? (milestoneTitles.get(item.milestoneId) ?? "未分類")
           : "未分類",
@@ -186,5 +202,65 @@ export function eventScheduleAdvicePrompt(
       null,
       2,
     ),
+  ].join("\n");
+}
+
+export function eventScheduleRevisionJsonPrompt(event: DanceEvent) {
+  return [
+    `ここまでの会話で合意した「${event.title}」の予定変更を、反映用JSONへ変換してください。`,
+    "この依頼では質問、説明、新しい提案、合意内容の変更を加えないでください。会話で合意した変更だけを出力してください。",
+    "合意した確定案を特定できない場合はJSONを出さず、不明な点を一つだけ確認してください。",
+    "",
+    "【変換条件】",
+    "- 変更する項目だけをchangesへ入れ、下の登録情報にあるidとkindをそのまま使ってください。",
+    "- kindはマイルストーンならmilestone、作業ならworkです。",
+    "- startDateとdueDateは合意した変更後の日付をYYYY-MM-DDで、日付を外す場合はnullで必ず両方指定してください。",
+    "- reasonには会話で合意した変更理由を書いてください。状態・名前・内容・優先度は変更しません。",
+    `- 完了・達成・見送り済みの項目、変更しない項目、${event.date}より後の日付は含めないでください。`,
+    "- 変更が不要ならchangesを空配列にしてください。回答は有効なJSONコードブロック一つだけにしてください。",
+    "",
+    "【現在の登録項目】",
+    JSON.stringify(
+      {
+        milestones: (event.milestones ?? []).map((item) => ({
+          kind: "milestone",
+          id: item.id,
+          title: item.title,
+          status: milestoneStatusLabels[item.status],
+          startDate: item.startDate ?? null,
+          dueDate: item.dueDate ?? null,
+        })),
+        workItems: (event.workItems ?? []).map((item) => ({
+          kind: "work",
+          id: item.id,
+          title: item.title,
+          status: workStatusLabels[item.status],
+          startDate: item.startDate ?? null,
+          dueDate: item.dueDate ?? null,
+        })),
+      },
+      null,
+      2,
+    ),
+    "",
+    "【回答JSONの形式】",
+    "```json",
+    JSON.stringify(
+      {
+        eventTitle: event.title,
+        changes: [
+          {
+            kind: "work",
+            id: "登録情報にあるID",
+            startDate: "YYYY-MM-DD または null",
+            dueDate: "YYYY-MM-DD または null",
+            reason: "合意した変更理由",
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+    "```",
   ].join("\n");
 }
