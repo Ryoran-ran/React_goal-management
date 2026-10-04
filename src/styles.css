@@ -3950,6 +3950,17 @@ button p {
   padding: 0 0 0 36px;
   margin: 12px 0 0;
 }
+.preparation-timeline-options {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 12px 0 4px;
+}
+.preparation-timeline-options .choice {
+  min-height: 40px;
+}
 .preparation-timeline-step {
   --step-color: #a47e51;
   position: relative;
