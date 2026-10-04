@@ -25,7 +25,7 @@ export function EventWorkEditor({
   const [reason, setReason] = useState("");
   const [addNext, setAddNext] = useState(false);
   const milestone = event.milestones?.find(
-    (item) => item.id === value.milestoneId,
+    (item) => item.id === draft.milestoneId,
   );
   const patch = (changes: Partial<EventWorkItem>) =>
     setDraft((current) => ({ ...current, ...changes }));
@@ -71,6 +71,21 @@ export function EventWorkEditor({
               onChange={(e) => patch({ title: e.target.value })}
               placeholder="例：ルンバ前半を見本なしで踊る"
             />
+          </Field>
+          <Field label="所属するマイルストーン">
+            <select
+              value={draft.milestoneId ?? ""}
+              onChange={(e) =>
+                patch({ milestoneId: e.target.value || undefined })
+              }
+            >
+              <option value="">未分類</option>
+              {(event.milestones ?? []).map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.title}
+                </option>
+              ))}
+            </select>
           </Field>
           <Field label="作業内容・完了の目安（任意）">
             <textarea
