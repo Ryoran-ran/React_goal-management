@@ -1,7 +1,9 @@
 import type { AiEventScheduleDraft } from "../lib/aiEventSchedule";
 import { previewScheduleImport } from "../lib/aiEventSchedule";
-import { validateEventWork } from "../lib/eventWork";
-import { validateMilestones } from "../lib/milestones";
+import { previewEventScheduleRevision } from "../lib/eventScheduleRevision";
+import { validateEventWork, workSchedule } from "../lib/eventWork";
+import { updateMilestonePlan, validateMilestones } from "../lib/milestones";
+import type { EventWorkItem } from "../types";
 import { db } from "./db";
 
 export async function importAiEventSchedule(
@@ -34,17 +36,60 @@ export async function importAiEventSchedule(
     const now = new Date(
       Math.max(Date.now(), Date.parse(event.updatedAt) + 1),
     ).toISOString();
-    const preview = previewScheduleImport(event, draft, now);
-    const updated = {
+    const revision = previewEventScheduleRevision(event, draft);
+    const changeMap = new Map(
+      revision.changes.map((change) => [`${change.kind}:${change.id}`, change]),
+    );
+    const revisedMilestones = (event.milestones ?? []).map((item) => {
+      const change = changeMap.get(`milestone:${item.id}`);
+      return change
+        ? updateMilestonePlan(item, change.to, change.reason, now)
+        : item;
+    });
+    const revisedWorkItems = (event.workItems ?? []).map(
+      (item): EventWorkItem => {
+        const change = changeMap.get(`work:${item.id}`);
+        if (!change) return item;
+        const plan = updateMilestonePlan(
+          workSchedule(item),
+          change.to,
+          change.reason,
+          now,
+        );
+        return {
+          ...item,
+          startDate: plan.startDate,
+          dueDate: plan.dueDate,
+          baseline: plan.baseline,
+          changes: plan.changes,
+          updatedAt: now,
+        };
+      },
+    );
+    const revisedEvent = {
       ...event,
+      milestones: revisedMilestones,
+      workItems: revisedWorkItems,
+    };
+    const preview = previewScheduleImport(revisedEvent, draft, now);
+    const updated = {
+      ...revisedEvent,
       updatedAt: now,
-      milestones: [...(event.milestones ?? []), ...preview.milestones],
-      workItems: [...(event.workItems ?? []), ...preview.workItems],
+      milestones: [...revisedMilestones, ...preview.milestones],
+      workItems: [...revisedWorkItems, ...preview.workItems],
     };
     validateMilestones(updated.milestones);
     validateEventWork(updated);
-    if (preview.milestones.length || preview.workItems.length)
+    if (
+      revision.changes.length ||
+      preview.milestones.length ||
+      preview.workItems.length
+    )
       await db.events.put(updated);
-    return preview;
+    return {
+      ...preview,
+      changes: revision.changes,
+      skippedUnchanged: revision.skippedUnchanged,
+    };
   });
 }

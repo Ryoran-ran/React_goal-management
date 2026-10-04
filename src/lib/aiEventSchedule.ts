@@ -4,6 +4,10 @@ import type {
   EventWorkItem,
   Priority,
 } from "../types";
+import {
+  parseEventScheduleRevision,
+  type ScheduleRevisionChangeDraft,
+} from "./eventScheduleRevision";
 
 export interface AiScheduleWorkDraft {
   title: string;
@@ -23,6 +27,7 @@ export interface AiScheduleMilestoneDraft {
 
 export interface AiEventScheduleDraft {
   eventTitle: string;
+  changes: ScheduleRevisionChangeDraft[];
   milestones: AiScheduleMilestoneDraft[];
   workItems: AiScheduleWorkDraft[];
 }
@@ -91,7 +96,7 @@ function jsonText(input: string) {
 
 export function parseAiEventSchedule(
   input: string,
-  event: Pick<DanceEvent, "title" | "date">,
+  event: DanceEvent,
 ): AiEventScheduleDraft {
   if (!input.trim()) throw new Error("AIの回答を貼り付けてください。");
   let raw: unknown;
@@ -110,6 +115,13 @@ export function parseAiEventSchedule(
     );
   if (!Array.isArray(raw.milestones) || !Array.isArray(raw.workItems))
     throw new Error("milestones と workItems は配列で指定してください。");
+  const changes = parseEventScheduleRevision(
+    JSON.stringify({
+      eventTitle,
+      changes: raw.changes === undefined ? [] : raw.changes,
+    }),
+    event,
+  ).changes;
   if (raw.milestones.length > 50)
     throw new Error("マイルストーンは50件以内にしてください。");
   const keys = new Set<string>();
@@ -140,6 +152,7 @@ export function parseAiEventSchedule(
   if (workCount > 200) throw new Error("作業は合計200件以内にしてください。");
   return {
     eventTitle,
+    changes,
     milestones,
     workItems: raw.workItems.map((work) => parseWork(work, event.date)),
   };
@@ -237,7 +250,7 @@ export function previewScheduleImport(
   return { milestones, workItems, skippedMilestones, skippedWorkItems };
 }
 
-export function aiEventSchedulePrompt(
+export function aiEventScheduleConsultationPrompt(
   event: DanceEvent,
   additionalRequest = "",
 ) {
@@ -245,8 +258,15 @@ export function aiEventSchedulePrompt(
     (event.milestones ?? []).map((item) => [item.id, item.title]),
   );
   return [
-    `「${event.title}」に向けた準備スケジュールを作成してください。`,
-    "大会・イベントの内容から、到達点となるマイルストーンと具体的な準備作業を逆算してください。",
+    `「${event.title}」に向けた準備スケジュールを、私と会話しながら作成してください。`,
+    "大会・イベントの内容から、到達点となるマイルストーンと具体的な準備作業を逆算します。ただし、最初から予定を確定せず、私の回答を使って精度を上げてください。",
+    "",
+    "【会話の進め方（必須）】",
+    "1. 最初の回答では、スケジュール案やJSONを出さないでください。精度に大きく影響する未確認事項を2〜5問に絞って質問してください。",
+    "2. 質問では、登録済み情報や追加の希望から分かることを聞き直さないでください。必要に応じて、使える曜日・時間、動かせない期限、現在地、優先したい成果、外部の人や物への依存、予備日の希望を確認してください。",
+    "3. 答えやすいよう、必要なら選択肢とおすすめを添えてください。一度に細部まで聞きすぎず、重要な不明点が残る場合だけ追加で最大3問してください。",
+    "4. 情報がそろったら、人が読めるスケジュール案を、前提・余裕・優先順位が分かる形で示してください。修正点がないか確認し、合意できるまで案を更新してください。",
+    "5. この相談用プロンプトへの回答ではJSONを出さないでください。私が案に合意したら、別のJSON作成用プロンプトを送ります。",
     "",
     "【条件】",
     `- 開催日: ${event.date}`,
@@ -256,19 +276,65 @@ export function aiEventSchedulePrompt(
     "- 期限・終了日は開催日以前にしてください。",
     "- 作業には開始日と終了日を必ず設定し、開始日は終了日以前にしてください。",
     "- priority は high・medium・low のいずれかにしてください。",
-    "- 既存予定と同じ内容は作らず、不足している予定だけを提案してください。",
-    "- 回答は説明を付けず、下記形式の有効なJSONを ```json と ``` で囲んでください。",
+    "- 既存予定を動かす場合は、同じ予定を作り直さず、変更前後の日付と理由を示してください。新しく作るのは不足している予定だけにしてください。",
     additionalRequest.trim() ? `- 追加の希望: ${additionalRequest.trim()}` : "",
     "",
     "【既存の準備スケジュール】",
     JSON.stringify(
       {
         milestones: (event.milestones ?? []).map((item) => ({
+          id: item.id,
           title: item.title,
           dueDate: item.dueDate ?? null,
           status: item.status,
         })),
         workItems: (event.workItems ?? []).map((item) => ({
+          id: item.id,
+          milestone: item.milestoneId
+            ? (existingMilestones.get(item.milestoneId) ?? null)
+            : null,
+          title: item.title,
+          startDate: item.startDate ?? null,
+          dueDate: item.dueDate ?? null,
+          status: item.status,
+        })),
+      },
+      null,
+      2,
+    ),
+  ].join("\n");
+}
+
+export function aiEventScheduleJsonPrompt(event: DanceEvent) {
+  const existingMilestones = new Map(
+    (event.milestones ?? []).map((item) => [item.id, item.title]),
+  );
+  return [
+    `ここまでの会話で合意した「${event.title}」の確定スケジュールを、取り込み用JSONへ変換してください。`,
+    "この依頼では質問、説明、新しい提案、合意内容の変更を加えないでください。会話で合意した項目だけを出力してください。",
+    "合意した確定案を特定できない場合はJSONを出さず、不明な点を一つだけ確認してください。",
+    "",
+    "【変換条件】",
+    `- 開催日: ${event.date}`,
+    "- 既存予定の日付を変える場合はchangesへ入れ、同じ予定を新規追加しないでください。",
+    "- milestonesとworkItemsには、既存予定にない不足分として合意した予定だけを含めてください。",
+    "- すべての日付は YYYY-MM-DD 形式にしてください。",
+    "- 期限・終了日は開催日以前にしてください。",
+    "- 作業には開始日と終了日を必ず設定し、開始日は終了日以前にしてください。",
+    "- priority は high・medium・low のいずれかにしてください。",
+    "- 回答は説明を付けず、有効なJSONを ```json と ``` で囲んでください。",
+    "",
+    "【既存の準備スケジュール】",
+    JSON.stringify(
+      {
+        milestones: (event.milestones ?? []).map((item) => ({
+          id: item.id,
+          title: item.title,
+          dueDate: item.dueDate ?? null,
+          status: item.status,
+        })),
+        workItems: (event.workItems ?? []).map((item) => ({
+          id: item.id,
           milestone: item.milestoneId
             ? (existingMilestones.get(item.milestoneId) ?? null)
             : null,
@@ -286,6 +352,15 @@ export function aiEventSchedulePrompt(
     JSON.stringify(
       {
         eventTitle: event.title,
+        changes: [
+          {
+            kind: "work",
+            id: "既存の準備スケジュールにあるID",
+            startDate: "YYYY-MM-DD または null",
+            dueDate: "YYYY-MM-DD または null",
+            reason: "合意した変更理由",
+          },
+        ],
         milestones: [
           {
             key: "unique-key",

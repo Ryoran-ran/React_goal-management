@@ -992,6 +992,34 @@
 .event-schedule-advice .learning-heading {
   margin-bottom: 0;
 }
+.event-chat-guide {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  border-color: #b9ccc7;
+  background: #f7faf9;
+}
+.event-chat-guide.is-available {
+  border-color: #70a99f;
+  background: #eff8f5;
+}
+.event-chat-guide > svg {
+  color: var(--teal);
+}
+.event-chat-guide h2,
+.event-chat-guide p {
+  margin: 0;
+}
+.event-chat-guide h2 {
+  margin-bottom: 6px;
+  font-size: 1rem;
+}
+.event-chat-guide p {
+  line-height: 1.65;
+}
+.event-chat-guide p + p {
+  margin-top: 8px;
+}
 .event-advice-form {
   display: grid;
   gap: 24px;
@@ -1004,7 +1032,7 @@
 }
 .event-advice-purpose-list {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 12px;
 }
 .event-advice-purpose {
@@ -1248,6 +1276,31 @@
 .ai-schedule-preview {
   max-height: 28rem;
   overflow-y: auto;
+}
+.event-revision-import {
+  display: grid;
+  gap: 18px;
+}
+.event-revision-import > .secondary {
+  justify-self: start;
+}
+.event-revision-preview {
+  display: grid;
+  gap: 14px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.event-revision-preview > .primary {
+  justify-self: start;
+}
+.event-revision-items {
+  max-height: 30rem;
+  overflow-y: auto;
+}
+.event-revision-items small {
+  margin-top: 2px;
+  color: var(--text);
+  line-height: 1.5;
 }
 @media (max-width: 600px) {
   .ai-schedule-step {

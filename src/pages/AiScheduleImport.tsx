@@ -3,14 +3,20 @@ import { ArrowLeft, Copy, Sparkles, Upload } from "lucide-react";
 import type { DanceEvent } from "../types";
 import { importAiEventSchedule } from "../data/aiScheduleImport";
 import {
-  aiEventSchedulePrompt,
+  aiEventScheduleConsultationPrompt,
+  aiEventScheduleJsonPrompt,
   parseAiEventSchedule,
   previewScheduleImport,
   type AiEventScheduleDraft,
   type ScheduleImportPreview,
 } from "../lib/aiEventSchedule";
+import {
+  previewEventScheduleRevision,
+  type ScheduleRevisionPreview,
+} from "../lib/eventScheduleRevision";
 
 const priorityLabels = { high: "高", medium: "中", low: "低" };
+type AiSchedulePlanPreview = ScheduleImportPreview & ScheduleRevisionPreview;
 
 export function AiScheduleImport({
   event,
@@ -22,25 +28,42 @@ export function AiScheduleImport({
   const [additionalRequest, setAdditionalRequest] = useState("");
   const [answer, setAnswer] = useState("");
   const [draft, setDraft] = useState<AiEventScheduleDraft>();
-  const [preview, setPreview] = useState<ScheduleImportPreview>();
+  const [preview, setPreview] = useState<AiSchedulePlanPreview>();
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [imported, setImported] = useState(false);
   const [activeTab, setActiveTab] = useState<"request" | "import">("request");
-  const prompt = aiEventSchedulePrompt(event, additionalRequest);
+  const consultationPrompt = aiEventScheduleConsultationPrompt(
+    event,
+    additionalRequest,
+  );
+  const jsonPrompt = aiEventScheduleJsonPrompt(event);
 
   const copy = async () => {
     setError("");
     try {
-      await navigator.clipboard.writeText(prompt);
+      await navigator.clipboard.writeText(consultationPrompt);
       setNotice(
-        "コピーしました。利用するAIへ貼り付け、返された回答を下の欄へ貼り付けてください。",
+        "コピーしました。AIの質問にChatで答え、案を調整してください。案に合意すると最終JSONが返るので、この画面へ貼り付けてください。",
       );
       setActiveTab("import");
     } catch {
       setError(
         "コピーできませんでした。下のプロンプトを選択してコピーしてください。",
+      );
+    }
+  };
+  const copyJsonPrompt = async () => {
+    setError("");
+    try {
+      await navigator.clipboard.writeText(jsonPrompt);
+      setNotice(
+        "コピーしました。相談を続けていた同じChatへ貼り付け、返された確定JSONを下の欄へ貼り付けてください。",
+      );
+    } catch {
+      setError(
+        "コピーできませんでした。下のJSON作成用プロンプトを選択してコピーしてください。",
       );
     }
   };
@@ -51,7 +74,10 @@ export function AiScheduleImport({
     try {
       const parsed = parseAiEventSchedule(answer, event);
       setDraft(parsed);
-      setPreview(previewScheduleImport(event, parsed));
+      setPreview({
+        ...previewScheduleImport(event, parsed),
+        ...previewEventScheduleRevision(event, parsed),
+      });
     } catch (cause) {
       setDraft(undefined);
       setPreview(undefined);
@@ -73,7 +99,7 @@ export function AiScheduleImport({
       setImported(true);
       setPreview(result);
       setNotice(
-        `マイルストーン${result.milestones.length}件、作業${result.workItems.length}件を追加しました。`,
+        `既存予定${result.changes.length}件を変更し、マイルストーン${result.milestones.length}件、作業${result.workItems.length}件を追加しました。`,
       );
     } catch (cause) {
       setError(
@@ -91,7 +117,7 @@ export function AiScheduleImport({
         準備スケジュールに戻る
       </button>
       <header className="learning-heading">
-        <h1>AIで準備スケジュールを作成</h1>
+        <h1>AIで準備スケジュールを作成・見直す</h1>
         <p>
           {event.date} · {event.title}
         </p>
@@ -111,7 +137,7 @@ export function AiScheduleImport({
           className={activeTab === "request" ? "active" : ""}
           onClick={() => setActiveTab("request")}
         >
-          作成を依頼
+          相談を始める
         </button>
         <button
           type="button"
@@ -122,7 +148,7 @@ export function AiScheduleImport({
           className={activeTab === "import" ? "active" : ""}
           onClick={() => setActiveTab("import")}
         >
-          回答を取り込む
+          確定案を取り込む
         </button>
       </div>
 
@@ -137,8 +163,10 @@ export function AiScheduleImport({
             <div className="ai-schedule-step-heading">
               <span>1</span>
               <div>
-                <h2>AIに作成を依頼</h2>
-                <p>イベント情報と既存予定を含むプロンプトをコピーします。</p>
+                <h2>AIと相談を始める</h2>
+                <p>
+                  イベント情報と既存予定を渡します。AIの質問に答えながら、無理のない予定へ調整します。
+                </p>
               </div>
             </div>
             <label className="field">
@@ -158,7 +186,7 @@ export function AiScheduleImport({
               onClick={() => void copy()}
             >
               <Copy size={18} />
-              作成依頼のプロンプトをコピー
+              相談を始めるプロンプトをコピー
             </button>
             <details className="advice-prompt-preview">
               <summary>プロンプトを確認・手動でコピー</summary>
@@ -166,7 +194,7 @@ export function AiScheduleImport({
                 <span>AIに貼り付けるプロンプト</span>
                 <textarea
                   readOnly
-                  value={prompt}
+                  value={consultationPrompt}
                   onFocus={(focusEvent) => focusEvent.currentTarget.select()}
                 />
               </label>
@@ -184,8 +212,42 @@ export function AiScheduleImport({
             <div className="ai-schedule-step-heading">
               <span>2</span>
               <div>
-                <h2>AIの回答を確認</h2>
-                <p>AIから返された ```json ... ``` 形式の回答を貼り付けます。</p>
+                <h2>合意した案をJSONに変換</h2>
+                <p>
+                  相談を続けていた同じChatに、JSON作成だけを依頼するプロンプトを送ります。
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="primary"
+              onClick={() => void copyJsonPrompt()}
+            >
+              <Copy size={18} />
+              JSON作成用プロンプトをコピー
+            </button>
+            <details className="advice-prompt-preview">
+              <summary>JSON作成用プロンプトを確認・手動でコピー</summary>
+              <label className="field">
+                <span>合意後に同じChatへ貼り付けるプロンプト</span>
+                <textarea
+                  readOnly
+                  value={jsonPrompt}
+                  onFocus={(focusEvent) => focusEvent.currentTarget.select()}
+                />
+              </label>
+            </details>
+          </section>
+
+          <section className="card ai-schedule-step">
+            <div className="ai-schedule-step-heading">
+              <span>3</span>
+              <div>
+                <h2>確定JSONを確認</h2>
+                <p>
+                  JSON作成用プロンプトへの回答として返された、```json ... ```
+                  形式の確定版を貼り付けます。
+                </p>
               </div>
             </div>
             <label className="field">
@@ -202,7 +264,7 @@ export function AiScheduleImport({
                   setNotice("");
                 }}
                 placeholder={
-                  '```json\n{"eventTitle":"…","milestones":[],"workItems":[]}\n```'
+                  '```json\n{"eventTitle":"…","changes":[],"milestones":[],"workItems":[]}\n```'
                 }
               />
             </label>
@@ -215,29 +277,49 @@ export function AiScheduleImport({
           {preview && (
             <section className="card ai-schedule-step">
               <div className="ai-schedule-step-heading">
-                <span>3</span>
+                <span>4</span>
                 <div>
-                  <h2>追加内容を確認</h2>
+                  <h2>変更・追加内容を確認</h2>
                   <p>
-                    既存の予定は変更せず、下記の予定を追加します。すべて未着手で登録されます。
+                    既存項目は同じ項目のまま日付を変更し、不足する予定だけを未着手で追加します。
                   </p>
                 </div>
               </div>
               <div className="ai-schedule-summary">
+                <strong>既存予定の変更 {preview.changes.length}件</strong>
                 <strong>マイルストーン {preview.milestones.length}件</strong>
                 <strong>作業 {preview.workItems.length}件</strong>
               </div>
-              {!!(preview.skippedMilestones || preview.skippedWorkItems) && (
+              {!!(
+                preview.skippedUnchanged ||
+                preview.skippedMilestones ||
+                preview.skippedWorkItems
+              ) && (
                 <p className="muted">
+                  日付が変わらない既存予定 {preview.skippedUnchanged}件、
                   重複するマイルストーン {preview.skippedMilestones}件、作業{" "}
                   {preview.skippedWorkItems}
                   件は追加しません。
                 </p>
               )}
-              {!preview.milestones.length && !preview.workItems.length ? (
-                <p>追加できる新しい予定はありません。</p>
+              {!preview.changes.length &&
+              !preview.milestones.length &&
+              !preview.workItems.length ? (
+                <p>変更・追加する予定はありません。</p>
               ) : (
                 <ul className="calendar-prompt-items ai-schedule-preview">
+                  {preview.changes.map((item) => (
+                    <li key={`change:${item.kind}:${item.id}`}>
+                      <span className="tag">変更</span>
+                      <span>
+                        <strong>{item.title}</strong>
+                        <span className="muted">
+                          {scheduleLabel(item.from)} → {scheduleLabel(item.to)}
+                        </span>
+                        <small>{item.reason}</small>
+                      </span>
+                    </li>
+                  ))}
                   {preview.milestones.map((item) => (
                     <li key={item.id}>
                       <span className="tag">到達点</span>
@@ -262,7 +344,11 @@ export function AiScheduleImport({
                 </ul>
               )}
               {!imported &&
-                !!(preview.milestones.length || preview.workItems.length) && (
+                !!(
+                  preview.changes.length ||
+                  preview.milestones.length ||
+                  preview.workItems.length
+                ) && (
                   <button
                     type="button"
                     className="primary"
@@ -270,7 +356,7 @@ export function AiScheduleImport({
                     onClick={() => void runImport()}
                   >
                     <Upload size={18} />
-                    {saving ? "追加中…" : "準備スケジュールに追加"}
+                    {saving ? "反映中…" : "変更・追加をスケジュールに反映"}
                   </button>
                 )}
             </section>
@@ -285,4 +371,12 @@ export function AiScheduleImport({
       {notice && <p role="status">{notice}</p>}
     </div>
   );
+}
+
+function scheduleLabel(plan: { startDate?: string; dueDate?: string }) {
+  if (plan.startDate && plan.dueDate)
+    return plan.startDate === plan.dueDate
+      ? plan.startDate
+      : `${plan.startDate}〜${plan.dueDate}`;
+  return plan.startDate ?? plan.dueDate ?? "日付未設定";
 }

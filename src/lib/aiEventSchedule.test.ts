@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { DanceEvent } from "../types";
 import {
-  aiEventSchedulePrompt,
+  aiEventScheduleConsultationPrompt,
+  aiEventScheduleJsonPrompt,
   parseAiEventSchedule,
   previewScheduleImport,
 } from "./aiEventSchedule";
@@ -43,13 +44,22 @@ const response = {
 
 describe("AI event schedule", () => {
   it("builds a prompt containing the event and import schema", () => {
-    const prompt = aiEventSchedulePrompt(event, "週末を中心にする");
+    const prompt = aiEventScheduleConsultationPrompt(event, "週末を中心にする");
     expect(prompt).toContain("メダルテスト");
     expect(prompt).toContain("2026-10-25");
     expect(prompt).toContain("中央市民ホール");
     expect(prompt).toContain("週末を中心にする");
-    expect(prompt).toContain('"milestones"');
-    expect(prompt).toContain("```json と ``` で囲んでください");
+    expect(prompt).toContain("最初の回答では、スケジュール案やJSONを出さない");
+    expect(prompt).toContain("未確認事項を2〜5問に絞って質問");
+    expect(prompt).toContain("別のJSON作成用プロンプトを送ります");
+    expect(prompt).not.toContain("【回答JSONの形式】");
+
+    const jsonPrompt = aiEventScheduleJsonPrompt(event);
+    expect(jsonPrompt).toContain("合意した");
+    expect(jsonPrompt).toContain("質問、説明、新しい提案");
+    expect(jsonPrompt).toContain("【回答JSONの形式】");
+    expect(jsonPrompt).toContain('"changes"');
+    expect(jsonPrompt).toContain("```json と ``` で囲んでください");
   });
 
   it("parses JSON code fences and validates the target event", () => {
