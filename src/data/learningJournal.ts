@@ -111,8 +111,9 @@ export async function learningJournal(): Promise<JournalEntry[]> {
         attachmentCount,
         youtubeCount,
         youtubeUrls: section.youtubeUrls.filter((url) => url.trim()),
-        relatedEventIds:
-          section.relatedEventIds ?? lesson.relatedEventIds ?? [],
+        relatedEventIds: lesson.sectionEventLinks
+          ? (section.relatedEventIds ?? [])
+          : (section.relatedEventIds ?? lesson.relatedEventIds ?? []),
         target: { type: "schedule", item, sectionId: section.id },
       });
     }
@@ -138,7 +139,9 @@ export async function learningJournal(): Promise<JournalEntry[]> {
         attachmentCount,
         youtubeCount: 0,
         youtubeUrls: [],
-        relatedEventIds: lesson.relatedEventIds ?? [],
+        relatedEventIds: lesson.sectionEventLinks
+          ? []
+          : (lesson.relatedEventIds ?? []),
         target: { type: "schedule", item },
       });
   }

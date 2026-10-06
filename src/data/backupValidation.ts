@@ -2,6 +2,11 @@ import { goalCategories } from "../lib/goalCategories";
 import { validateMilestones } from "../lib/milestones";
 import { validateEventWork } from "../lib/eventWork";
 import type { DanceEvent } from "../types";
+import {
+  eventPracticeTemplatesSetting,
+  validEventPracticeTemplates,
+  validateEventPracticeSessions,
+} from "../lib/eventPractice";
 
 export const backupTables = [
   "events",
@@ -88,6 +93,14 @@ const checks: Record<BackupTable, Check> = {
     milestones: optional((value) => {
       try {
         validateMilestones(value);
+        return true;
+      } catch {
+        return false;
+      }
+    }),
+    practiceSessions: optional((value) => {
+      try {
+        validateEventPracticeSessions(value);
         return true;
       } catch {
         return false;
@@ -286,6 +299,11 @@ export function validateBackupRows(
           throw new Error("繰り返しレッスンの設定が正しくありません。");
         if (key === "lesson-custom-categories" && !strings(row.value))
           throw new Error("カテゴリの設定が正しくありません。");
+        if (
+          key === eventPracticeTemplatesSetting &&
+          !validEventPracticeTemplates(row.value)
+        )
+          throw new Error("練習予定のテンプレート設定が正しくありません。");
       }
     }
   }

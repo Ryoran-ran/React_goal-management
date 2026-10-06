@@ -6,6 +6,7 @@ import { base, remove, save } from "./repository";
 import { newLearningNote, newTheme, saveLearningNote } from "./learning";
 import { filterJournal, learningJournal } from "./learningJournal";
 import { openAgendaItem } from "../lib/practiceNavigation";
+import { eventLessonPromptRecords } from "../lib/eventLessonPrompt";
 import type { Lesson, LessonSection, PracticeLog } from "../types";
 
 const section = (fields: Partial<LessonSection> = {}): LessonSection => ({
@@ -73,6 +74,21 @@ describe("combined learning journal", () => {
     expect(entry.title).toBe(source.title);
     expect(entry.date).toBe(source.date);
     expect(entry.relatedEventIds).toEqual(["section-event"]);
+    expect(eventLessonPromptRecords(entries, "section-event")).toEqual([
+      {
+        date: source.date,
+        lesson: source.title,
+        category: "ルンバ",
+        notes: [
+          { label: "取り組んだ内容", content: rumba.content },
+          {
+            label: "先生からの指摘・アドバイス",
+            content: rumba.feedback,
+          },
+          { label: "次回までの宿題", content: rumba.homework },
+        ],
+      },
+    ]);
     if (entry.target.type !== "schedule")
       throw new Error("Expected original schedule");
     expect(

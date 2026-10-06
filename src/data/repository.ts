@@ -8,6 +8,7 @@ import { retireTechnicalGoals } from "./retireGoals";
 import { goalCategories, goalCategory } from "../lib/goalCategories";
 import { youtubeLink } from "../lib/lessonContent";
 import { indexLessonSectionEvents } from "../lib/lessonEvents";
+import { validateEventPracticeSessions } from "../lib/eventPractice";
 import {
   categoryNameKey,
   lessonCategoryKey,
@@ -240,6 +241,8 @@ export async function home(today: string) {
 }
 function validate<K extends Kind>(kind: K, record: Records[K]) {
   if (kind === "events") validateEventWork(record as DanceEvent);
+  if (kind === "events")
+    validateEventPracticeSessions((record as DanceEvent).practiceSessions);
   if (kind === "events" && (record as DanceEvent).milestones !== undefined)
     validateMilestones((record as DanceEvent).milestones);
   if (kind === "learningNotes") {

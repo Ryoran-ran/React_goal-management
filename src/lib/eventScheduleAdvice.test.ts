@@ -42,6 +42,28 @@ const event: DanceEvent = {
   goalIds: [],
   milestones: [milestone],
   workItems: [work],
+  practiceSessions: [
+    {
+      id: "practice-1",
+      createdAt: "2026-09-01T00:00:00.000Z",
+      updatedAt: "2026-09-01T00:00:00.000Z",
+      date: "2026-09-28",
+      kind: "lesson",
+      title: "個人レッスン",
+      status: "planned",
+      memo: "",
+    },
+    {
+      id: "practice-2",
+      createdAt: "2026-09-01T00:00:00.000Z",
+      updatedAt: "2026-09-01T00:00:00.000Z",
+      date: "2026-09-20",
+      kind: "practice",
+      title: "体育館",
+      status: "completed",
+      memo: "",
+    },
+  ],
 };
 
 describe("イベント準備の相談用プロンプト", () => {
@@ -52,10 +74,25 @@ describe("イベント準備の相談用プロンプト", () => {
       undefined,
       "平日は30分だけ使えます",
       "2026-09-27",
+      [
+        {
+          date: "2026-09-20",
+          lesson: "個人レッスン",
+          category: "ワルツ",
+          notes: [
+            {
+              label: "先生からの指摘・アドバイス",
+              content: "左肘の位置を保つ",
+            },
+          ],
+        },
+      ],
     );
 
     expect(prompt).toContain("現実的に立て直せる組み直し案");
     expect(prompt).toContain('"overdue": 1');
+    expect(prompt).toContain('"scheduledRemaining": 1');
+    expect(prompt).toContain('"completed": 1');
     expect(prompt).toContain("平日は30分だけ使えます");
     expect(prompt).toContain("先生に衣装を確認する");
     expect(prompt).toContain('"id": "work-1"');
@@ -63,6 +100,8 @@ describe("イベント準備の相談用プロンプト", () => {
     expect(prompt).toContain("この段階ではJSONを出さず");
     expect(prompt).toContain("別のJSON作成用プロンプト");
     expect(prompt).not.toContain("【合意後の変更用JSON】");
+    expect(prompt).toContain("【関連するレッスン記録】");
+    expect(prompt).toContain("左肘の位置を保つ");
     expect(prompt).toContain("書かれていない進捗や完了実績を推測しない");
 
     const jsonPrompt = eventScheduleRevisionJsonPrompt(event);

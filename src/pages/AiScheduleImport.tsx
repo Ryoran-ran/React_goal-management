@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ArrowLeft, Copy, Sparkles, Upload } from "lucide-react";
 import type { DanceEvent } from "../types";
 import { importAiEventSchedule } from "../data/aiScheduleImport";
+import { learningJournal } from "../data/learningJournal";
 import {
   aiEventScheduleConsultationPrompt,
   aiEventScheduleJsonPrompt,
@@ -14,6 +15,8 @@ import {
   previewEventScheduleRevision,
   type ScheduleRevisionPreview,
 } from "../lib/eventScheduleRevision";
+import { eventLessonPromptRecords } from "../lib/eventLessonPrompt";
+import { useQuery } from "../lib/hooks";
 
 const priorityLabels = { high: "高", medium: "中", low: "低" };
 type AiSchedulePlanPreview = ScheduleImportPreview & ScheduleRevisionPreview;
@@ -34,9 +37,13 @@ export function AiScheduleImport({
   const [saving, setSaving] = useState(false);
   const [imported, setImported] = useState(false);
   const [activeTab, setActiveTab] = useState<"request" | "import">("request");
+  const journal = useQuery(learningJournal, [event.id]);
+  const lessonRecords = eventLessonPromptRecords(journal.data ?? [], event.id);
   const consultationPrompt = aiEventScheduleConsultationPrompt(
     event,
     additionalRequest,
+    undefined,
+    lessonRecords,
   );
   const jsonPrompt = aiEventScheduleJsonPrompt(event);
 
@@ -165,7 +172,7 @@ export function AiScheduleImport({
               <div>
                 <h2>AIと相談を始める</h2>
                 <p>
-                  イベント情報と既存予定を渡します。AIの質問に答えながら、無理のない予定へ調整します。
+                  イベント情報・既存予定・練習回数・関連レッスンの指摘や宿題を渡します。AIの質問に答えながら、無理のない予定へ調整します。
                 </p>
               </div>
             </div>
@@ -180,9 +187,15 @@ export function AiScheduleImport({
                 placeholder="例：平日は短時間でできる作業にし、衣装準備は早めに始めてください。"
               />
             </label>
+            {journal.error && (
+              <p className="error" role="alert">
+                関連するレッスン記録を読み込めませんでした：{journal.error}
+              </p>
+            )}
             <button
               type="button"
               className="primary"
+              disabled={!journal.data || !!journal.error}
               onClick={() => void copy()}
             >
               <Copy size={18} />

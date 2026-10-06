@@ -3,6 +3,7 @@ import { db } from "./db";
 import { save } from "./repository";
 import { daysUntil, localDate } from "../lib/dates";
 import { normalizeEventWork, shiftEventWork } from "../lib/eventWork";
+import { shiftEventPracticeSessions } from "../lib/eventPractice";
 import {
   milestonePlan,
   shiftMilestones,
@@ -139,6 +140,8 @@ export async function saveEventDetails(
       );
     const milestones = previous?.milestones ?? event.milestones;
     const workItems = previous?.workItems ?? event.workItems;
+    const practiceSessions =
+      previous?.practiceSessions ?? event.practiceSessions;
     await save(
       "events",
       {
@@ -151,6 +154,13 @@ export async function saveEventDetails(
           shift && previous && milestones
             ? shiftMilestones(milestones, daysUntil(event.date, previous.date))
             : milestones,
+        practiceSessions:
+          shift && previous && practiceSessions
+            ? shiftEventPracticeSessions(
+                practiceSessions,
+                daysUntil(event.date, previous.date),
+              )
+            : practiceSessions,
       },
       files,
       removed,
