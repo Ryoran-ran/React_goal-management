@@ -1,5 +1,7 @@
 import type { DanceEvent, EventMilestone, EventWorkItem } from "../types";
 import { daysUntil, localDate } from "./dates";
+import type { EventLessonPromptRecord } from "./eventLessonPrompt";
+import { eventPracticePromptSummary } from "./eventPractice";
 
 export type EventAdvicePurpose =
   "recovery" | "direction" | "next" | "completion" | "free";
@@ -91,6 +93,7 @@ export function eventScheduleAdvicePrompt(
   target?: EventAdviceTarget,
   note = "",
   today = localDate(),
+  lessonRecords: EventLessonPromptRecord[] = [],
 ) {
   const milestones = event.milestones ?? [];
   const workItems = event.workItems ?? [];
@@ -142,6 +145,7 @@ export function eventScheduleAdvicePrompt(
             total: workItems.length,
             overdue: overdueWork.length,
           },
+          practiceSessions: eventPracticePromptSummary(event, today),
         },
       },
       null,
@@ -202,6 +206,9 @@ export function eventScheduleAdvicePrompt(
       null,
       2,
     ),
+    "",
+    "【関連するレッスン記録】",
+    JSON.stringify(lessonRecords, null, 2),
   ].join("\n");
 }
 

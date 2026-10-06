@@ -92,6 +92,17 @@ describe("full backup and restore", () => {
       type: "competition" as const,
       status: "planned" as const,
       goalIds: [goal.id],
+      practiceSessions: [
+        {
+          ...base(),
+          date: "2026-10-12",
+          kind: "custom" as const,
+          title: "本番リハーサル",
+          status: "planned" as const,
+          memo: "衣装を着て通す",
+          templateId: "rehearsal",
+        },
+      ],
     };
     await save("events", event);
     const theme = {
@@ -170,6 +181,16 @@ describe("full backup and restore", () => {
     await db.settings.put({
       id: "lesson-custom-categories",
       value: ["身体づくり"],
+    });
+    await db.settings.put({
+      id: "event-practice-templates",
+      value: [
+        {
+          id: "rehearsal",
+          title: "本番リハーサル",
+          memo: "衣装を着て通す",
+        },
+      ],
     });
     await retireTechnicalGoals(true);
     const expected = await Promise.all(

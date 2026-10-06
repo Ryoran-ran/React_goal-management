@@ -16,7 +16,10 @@ import {
   Upload,
 } from "lucide-react";
 import type { DanceEvent, EventMilestone, EventWorkItem } from "../types";
+import { learningJournal } from "../data/learningJournal";
 import { dateLabel } from "../lib/dates";
+import { eventLessonPromptRecords } from "../lib/eventLessonPrompt";
+import { useQuery } from "../lib/hooks";
 import { milestoneStatuses, sortedMilestones } from "../lib/milestones";
 import { sortedEventWork, workStatuses } from "../lib/eventWork";
 import { scrollPageToTop } from "../lib/pageScroll";
@@ -104,6 +107,8 @@ export function EventScheduleAdvice({
     useState<ScheduleRevisionPreview>();
   const [saving, setSaving] = useState(false);
   const [applied, setApplied] = useState(false);
+  const journal = useQuery(learningJournal, [event.id]);
+  const lessonRecords = eventLessonPromptRecords(journal.data ?? [], event.id);
 
   const [targetKind, targetId] = targetKey.split(":");
   const target: EventAdviceTarget | undefined =
@@ -123,6 +128,8 @@ export function EventScheduleAdvice({
     purpose,
     purpose === "completion" ? target : undefined,
     note,
+    undefined,
+    lessonRecords,
   );
   const revisionJsonPrompt = eventScheduleRevisionJsonPrompt(event);
 
@@ -256,9 +263,15 @@ export function EventScheduleAdvice({
         <div>
           <h2>何を相談しますか？</h2>
           <p className="muted">
-            予定の組み直しから方向性の整理、ちょっとした相談まで、目的に合うプロンプトを作ります。
+            予定の組み直しから方向性の整理まで、練習回数や関連レッスンの指摘・宿題も含め、目的に合うプロンプトを作ります。
           </p>
         </div>
+
+        {journal.error && (
+          <p className="error" role="alert">
+            関連するレッスン記録を読み込めませんでした：{journal.error}
+          </p>
+        )}
 
         <div className="event-advice-purpose-list" role="radiogroup">
           {purposes.map((item) => {
@@ -350,7 +363,12 @@ export function EventScheduleAdvice({
           <small>{note.length} / 2000文字</small>
         </label>
 
-        <button type="button" className="primary" onClick={() => void copy()}>
+        <button
+          type="button"
+          className="primary"
+          disabled={!journal.data || !!journal.error}
+          onClick={() => void copy()}
+        >
           <Copy size={18} />
           {purpose === "recovery"
             ? "変更相談のプロンプトをコピー"

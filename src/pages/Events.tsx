@@ -372,7 +372,10 @@ function EventEditor({
           {exists &&
             value.date !== event.date &&
             (value.milestones?.some(unfinished) ||
-              value.workItems?.some((item) => item.status !== "completed")) && (
+              value.workItems?.some((item) => item.status !== "completed") ||
+              value.practiceSessions?.some(
+                (item) => item.status === "planned",
+              )) && (
               <div className="event-date-shift">
                 <label className="choice">
                   <input
@@ -380,7 +383,7 @@ function EventEditor({
                     checked={shift}
                     onChange={(e) => setShift(e.target.checked)}
                   />
-                  未達成の節目・未完了の作業の予定も同じ日数ずらす
+                  未達成の節目・未完了の作業・予定中の練習を同じ日数ずらす
                 </label>
                 <p className="muted">
                   {daysUntil(event.date, value.date)}

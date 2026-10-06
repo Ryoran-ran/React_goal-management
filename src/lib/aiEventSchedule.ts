@@ -8,6 +8,9 @@ import {
   parseEventScheduleRevision,
   type ScheduleRevisionChangeDraft,
 } from "./eventScheduleRevision";
+import { localDate } from "./dates";
+import type { EventLessonPromptRecord } from "./eventLessonPrompt";
+import { eventPracticePromptSummary } from "./eventPractice";
 
 export interface AiScheduleWorkDraft {
   title: string;
@@ -253,6 +256,8 @@ export function previewScheduleImport(
 export function aiEventScheduleConsultationPrompt(
   event: DanceEvent,
   additionalRequest = "",
+  today = localDate(),
+  lessonRecords: EventLessonPromptRecord[] = [],
 ) {
   const existingMilestones = new Map(
     (event.milestones ?? []).map((item) => [item.id, item.title]),
@@ -277,6 +282,8 @@ export function aiEventScheduleConsultationPrompt(
     "- 作業には開始日と終了日を必ず設定し、開始日は終了日以前にしてください。",
     "- priority は high・medium・low のいずれかにしてください。",
     "- 既存予定を動かす場合は、同じ予定を作り直さず、変更前後の日付と理由を示してください。新しく作るのは不足している予定だけにしてください。",
+    "- 登録済みの練習回数を考慮し、イベント日までに実行可能な準備量にしてください。",
+    "- 関連するレッスン記録がある場合は、先生の指摘や宿題を技術面の優先事項に反映してください。記録にない内容は推測しないでください。",
     additionalRequest.trim() ? `- 追加の希望: ${additionalRequest.trim()}` : "",
     "",
     "【既存の準備スケジュール】",
@@ -302,6 +309,12 @@ export function aiEventScheduleConsultationPrompt(
       null,
       2,
     ),
+    "",
+    "【練習回数】",
+    JSON.stringify(eventPracticePromptSummary(event, today), null, 2),
+    "",
+    "【関連するレッスン記録】",
+    JSON.stringify(lessonRecords, null, 2),
   ].join("\n");
 }
 
@@ -347,7 +360,6 @@ export function aiEventScheduleJsonPrompt(event: DanceEvent) {
       null,
       2,
     ),
-    "",
     "【回答JSONの形式】",
     JSON.stringify(
       {

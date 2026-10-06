@@ -18,6 +18,28 @@ const event: DanceEvent = {
   description: "ラテン2種目",
   status: "planned",
   goalIds: [],
+  practiceSessions: [
+    {
+      id: "practice-1",
+      createdAt: "2026-09-01T00:00:00.000Z",
+      updatedAt: "2026-09-01T00:00:00.000Z",
+      date: "2026-10-10",
+      kind: "lesson",
+      title: "個人レッスン",
+      status: "planned",
+      memo: "",
+    },
+    {
+      id: "practice-2",
+      createdAt: "2026-09-01T00:00:00.000Z",
+      updatedAt: "2026-09-01T00:00:00.000Z",
+      date: "2026-10-18",
+      kind: "practice",
+      title: "体育館",
+      status: "planned",
+      memo: "",
+    },
+  ],
 };
 
 const response = {
@@ -44,7 +66,25 @@ const response = {
 
 describe("AI event schedule", () => {
   it("builds a prompt containing the event and import schema", () => {
-    const prompt = aiEventScheduleConsultationPrompt(event, "週末を中心にする");
+    const prompt = aiEventScheduleConsultationPrompt(
+      event,
+      "週末を中心にする",
+      "2026-10-01",
+      [
+        {
+          date: "2026-09-28",
+          lesson: "個人レッスン",
+          category: "ルンバ",
+          notes: [
+            {
+              label: "先生からの指摘・アドバイス",
+              content: "送り足を最後まで使う",
+            },
+            { label: "次回までの宿題", content: "音楽で3回通す" },
+          ],
+        },
+      ],
+    );
     expect(prompt).toContain("メダルテスト");
     expect(prompt).toContain("2026-10-25");
     expect(prompt).toContain("中央市民ホール");
@@ -53,6 +93,14 @@ describe("AI event schedule", () => {
     expect(prompt).toContain("未確認事項を2〜5問に絞って質問");
     expect(prompt).toContain("別のJSON作成用プロンプトを送ります");
     expect(prompt).not.toContain("【回答JSONの形式】");
+    expect(prompt).toContain('"milestones"');
+    expect(prompt).toContain("【練習回数】");
+    expect(prompt).toContain('"scheduledRemaining": 2');
+    expect(prompt).toContain('"lesson": 1');
+    expect(prompt).toContain('"selfPractice": 1');
+    expect(prompt).toContain("【関連するレッスン記録】");
+    expect(prompt).toContain("送り足を最後まで使う");
+    expect(prompt).toContain("音楽で3回通す");
 
     const jsonPrompt = aiEventScheduleJsonPrompt(event);
     expect(jsonPrompt).toContain("合意した");

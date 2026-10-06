@@ -16,6 +16,22 @@ export interface DanceEvent extends Base {
   goalIds: string[];
   milestones?: EventMilestone[];
   workItems?: EventWorkItem[];
+  practiceSessions?: EventPracticeSession[];
+}
+export type EventPracticeKind = "lesson" | "practice" | "custom";
+export type EventPracticeStatus = "planned" | "completed" | "cancelled";
+export interface EventPracticeSession extends Base {
+  date: string;
+  kind: EventPracticeKind;
+  title: string;
+  status: EventPracticeStatus;
+  memo: string;
+  templateId?: string;
+}
+export interface EventPracticeTemplate {
+  id: string;
+  title: string;
+  memo: string;
 }
 export interface MilestonePlan {
   startDate?: string;

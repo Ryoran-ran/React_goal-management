@@ -23,6 +23,7 @@ import { sortedEventWork } from "../lib/eventWork";
 import { scrollPageToTop } from "../lib/pageScroll";
 import { downloadNotionSchedule } from "../lib/notionCsv";
 import { MobilePreparationOverview } from "./MobilePreparationOverview";
+import { EventPracticeCalendar } from "./EventPracticeCalendar";
 
 export function EventPreparation({
   event,
@@ -39,6 +40,9 @@ export function EventPreparation({
   onAiSchedule: () => void;
   onScheduleAdvice: () => void;
 }) {
+  const [activeTab, setActiveTab] = useState<"schedule" | "practice">(
+    "schedule",
+  );
   const [view, setView] = useState("list");
   const [showMobileRoadmap, setShowMobileRoadmap] = useState(false);
   const [scale, setScale] = useState<GanttScale>("event");
@@ -189,6 +193,7 @@ export function EventPreparation({
                 className="text-button"
                 onClick={(clickEvent) => {
                   setView(view === "gantt" ? "list" : "gantt");
+                  setActiveTab("schedule");
                   clickEvent.currentTarget
                     .closest("details")
                     ?.removeAttribute("open");
@@ -206,116 +211,159 @@ export function EventPreparation({
           {exportNotice}
         </p>
       )}
-      <section
-        className={`card preparation-card ${
-          showMobileRoadmap || view === "gantt" ? "is-roadmap-open" : ""
-        }`}
+      <div
+        className="event-detail-tabs"
+        role="tablist"
+        aria-label="イベント詳細の表示"
       >
-        <div className="section-heading">
-          <div>
-            <h2>準備スケジュール</h2>
-            <p className="preparation-progress">
-              {all.filter((item) => item.status === "achieved").length} /{" "}
-              {all.filter((item) => item.status !== "skipped").length} 件達成
-            </p>
-          </div>
-          <div
-            className="segmented preparation-view-switch"
-            role="group"
-            aria-label="準備スケジュールの表示"
-          >
-            <button
-              type="button"
-              className={view === "list" ? "active" : ""}
-              aria-pressed={view === "list"}
-              onClick={() => setView("list")}
-            >
-              ロードマップ
-            </button>
-            <button
-              type="button"
-              className={view === "gantt" ? "active" : ""}
-              aria-pressed={view === "gantt"}
-              onClick={() => setView("gantt")}
-            >
-              ガント
-            </button>
-          </div>
+        <button
+          type="button"
+          role="tab"
+          id="event-schedule-tab"
+          aria-controls="event-schedule-panel"
+          aria-selected={activeTab === "schedule"}
+          className={activeTab === "schedule" ? "active" : ""}
+          onClick={() => setActiveTab("schedule")}
+        >
+          予定
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="event-practice-tab"
+          aria-controls="event-practice-panel"
+          aria-selected={activeTab === "practice"}
+          className={activeTab === "practice" ? "active" : ""}
+          onClick={() => setActiveTab("practice")}
+        >
+          練習
+        </button>
+      </div>
+      {activeTab === "practice" ? (
+        <div
+          id="event-practice-panel"
+          role="tabpanel"
+          aria-labelledby="event-practice-tab"
+        >
+          <EventPracticeCalendar event={event} />
         </div>
-        {!all.length && !allWork.length ? (
-          <p className="empty">大会までに準備したい到達点を追加しましょう。</p>
-        ) : view === "gantt" ? (
-          <>
-            <div className="mobile-gantt-return">
-              <span>ガント表示</span>
+      ) : (
+        <section
+          id="event-schedule-panel"
+          role="tabpanel"
+          aria-labelledby="event-schedule-tab"
+          className={`card preparation-card ${
+            showMobileRoadmap || view === "gantt" ? "is-roadmap-open" : ""
+          }`}
+        >
+          <div className="section-heading">
+            <div>
+              <h2>準備スケジュール</h2>
+              <p className="preparation-progress">
+                {all.filter((item) => item.status === "achieved").length} /{" "}
+                {all.filter((item) => item.status !== "skipped").length} 件達成
+              </p>
+            </div>
+            <div
+              className="segmented preparation-view-switch"
+              role="group"
+              aria-label="準備スケジュールの表示"
+            >
               <button
                 type="button"
-                className="text-button"
+                className={view === "list" ? "active" : ""}
+                aria-pressed={view === "list"}
                 onClick={() => setView("list")}
               >
-                今やることに戻る
+                ロードマップ
+              </button>
+              <button
+                type="button"
+                className={view === "gantt" ? "active" : ""}
+                aria-pressed={view === "gantt"}
+                onClick={() => setView("gantt")}
+              >
+                ガント
               </button>
             </div>
-            <MilestoneGantt
-              event={event}
-              items={all}
-              onEdit={open}
-              workItems={allWork}
-              onEditWork={openWork}
-              scale={scale}
-              onScale={setScale}
-              anchor={anchor}
-              onAnchor={setAnchor}
-            />
-          </>
-        ) : (
-          <>
-            <MobilePreparationOverview
-              event={event}
-              milestones={all}
-              workItems={allWork}
-              onEditWork={openWork}
-              roadmapOpen={showMobileRoadmap}
-              onToggleRoadmap={() =>
-                setShowMobileRoadmap((current) => !current)
-              }
-            />
-            <div
-              className={`preparation-roadmap ${
-                showMobileRoadmap ? "is-open" : ""
-              }`}
-            >
-              <EventMilestoneTimeline
+          </div>
+          {!all.length && !allWork.length ? (
+            <p className="empty">
+              大会までに準備したい到達点を追加しましょう。
+            </p>
+          ) : view === "gantt" ? (
+            <>
+              <div className="mobile-gantt-return">
+                <span>ガント表示</span>
+                <button
+                  type="button"
+                  className="text-button"
+                  onClick={() => setView("list")}
+                >
+                  今やることに戻る
+                </button>
+              </div>
+              <MilestoneGantt
                 event={event}
                 items={all}
-                workItems={allWork}
                 onEdit={open}
+                workItems={allWork}
                 onEditWork={openWork}
-                onAddWork={addWork}
-                onEditEvent={onEditEvent}
+                scale={scale}
+                onScale={setScale}
+                anchor={anchor}
+                onAnchor={setAnchor}
               />
-            </div>
-          </>
-        )}
-        <div className="preparation-add-actions">
-          <button
-            type="button"
-            className="secondary milestone-add"
-            onClick={() =>
-              open({
-                ...base(),
-                title: "",
-                successCriteria: "",
-                status: "not_started",
-                changes: [],
-              })
-            }
-          >
-            <Plus size={18} />
-            マイルストーンを追加
-          </button>
-        </div>
-      </section>
+            </>
+          ) : (
+            <>
+              <MobilePreparationOverview
+                event={event}
+                milestones={all}
+                workItems={allWork}
+                onEditWork={openWork}
+                roadmapOpen={showMobileRoadmap}
+                onToggleRoadmap={() =>
+                  setShowMobileRoadmap((current) => !current)
+                }
+              />
+              <div
+                className={`preparation-roadmap ${
+                  showMobileRoadmap ? "is-open" : ""
+                }`}
+              >
+                <EventMilestoneTimeline
+                  event={event}
+                  items={all}
+                  workItems={allWork}
+                  onEdit={open}
+                  onEditWork={openWork}
+                  onAddWork={addWork}
+                  onEditEvent={onEditEvent}
+                />
+              </div>
+            </>
+          )}
+          <div className="preparation-add-actions">
+            <button
+              type="button"
+              className="secondary milestone-add"
+              onClick={() =>
+                open({
+                  ...base(),
+                  title: "",
+                  successCriteria: "",
+                  status: "not_started",
+                  changes: [],
+                })
+              }
+            >
+              <Plus size={18} />
+              マイルストーンを追加
+            </button>
+          </div>
+        </section>
+      )}
     </section>
   );
 }
