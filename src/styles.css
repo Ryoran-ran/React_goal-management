@@ -118,18 +118,22 @@
   margin: -3px 0 10px;
 }
 .lesson-outline-dialog-content {
-  flex: 1;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
   min-height: 0;
   overflow: hidden;
 }
 .lesson-outline-dialog-content > textarea {
-  height: 100%;
+  flex: 1 1 0;
+  height: auto;
   min-height: 0;
   resize: none;
   line-height: 1.7;
 }
 .lesson-outline-dialog-content > .lesson-outline-preview {
-  height: 100%;
+  flex: 1 1 0;
+  height: auto;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
