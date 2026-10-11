@@ -3,6 +3,11 @@ import { ArrowLeft, Cloud, RefreshCw } from "lucide-react";
 import { db } from "../data/db";
 import { backupCounts } from "../data/backup";
 import { errorText, useQuery } from "../lib/hooks";
+import {
+  createSingleFileZip,
+  isZipFile,
+  readSingleFileZip,
+} from "../lib/singleFileZip";
 import { googleClientId, prepareGoogle } from "../sync/google";
 import { deviceState } from "../sync/journal";
 import { resolveConflict } from "../sync/merge";
@@ -67,13 +72,19 @@ const display = (value: unknown) =>
       : JSON.stringify(value, null, 2);
 const time = (value?: string) =>
   value ? new Date(value).toLocaleString("ja-JP") : "まだ同期していません";
-function downloadSafetyCopy(blob: Blob, id: string) {
-  const url = URL.createObjectURL(blob),
+async function downloadSafetyCopy(blob: Blob, id: string) {
+  const archive = await createSingleFileZip("dance-note-safety-copy.dat", blob),
+    url = URL.createObjectURL(archive),
     link = document.createElement("a");
   link.href = url;
-  link.download = `dance-note-${id}.dancenote-sync`;
+  link.download = `dance-note-safety-${id}.zip`;
+  document.body.append(link);
   link.click();
+  link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+async function safetyCopyData(blob: Blob) {
+  return (await isZipFile(blob)) ? (await readSingleFileZip(blob)).file : blob;
 }
 function ConflictCard({
   conflict,
@@ -723,19 +734,20 @@ export function Sync({ onBack }: { onBack: () => void }) {
           </div>
         )}
         <label className="field">
-          <span>保存した安全コピーを確認（.dancenote-sync）</span>
+          <span>保存した安全コピーを確認（ZIP）</span>
           <input
             type="file"
-            accept=".dancenote-sync"
+            accept=".zip,.dancenote-sync,application/zip"
             disabled={busy}
             onChange={(event) => {
               const blob = event.target.files?.[0];
               if (blob)
                 void run(async () => {
+                  const snapshotBlob = await safetyCopyData(blob);
                   setPreview({
-                    localBlob: blob,
+                    localBlob: snapshotBlob,
                     snapshot: await readSnapshot(
-                      blob,
+                      snapshotBlob,
                       state?.account?.id ?? "",
                     ),
                   });
@@ -744,8 +756,8 @@ export function Sync({ onBack }: { onBack: () => void }) {
             }}
           />
           <small>
-            通常の .dancenote
-            ファイルは「エクスポート・インポート」から読み込めます。
+            通常のバックアップZIPは「エクスポート・インポート」から読み込めます。旧
+            .dancenote-syncも選択できます。
           </small>
         </label>
         {(query.data?.localBackups.length ?? 0) > 0 && (
@@ -783,7 +795,11 @@ export function Sync({ onBack }: { onBack: () => void }) {
                     <button
                       className="text-button"
                       type="button"
-                      onClick={() => downloadSafetyCopy(backup.blob, backup.id)}
+                      onClick={() =>
+                        void run(async () => {
+                          await downloadSafetyCopy(backup.blob, backup.id);
+                        })
+                      }
                     >
                       ダウンロード
                     </button>

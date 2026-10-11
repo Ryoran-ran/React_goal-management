@@ -18,6 +18,7 @@ import {
 import { backupTables } from "./backupValidation";
 import { retireTechnicalGoals } from "./retireGoals";
 import type { Lesson } from "../types";
+import { createSingleFileZip } from "../lib/singleFileZip";
 
 const clear = () =>
   db.transaction("rw", db.tables, async () => {
@@ -245,7 +246,10 @@ describe("full backup and restore", () => {
   });
 
   it("exports and restores an empty database", async () => {
-    const backup = await readBackup(await createBackup());
+    const raw = await createBackup();
+    const backup = await readBackup(
+      await createSingleFileZip("dance-note-backup.dat", raw),
+    );
     expect(backupCounts(backup.tables).every((row) => row.count === 0)).toBe(
       true,
     );
@@ -257,7 +261,7 @@ describe("full backup and restore", () => {
     await save("lessons", source());
     const file = await createBackup();
     await readBackup(file);
-    await expect(readBackup(new Blob(["{}"]))).rejects.toThrow(".dancenote");
+    await expect(readBackup(new Blob(["{}"]))).rejects.toThrow("バックアップ");
     await expect(readBackup(file.slice(0, file.size - 1))).rejects.toThrow();
     expect(await db.lessons.count()).toBe(1);
   });
