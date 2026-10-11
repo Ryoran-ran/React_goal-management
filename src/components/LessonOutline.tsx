@@ -196,6 +196,7 @@ function OutlineDialog({
       element.dataset.keyboardOpen = String(
         editing && expandedHeight - height > 120,
       );
+      element.dataset.inputActive = String(editing);
     };
     const resizeAfterKeyboardChange = () => {
       resize();
