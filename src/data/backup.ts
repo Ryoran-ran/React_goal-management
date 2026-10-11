@@ -4,6 +4,11 @@ import { retireTechnicalGoals } from "./retireGoals";
 import { migrateEventWork } from "./eventWorkMigration";
 import type { AttachmentFile } from "../types";
 import {
+  createSingleFileZip,
+  isZipFile,
+  readSingleFileZip,
+} from "../lib/singleFileZip";
+import {
   backupTables,
   object,
   validateBackupRows,
@@ -164,13 +169,20 @@ export async function readBackup(
   progress?: Progress,
 ): Promise<PreparedBackup> {
   progress?.("バックアップを確認しています…");
+  if (await isZipFile(file)) {
+    try {
+      file = (await readSingleFileZip(file)).file;
+    } catch {
+      throw new Error("DanceNoteで作成したバックアップZIPを選んでください。");
+    }
+  }
   const header = new Uint8Array(await file.slice(0, headerSize).arrayBuffer());
   if (
     header.length !== headerSize ||
     magic.some((byte, index) => byte !== header[index])
   )
     throw new Error(
-      "このアプリからエクスポートした .dancenote ファイルを選んでください。",
+      "DanceNoteで作成したバックアップ（.zip または旧 .dancenote）を選んでください。",
     );
   const size = new DataView(header.buffer).getUint32(magic.length);
   if (!size || size > maxManifestSize || headerSize + size > file.size)
@@ -292,11 +304,13 @@ export async function restoreBackup(backup: PreparedBackup) {
   });
 }
 
-export function downloadBackup(blob: Blob) {
-  const url = URL.createObjectURL(blob);
+export async function downloadBackup(blob: Blob) {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const archive = await createSingleFileZip("dance-note-backup.dat", blob);
+  const url = URL.createObjectURL(archive);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `dance-note-${new Date().toISOString().replace(/[:.]/g, "-")}.dancenote`;
+  link.download = `dance-note-${timestamp}.zip`;
   document.body.append(link);
   link.click();
   link.remove();

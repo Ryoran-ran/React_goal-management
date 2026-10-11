@@ -43,7 +43,7 @@ export function Backup({ onBack }: { onBack: () => void }) {
   };
   const exportFile = () =>
     run(async () => {
-      downloadBackup(await createBackup(setProgress));
+      await downloadBackup(await createBackup(setProgress));
       setNotice("バックアップファイルのダウンロードを開始しました。");
     });
   return (
@@ -98,15 +98,15 @@ export function Backup({ onBack }: { onBack: () => void }) {
       <section className="card">
         <h2>バックアップをインポート</h2>
         <p>
-          このアプリでエクスポートした .dancenote
-          ファイルを選んでください。まず内容を確認し、その後に復元します。
+          このアプリでエクスポートしたZIPファイルを選んでください。旧形式の
+          .dancenoteも読み込めます。まず内容を確認し、その後に復元します。
         </p>
         <label className="field">
           <span>バックアップファイル</span>
           <input
             ref={input}
             type="file"
-            accept=".dancenote"
+            accept=".zip,.dancenote,application/zip"
             disabled={busy}
             onChange={(event) => {
               const file = event.target.files?.[0];
