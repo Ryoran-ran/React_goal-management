@@ -217,6 +217,9 @@
   display: flex;
   flex-direction: column;
 }
+.lesson-outline-dialog[data-keyboard-open="true"] {
+  padding-bottom: max(64px, env(safe-area-inset-bottom, 0px));
+}
 .lesson-outline-dialog::backdrop {
   background: white;
 }
@@ -3112,7 +3115,9 @@ input[type="checkbox"] {
   font-weight: 600;
   margin-bottom: 4px;
 }
-input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
+    [type="file"]
+  ),
 select,
 textarea {
   background: white;

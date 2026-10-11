@@ -165,12 +165,22 @@ function OutlineDialog({
   const [preview, setPreview] = useState(false);
   useLayoutEffect(() => {
     const element = dialog.current!;
+    const input = textarea.current!;
     const viewport = window.visualViewport;
-    const resize = () => {
-      element.style.setProperty(
-        "--outline-height",
-        `${viewport?.height ?? window.innerHeight}px`,
+    const timers = new Set<number>();
+    const visibleHeight = () =>
+      Math.min(
+        viewport?.height ?? Number.POSITIVE_INFINITY,
+        window.innerHeight,
+        document.documentElement.clientHeight,
       );
+    let expandedHeight = visibleHeight();
+    const resize = () => {
+      const height = visibleHeight();
+      const editing = document.activeElement === input;
+      if (!editing) expandedHeight = height;
+      else expandedHeight = Math.max(expandedHeight, height);
+      element.style.setProperty("--outline-height", `${height}px`);
       element.style.setProperty(
         "--outline-top",
         `${viewport?.offsetTop ?? 0}px`,
@@ -181,21 +191,40 @@ function OutlineDialog({
       );
       element.style.setProperty(
         "--outline-width",
-        `${viewport?.width ?? window.innerWidth}px`,
+        `${Math.min(viewport?.width ?? window.innerWidth, window.innerWidth)}px`,
       );
+      element.dataset.keyboardOpen = String(
+        editing && expandedHeight - height > 120,
+      );
+    };
+    const resizeAfterKeyboardChange = () => {
+      resize();
+      for (const delay of [50, 150, 300, 600]) {
+        const timer = window.setTimeout(() => {
+          timers.delete(timer);
+          resize();
+        }, delay);
+        timers.add(timer);
+      }
     };
     resize();
     element.showModal();
-    textarea.current?.focus({ preventScroll: true });
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     viewport?.addEventListener("resize", resize);
     viewport?.addEventListener("scroll", resize);
     window.addEventListener("resize", resize);
+    input.addEventListener("focus", resizeAfterKeyboardChange);
+    input.addEventListener("blur", resizeAfterKeyboardChange);
+    input.focus({ preventScroll: true });
+    resizeAfterKeyboardChange();
     return () => {
+      for (const timer of timers) window.clearTimeout(timer);
       viewport?.removeEventListener("resize", resize);
       viewport?.removeEventListener("scroll", resize);
       window.removeEventListener("resize", resize);
+      input.removeEventListener("focus", resizeAfterKeyboardChange);
+      input.removeEventListener("blur", resizeAfterKeyboardChange);
       element.close();
       document.body.style.overflow = overflow;
     };
