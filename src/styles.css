@@ -1,6 +1,131 @@
 .lesson-outline-field {
   margin-bottom: 24px;
 }
+.sync-page {
+  max-width: 1100px;
+}
+.sync-page > section {
+  margin-bottom: 20px;
+}
+.sync-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0;
+}
+.sync-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.sync-summary > div {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.sync-summary dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.sync-summary dd {
+  margin: 6px 0 0;
+  overflow-wrap: anywhere;
+}
+.sync-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 12px 0;
+}
+.sync-check input {
+  width: auto;
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+.sync-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.sync-initial {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f5f9f7;
+  margin: 16px 0;
+}
+.sync-conflict {
+  margin-bottom: 16px;
+}
+.sync-conflict fieldset {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+.sync-compare {
+  max-width: 100%;
+  overflow-x: auto;
+  margin-bottom: 18px;
+}
+.sync-compare table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 600px;
+}
+.sync-compare th,
+.sync-compare td {
+  border: 1px solid var(--line);
+  padding: 10px;
+  vertical-align: top;
+  text-align: left;
+}
+.sync-compare th small {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: normal;
+  color: var(--muted);
+}
+.sync-compare pre,
+.sync-json-preview {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 0;
+  max-height: 360px;
+  overflow-y: auto;
+  font-size: 0.85rem;
+}
+.sync-json {
+  font-family: monospace;
+  font-size: 0.85rem;
+}
+.sync-backups {
+  padding: 0;
+  list-style: none;
+}
+.sync-backups li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.sync-page details {
+  margin: 14px 0;
+}
+.sync-page summary {
+  cursor: pointer;
+}
+@media (max-width: 650px) {
+  .sync-summary,
+  .sync-settings-grid {
+    grid-template-columns: 1fr;
+  }
+  .sync-actions > button {
+    flex: 1 1 auto;
+  }
+}
 .lesson-outline-field + .lesson-outline-field {
   padding-top: 22px;
   border-top: 1px solid var(--line);

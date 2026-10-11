@@ -3,6 +3,8 @@ import { validateMilestones } from "../lib/milestones";
 import { validateEventWork } from "../lib/eventWork";
 import { migrateEventWork } from "./eventWorkMigration";
 import { db } from "./db";
+import { seedJournal } from "../sync/journal";
+import { recordKey } from "../sync/model";
 import { removeUnusedDefaultGoals } from "./migrations";
 import { retireTechnicalGoals } from "./retireGoals";
 import { goalCategories, goalCategory } from "../lib/goalCategories";
@@ -59,6 +61,7 @@ export async function initialize() {
     if (await db.settings.get("initialized")) return;
     await db.settings.put({ id: "initialized", value: true });
   });
+  await seedJournal(db);
 }
 export function watch<T>(
   query: () => Promise<T>,
@@ -450,6 +453,19 @@ export async function save<K extends Kind>(
     return { attachment, blob: file.slice(0, file.size, file.type) };
   });
   await db.transaction("rw", db.tables, async () => {
+    const previous = await db.table<Records[K]>(kind).get(input.id);
+    const revision = await db.syncRevisions.get(recordKey(kind, input.id));
+    if (
+      revision?.remoteVersion &&
+      Date.parse(input.updatedAt) < Date.parse(revision.remoteVersion)
+    )
+      throw new Error(
+        "この記録は同期で更新されています。入力内容を控えてから、記録を開き直してください。",
+      );
+    if (previous)
+      record.updatedAt = new Date(
+        Math.max(Date.now(), Date.parse(previous.updatedAt) + 1),
+      ).toISOString();
     if (kind === "learningNotes") {
       const note = record as LearningNote;
       if (note.themeId && !(await db.themes.get(note.themeId)))

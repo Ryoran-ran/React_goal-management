@@ -33,6 +33,7 @@ export function newOccurrence(
 ): Lesson {
   return {
     ...base(),
+    id: `occurrence:${seriesId}:${originalDate}`,
     title: schedule.title.trim(),
     date,
     originalDate,

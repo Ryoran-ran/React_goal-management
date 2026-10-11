@@ -7,6 +7,7 @@ import {
   DatabaseBackup,
   MessageSquare,
   Repeat2,
+  Cloud,
 } from "lucide-react";
 import { initialize } from "./data/repository";
 import { CalendarSettings } from "./components/CalendarSettings";
@@ -15,6 +16,8 @@ import { localDate } from "./lib/dates";
 import { Learning } from "./pages/Learning";
 import { Events } from "./pages/Events";
 import { Backup } from "./pages/Backup";
+import { Sync } from "./pages/Sync";
+import { startAutoSync } from "./sync/service";
 import { LessonAdvice } from "./pages/LessonAdvice";
 import { Plans } from "./pages/Plans";
 import { Practice } from "./pages/PracticeAgenda";
@@ -32,7 +35,12 @@ const navigation = [
   { id: "tools", label: "整理", icon: Settings2 },
 ] as const;
 type Page =
-  (typeof navigation)[number]["id"] | "plans" | "backup" | "advice" | "series";
+  | (typeof navigation)[number]["id"]
+  | "plans"
+  | "backup"
+  | "advice"
+  | "series"
+  | "sync";
 export default function App() {
   const [page, setPage] = useState<Page>("home");
   const [practiceEntry, setPracticeEntry] = useState<PracticeEntry>();
@@ -49,6 +57,9 @@ export default function App() {
   }, []);
   useEffect(() => {
     if (ready) return registerTrainingTools();
+  }, [ready]);
+  useEffect(() => {
+    if (ready) return startAutoSync();
   }, [ready]);
   const navigate = (value: Page) => {
     if (!confirmDiscardChanges()) return;
@@ -91,11 +102,13 @@ export default function App() {
           {navigation.map((item) => (
             <button
               key={item.id}
-              className={`${page === item.id || (item.id === "tools" && ["plans", "backup", "advice", "series"].includes(page)) ? "active" : ""}`}
+              className={`${page === item.id || (item.id === "tools" && ["plans", "backup", "advice", "series", "sync"].includes(page)) ? "active" : ""}`}
               aria-current={
                 page === item.id ||
                 (item.id === "tools" &&
-                  ["plans", "backup", "advice", "series"].includes(page))
+                  ["plans", "backup", "advice", "series", "sync"].includes(
+                    page,
+                  ))
                   ? "page"
                   : undefined
               }
@@ -151,6 +164,8 @@ export default function App() {
             <LessonAdvice today={today} onBack={() => navigate("tools")} />
           ) : page === "backup" ? (
             <Backup onBack={() => navigate("tools")} />
+          ) : page === "sync" ? (
+            <Sync onBack={() => navigate("tools")} />
           ) : page === "series" ? (
             <RecurringLessons today={today} onBack={() => navigate("tools")} />
           ) : page === "events" ? (
@@ -172,6 +187,14 @@ export default function App() {
                 <h1>整理</h1>
               </header>
               <div className="learning-tool-grid">
+                <button
+                  className="card learning-note-card"
+                  onClick={() => navigate("sync")}
+                >
+                  <Cloud size={24} />
+                  <h2>Google Drive同期</h2>
+                  <p>複数端末で記録を共有・競合確認・バックアップ復元。</p>
+                </button>
                 <button
                   className="card learning-note-card"
                   onClick={() => navigate("advice")}

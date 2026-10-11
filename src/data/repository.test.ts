@@ -13,6 +13,8 @@ import {
 } from "./repository";
 import type { DanceEvent, Goal, Lesson, PracticeLog } from "../types";
 import { weekOf } from "../lib/dates";
+import { applyEvents } from "../sync/merge";
+import { makeEvent, wireEvent, type Row } from "../sync/model";
 const goal = (title = "体幹"): Goal => ({
   ...base(),
   title,
@@ -56,6 +58,42 @@ afterAll(async () => {
   await db.delete();
 });
 describe("local repository", () => {
+  it("protects open drafts from background remote edits and deletions", async () => {
+    const input = lesson();
+    await save("lessons", input);
+    const stale = (await db.lessons.get(input.id))!;
+    const root = (
+      await db.syncEvents
+        .where("[recordType+recordId]")
+        .equals(["lessons", input.id])
+        .toArray()
+    ).map(wireEvent)[0];
+    const remote = makeEvent(
+      "lessons",
+      input.id,
+      stale as unknown as Row,
+      { ...stale, teacherFeedback: "PCの新しい内容" } as unknown as Row,
+      "pc",
+      [root.eventId],
+    );
+    await applyEvents(db, [remote]);
+    await expect(
+      save("lessons", { ...stale, homework: "入力中の内容" }),
+    ).rejects.toThrow("同期で更新");
+    const refreshed = (await db.lessons.get(input.id))!;
+    expect(refreshed.teacherFeedback).toBe("PCの新しい内容");
+    const deleted = makeEvent(
+      "lessons",
+      input.id,
+      refreshed as unknown as Row,
+      null,
+      "pc",
+      [remote.eventId],
+    );
+    await applyEvents(db, [deleted]);
+    await expect(save("lessons", stale)).rejects.toThrow("同期で更新");
+    expect(await db.lessons.get(input.id)).toBeUndefined();
+  });
   it("initializes without preset goals and preserves user goals", async () => {
     await initialize();
     await initialize();
