@@ -3112,7 +3112,7 @@ input[type="checkbox"] {
   font-weight: 600;
   margin-bottom: 4px;
 }
-input:not([type="checkbox"]):not([type="range"]):not([type="file"]),
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
 select,
 textarea {
   background: white;
