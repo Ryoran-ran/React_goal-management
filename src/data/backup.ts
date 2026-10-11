@@ -1,4 +1,5 @@
 import { db } from "./db";
+import type { DanceDatabase } from "./db";
 import { retireTechnicalGoals } from "./retireGoals";
 import { migrateEventWork } from "./eventWorkMigration";
 import type { AttachmentFile } from "../types";
@@ -74,19 +75,33 @@ export async function currentBackupCounts() {
 }
 
 // Capture every table in one read transaction. Hashing and file work run outside it.
-export async function createBackup(progress?: Progress): Promise<Blob> {
+export async function createBackup(
+  progress?: Progress,
+  database: DanceDatabase = db,
+  capture?: { tables: BackupRows; files: AttachmentFile[] },
+): Promise<Blob> {
   progress?.("データをまとめています…");
-  const snapshot = await db.transaction("r", db.tables, async () => {
-    const tables = Object.fromEntries(
-      await Promise.all(
-        backupTables.map(async (name) => [
-          name,
-          await db.table(name).toArray(),
-        ]),
-      ),
-    );
-    return { tables, files: await db.attachmentFiles.toArray() };
-  });
+  const snapshot =
+    capture ??
+    (await database.transaction("r", database.tables, async () => {
+      const tables = Object.fromEntries(
+        await Promise.all(
+          backupTables.map(async (name) => [
+            name,
+            await database.table(name).toArray(),
+          ]),
+        ),
+      );
+      const attachmentIds = new Set(
+        (tables.attachments as { id: string }[]).map((row) => row.id),
+      );
+      return {
+        tables: tables as BackupRows,
+        files: (await database.attachmentFiles.toArray()).filter((file) =>
+          attachmentIds.has(file.id),
+        ),
+      };
+    }));
   validateBackupRows(snapshot.tables);
   validateMedia(snapshot.tables, snapshot.files);
   const blobs: Blob[] = [];
@@ -266,7 +281,9 @@ export async function restoreBackup(backup: PreparedBackup) {
   validateMedia(backup.tables, backup.files);
   // Clearing and restoring is atomic: quota/constraint failures roll back everything.
   await db.transaction("rw", db.tables, async () => {
-    for (const table of db.tables) await table.clear();
+    // Retain account binding and pending history. Import is a new local change.
+    for (const name of [...backupTables, "attachmentFiles"])
+      await db.table(name).clear();
     for (const name of backupTables)
       await db.table(name).bulkAdd(backup.tables[name]);
     await db.attachmentFiles.bulkAdd(backup.files);

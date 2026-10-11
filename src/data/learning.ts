@@ -1,4 +1,5 @@
 import { db } from "./db";
+import { recordKey } from "../sync/model";
 import { base, save } from "./repository";
 import { agendaBetween, type AgendaItem } from "./practiceAgenda";
 import { lessonHomework } from "../lib/lessonContent";
@@ -63,7 +64,17 @@ export async function saveTheme(theme: LearningTheme) {
       if (!(await db.goals.get(id)))
         throw new Error("関連する技術目標が見つかりません。");
     const old = await db.themes.get(theme.id);
-    const now = new Date().toISOString();
+    const revision = await db.syncRevisions.get(recordKey("themes", theme.id));
+    if (
+      revision?.remoteVersion &&
+      Date.parse(theme.updatedAt) < Date.parse(revision.remoteVersion)
+    )
+      throw new Error(
+        "このテーマは同期で更新されています。入力内容を控えてから、テーマを開き直してください。",
+      );
+    const now = new Date(
+      Math.max(Date.now(), old ? Date.parse(old.updatedAt) + 1 : 0),
+    ).toISOString();
     await db.themes.put({
       ...theme,
       title: theme.title.trim(),
