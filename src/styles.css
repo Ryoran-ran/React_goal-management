@@ -220,6 +220,15 @@
 .lesson-outline-dialog[data-keyboard-open="true"] {
   padding-bottom: max(64px, env(safe-area-inset-bottom, 0px));
 }
+@media (max-width: 760px) and (pointer: coarse) {
+  .lesson-outline-dialog[data-input-active="true"][data-keyboard-open="false"] {
+    height: min(var(--outline-height, 100dvh), 42svh);
+    padding-bottom: 12px;
+  }
+  .lesson-outline-dialog[data-input-active="true"] .lesson-outline-dialog-hint {
+    display: none;
+  }
+}
 .lesson-outline-dialog::backdrop {
   background: white;
 }
